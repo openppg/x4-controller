@@ -4,7 +4,8 @@
 
 Servo esc; //Creating a servo class with name as esc
 int led_sw = 9; // LED on button switch
-
+const long interval = 750;   // interval at which to blink (milliseconds)
+unsigned long previousMillis = 0;        // will store last time LED was updated
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT); //onboard LED
@@ -23,16 +24,29 @@ void setup()
 
 void checkArmRange(){
   bool throttle_high = true;
+  unsigned long currentMillis = millis();
+  int ledState = LOW;
+  
   while(throttle_high){
-    digitalWrite(led_sw, HIGH);
-    digitalWrite(LED_BUILTIN, HIGH);
-    if (analogRead(A0) < 10){
-      throttle_high = false;
+    unsigned long currentMillis = millis();
+
+    if (currentMillis - previousMillis >= interval) {
+      // save the last time throttle checked and LED blinked
+      previousMillis = currentMillis;
+      if (analogRead(A0) < 10){
+        throttle_high = false;
+      }
+      // if the LED is off turn it on and vice-versa:
+      if (ledState == LOW) {
+        ledState = HIGH;
+      } else {
+        ledState = LOW;
+      }
+  
+      // set the LED with the ledState of the variable:
+      digitalWrite(LED_BUILTIN, ledState);
+      digitalWrite(led_sw, ledState);
     }
-    delay(750);
-    digitalWrite(led_sw, LOW);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(750);
   }
 }
 
