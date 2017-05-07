@@ -1,24 +1,38 @@
-// Zach Whitehead - Apr 30th 2017
+// Zach Whitehead - 2017
 
-#include <Servo.h>//Using servo library to control ESC
+#include <Servo.h> //To control ESCs
+#include <FastLED.h> //For RGB lights
 
+// Arduino Pins
+#define LED_SW        9 // output for LED on button switch
+#define ESC_PIN       8 // the ESC signal output pin 
+#define THROTTLE_PIN  A0 // throttle pot input 
+#define LED_PIN       5 // LED strip
+
+#define NUM_LEDS    10
+#define BRIGHTNESS  64
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+
+CRGB leds[NUM_LEDS];
 Servo esc; //Creating a servo class with name as esc
-int led_sw = 9; // LED on button switch
+
 const long interval = 750;   // interval at which to blink (milliseconds)
-unsigned long previousMillis = 0;        // will store last time LED was updated
+unsigned long previousMillis = 0;     // will store last time LED was updated
 void setup()
 {
   pinMode(LED_BUILTIN, OUTPUT); //onboard LED
-  pinMode(led_sw, OUTPUT); //setup the external LED pin
+  pinMode(LED_SW, OUTPUT); //setup the external LED pin
   
-  esc.attach(8); //Specify the esc signal pin, Here as D8
+  esc.attach(ESC_PIN);
 
   Serial.begin(9600);
   
   checkArmRange();
   // Arming range check exited so continue
-  digitalWrite(led_sw, HIGH);
+  digitalWrite(LED_SW, HIGH);
   digitalWrite(LED_BUILTIN, HIGH);
+  // TODO indicate armed on LED strip
   esc.writeMicroseconds(1000); //initialize the signal to 1000
 }
 
@@ -28,6 +42,7 @@ void checkArmRange(){
   int ledState = LOW;
   
   while(throttle_high){
+    // TODO indicate unarmed on LED strip
     unsigned long currentMillis = millis();
 
     if (currentMillis - previousMillis >= interval) {
@@ -45,15 +60,16 @@ void checkArmRange(){
   
       // set the LED with the ledState of the variable:
       digitalWrite(LED_BUILTIN, ledState);
-      digitalWrite(led_sw, ledState);
+      digitalWrite(LED_SW, ledState);
     }
   }
 }
 
 void loop()
 {
+  // TODO check and display battery voltage
   int val; 
-  val= analogRead(A0); //Read input from analog pin a0 and store in val
+  val= analogRead(THROTTLE_PIN);
   
   val= map(val, 0, 1023,1000,2000); //mapping val to minimum and maximum(Change if needed) 
   esc.writeMicroseconds(val); //using val as the signal to esc
