@@ -21,8 +21,11 @@ const long interval = 750;   // interval at which to blink (milliseconds)
 unsigned long previousMillis = 0;     // will store last time LED was updated
 void setup()
 {
+  delay( 1500 ); // power-up safety delay
   pinMode(LED_BUILTIN, OUTPUT); //onboard LED
   pinMode(LED_SW, OUTPUT); //setup the external LED pin
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.setBrightness(  BRIGHTNESS );
   
   esc.attach(ESC_PIN);
 
@@ -74,3 +77,4 @@ void loop()
   val= map(val, 0, 1023,1000,2000); //mapping val to minimum and maximum(Change if needed) 
   esc.writeMicroseconds(val); //using val as the signal to esc
 }
+
