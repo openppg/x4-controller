@@ -18,54 +18,61 @@
 CRGB leds[NUM_LEDS];
 Servo esc; //Creating a servo class with name as esc
 
-const long interval = 750;   // interval at which to blink (milliseconds)
-unsigned long previousMillis = 0;     // will store last time LED was updated
+const long interval = 750; // interval at which to blink (milliseconds)
+unsigned long previousMillis = 0; // will store last time LED was updated
 
 CRGBPalette16 currentPalette;
-TBlendType    currentBlending;
+TBlendType currentBlending;
 
-void setup()
-{
-  delay( 1500 ); // power-up safety delay
+void setup() {
+  delay(1500); // power-up safety delay
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT); //onboard LED
   pinMode(LED_SW, OUTPUT); //setup the external LED pin
-  pinMode(HAPTIC_PIN, OUTPUT); 
-  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-  FastLED.setBrightness(  BRIGHTNESS );
+  pinMode(HAPTIC_PIN, OUTPUT);
+  FastLED.addLeds < LED_TYPE, LED_PIN, COLOR_ORDER > (leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+  FastLED.setBrightness(BRIGHTNESS);
 
   currentBlending = LINEARBLEND;
-  SetupBlackAndRedStripedPalette();
-  
+
   esc.attach(ESC_PIN);
-  
   checkArmRange();
   // Arming range check exited so continue
+
   digitalWrite(LED_SW, HIGH);
   digitalWrite(LED_BUILTIN, HIGH);
-  
+
   analogWrite(HAPTIC_PIN, 200);
-  delay( 1500 ); // TODO move to timer with callback
+  delay(1500); // TODO move to timer with callback
   analogWrite(HAPTIC_PIN, 0);
-  
+
   // TODO indicate armed on LED strip
+  Serial.println("Sending Arm Signal");
   esc.writeMicroseconds(1000); //initialize the signal to 1000
+  fill_solid(currentPalette, 16, CRGB::Green);
+  FillLEDsFromPaletteColors(0);
+  FastLED.show();
 
 }
 
-void checkArmRange(){
+void checkArmRange() {
   bool throttle_high = true;
   unsigned long currentMillis = millis();
   int ledState = LOW;
-  
-  while(throttle_high){
+  Serial.println("Checking throttle");
+  fill_solid(currentPalette, 16, CRGB::Orange);
+  FillLEDsFromPaletteColors(0);
+  FastLED.show();
+
+  while (throttle_high) {
     // TODO indicate unarmed on LED strip
     unsigned long currentMillis = millis();
-
     if (currentMillis - previousMillis >= interval) {
       // save the last time throttle checked and LED blinked
+
       previousMillis = currentMillis;
-      if (analogRead(A0) < 10){
+      Serial.println(analogRead(THROTTLE_PIN));
+      if (analogRead(THROTTLE_PIN) < 100) {
         throttle_high = false;
       }
       // if the LED is off turn it on and vice-versa:
@@ -74,7 +81,7 @@ void checkArmRange(){
       } else {
         ledState = LOW;
       }
-  
+
       // set the LED with the ledState of the variable:
       digitalWrite(LED_BUILTIN, ledState);
       digitalWrite(LED_SW, ledState);
@@ -82,45 +89,23 @@ void checkArmRange(){
   }
 }
 
-void loop()
-{
-  static uint8_t startIndex = 0;
-  startIndex = startIndex + 1; /* motion speed */
-    
-  FillLEDsFromPaletteColors( startIndex);
-  FastLED.show();
-  //FastLED.delay(20);
-
+void loop() {
   // TODO check and display battery voltage
-  int val; 
-  val= analogRead(THROTTLE_PIN);
-  
-  val= map(val, 0, 1023,1000,2000); //mapping val to minimum and maximum 
+  int val;
+  val = analogRead(THROTTLE_PIN);
+  if (val < 100) {
+    val = 0;
+  } //deadband
+  val = map(val, 100, 1023, 1000, 2000); //mapping val to minimum and maximum 
   esc.writeMicroseconds(val); //using val as the signal to esc
 }
 
-void FillLEDsFromPaletteColors( uint8_t colorIndex)
-{
-    uint8_t brightness = 255;
-    
-    for( int i = 0; i < NUM_LEDS; i++) {
-        leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
-        colorIndex += 3;
-    }
-}
+void FillLEDsFromPaletteColors(uint8_t colorIndex) {
+  uint8_t brightness = 255;
 
-void SetupBlackAndRedStripedPalette()
-{
-    // 'black out' all 16 palette entries...
-    fill_solid( currentPalette, 16, CRGB::Black);
-    // and set every fourth one to white.
-    currentPalette[0] = CRGB::Red;
-    currentPalette[2] = CRGB::Orange;
-    currentPalette[4] = CRGB::Red;
-    currentPalette[6] = CRGB::Orange;
-    currentPalette[8] = CRGB::Red;
-    currentPalette[10] = CRGB::Orange;
-    currentPalette[12] = CRGB::Red;
-    currentPalette[14] = CRGB::Orange;
+  for (int i = 0; i < NUM_LEDS; i++) {
+    leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
+    colorIndex += 3;
+  }
 }
 
