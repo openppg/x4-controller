@@ -2,6 +2,7 @@
 
 #include <Servo.h> //To control ESCs
 #include <FastLED.h> //For RGB lights
+#include <ResponsiveAnalogRead.h>
 
 // Arduino Pins
 #define THROTTLE_PIN  A0 // throttle pot input
@@ -17,6 +18,8 @@
 
 CRGB leds[NUM_LEDS];
 Servo esc; //Creating a servo class with name as esc
+
+ResponsiveAnalogRead analog(THROTTLE_PIN, true);
 
 const long interval = 750; // interval at which to blink (milliseconds)
 unsigned long previousMillis = 0; // will store last time LED was updated
@@ -36,6 +39,8 @@ void setup() {
   currentBlending = LINEARBLEND;
 
   esc.attach(ESC_PIN);
+  esc.writeMicroseconds(0); //make sure off
+
   checkArmRange();
   // Arming range check exited so continue
 
@@ -47,7 +52,7 @@ void setup() {
   analogWrite(HAPTIC_PIN, 0);
 
   // TODO indicate armed on LED strip
-  Serial.println("Sending Arm Signal");
+  Serial.println(F("Sending Arm Signal"));
   esc.writeMicroseconds(1000); //initialize the signal to 1000
   fill_solid(currentPalette, 16, CRGB::Green);
   FillLEDsFromPaletteColors(0);
@@ -59,7 +64,7 @@ void checkArmRange() {
   bool throttle_high = true;
   unsigned long currentMillis = millis();
   int ledState = LOW;
-  Serial.println("Checking throttle");
+  Serial.println(F("Checking throttle"));
   fill_solid(currentPalette, 16, CRGB::Orange);
   FillLEDsFromPaletteColors(0);
   FastLED.show();
@@ -71,16 +76,22 @@ void checkArmRange() {
       // save the last time throttle checked and LED blinked
 
       previousMillis = currentMillis;
-      Serial.println(analogRead(THROTTLE_PIN));
-      if (analogRead(THROTTLE_PIN) < 100) {
+      analog.update();
+
+      if (analog.getValue() < 100) {
         throttle_high = false;
       }
+ 
       // if the LED is off turn it on and vice-versa:
       if (ledState == LOW) {
+        fill_solid(currentPalette, 16, CRGB::Orange);
         ledState = HIGH;
       } else {
+        fill_solid(currentPalette, 16, CRGB::Red);
         ledState = LOW;
       }
+      FillLEDsFromPaletteColors(0);
+      FastLED.show();
 
       // set the LED with the ledState of the variable:
       digitalWrite(LED_BUILTIN, ledState);
@@ -91,12 +102,11 @@ void checkArmRange() {
 
 void loop() {
   // TODO check and display battery voltage
+  analog.update();
+  int rawval = analog.getValue();
   int val;
-  val = analogRead(THROTTLE_PIN);
-  if (val < 100) {
-    val = 0;
-  } //deadband
-  val = map(val, 100, 1023, 1000, 2000); //mapping val to minimum and maximum 
+  
+  val = map(rawval, 0, 1023, 1000, 2000); //mapping val to minimum and maximum
   esc.writeMicroseconds(val); //using val as the signal to esc
 }
 
