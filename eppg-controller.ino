@@ -5,23 +5,26 @@
 #include <ResponsiveAnalogRead.h>
 
 // Arduino Pins
-#define THROTTLE_PIN  A0 // throttle pot input
-#define HAPTIC_PIN    3 // Vibration motor
-#define LED_PIN       5 // LED strip
-#define LED_SW        8 // output for LED on button switch 
-#define ESC_PIN       9 // the ESC signal output 
+#define THROTTLE_PIN  A7 // throttle pot input
+#define HAPTIC_PIN    3  // Vibration motor
+#define LED_PIN       5  // LED strip
+#define LED_SW        8  // output for LED on button switch 
+#define ESC_PIN       2  // the ESC signal output 
+#define BATT_IN       A6 //Battery voltage in (5v max)
 
 #define NUM_LEDS    10
-#define BRIGHTNESS  200
+#define BRIGHTNESS  225
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
 
 CRGB leds[NUM_LEDS];
 Servo esc; //Creating a servo class with name as esc
 
-ResponsiveAnalogRead analog(THROTTLE_PIN, true);
+ResponsiveAnalogRead analog(THROTTLE_PIN, false);
 
-const long interval = 750; // interval at which to blink (milliseconds)
+const long initInterval = 750; // throttle check (milliseconds)
+const long bgInterval = 1500;  // background updates (milliseconds)
+
 unsigned long previousMillis = 0; // will store last time LED was updated
 
 CRGBPalette16 currentPalette;
@@ -41,23 +44,20 @@ void setup() {
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(0); //make sure off
 
+  handleBattery();
   checkArmRange();
   // Arming range check exited so continue
 
   digitalWrite(LED_SW, HIGH);
   digitalWrite(LED_BUILTIN, HIGH);
 
-  analogWrite(HAPTIC_PIN, 200);
-  delay(1500); // TODO move to timer with callback
-  analogWrite(HAPTIC_PIN, 0);
+  // analogWrite(HAPTIC_PIN, 200);
+  // delay(1500); // TODO move to timer with callback
+  // analogWrite(HAPTIC_PIN, 0);
 
-  // TODO indicate armed on LED strip
   Serial.println(F("Sending Arm Signal"));
+  setAllLeds(CRGB::Gray);
   esc.writeMicroseconds(1000); //initialize the signal to 1000
-  fill_solid(currentPalette, 16, CRGB::Green);
-  FillLEDsFromPaletteColors(0);
-  FastLED.show();
-
 }
 
 void checkArmRange() {
@@ -65,14 +65,10 @@ void checkArmRange() {
   unsigned long currentMillis = millis();
   int ledState = LOW;
   Serial.println(F("Checking throttle"));
-  fill_solid(currentPalette, 16, CRGB::Orange);
-  FillLEDsFromPaletteColors(0);
-  FastLED.show();
 
   while (throttle_high) {
-    // TODO indicate unarmed on LED strip
     unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= interval) {
+    if (currentMillis - previousMillis >= initInterval) {
       // save the last time throttle checked and LED blinked
 
       previousMillis = currentMillis;
@@ -81,18 +77,16 @@ void checkArmRange() {
       if (analog.getValue() < 100) {
         throttle_high = false;
       }
- 
+
       // if the LED is off turn it on and vice-versa:
       if (ledState == LOW) {
-        fill_solid(currentPalette, 16, CRGB::Orange);
+        setAllLeds(CRGB::Blue);
         ledState = HIGH;
       } else {
-        fill_solid(currentPalette, 16, CRGB::Red);
+        setAllLeds(CRGB::Red);
         ledState = LOW;
       }
-      FillLEDsFromPaletteColors(0);
-      FastLED.show();
-
+ 
       // set the LED with the ledState of the variable:
       digitalWrite(LED_BUILTIN, ledState);
       digitalWrite(LED_SW, ledState);
@@ -101,21 +95,58 @@ void checkArmRange() {
 }
 
 void loop() {
-  // TODO check and display battery voltage
-  analog.update();
-  int rawval = analog.getValue();
-  int val;
-  
-  val = map(rawval, 0, 1023, 1000, 2000); //mapping val to minimum and maximum
-  esc.writeMicroseconds(val); //using val as the signal to esc
-}
-
-void FillLEDsFromPaletteColors(uint8_t colorIndex) {
-  uint8_t brightness = 255;
-
-  for (int i = 0; i < NUM_LEDS; i++) {
-    leds[i] = ColorFromPalette(currentPalette, colorIndex, brightness, currentBlending);
-    colorIndex += 3;
+  handleThrottle();
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= bgInterval) {
+    // handle background tasks
+    previousMillis = currentMillis; // reset
+    handleBattery();
   }
 }
 
+void handleBattery() {
+  CRGB ledColor;
+  int sensorValue = analogRead(BATT_IN);
+  float voltage = sensorValue * (5.0 / 1023.0);
+  float percent = mapf(voltage, 4.2, 5, 1, NUM_LEDS);
+  int numLedsToLight = 1;
+  
+  if (percent < 0) {percent = 0;}
+  
+  int lights = round(percent);
+  numLedsToLight = round(percent);
+  if (numLedsToLight < 1) {numLedsToLight =1;}
+  
+  Serial.print(voltage);
+
+  if (numLedsToLight <= 2) {
+    ledColor = CRGB::Red;
+  } else if (numLedsToLight == 3) {
+    ledColor = CRGB::Orange;
+  } else {
+    ledColor = CRGB::Green;
+  }
+  FastLED.clear();
+  for (int led = 0; led < numLedsToLight; led++) {
+    leds[led] = ledColor;
+  }
+  FastLED.show();
+}
+
+void handleThrottle() {
+  analog.update();
+  int rawval = analog.getValue();
+  int val = map(rawval, 0, 1023, 1000, 2000); //mapping val to minimum and maximum
+  esc.writeMicroseconds(val); //using val as the signal to esc
+}
+
+void setAllLeds(CRGB color) {
+  FastLED.clear();
+  fill_solid(leds, NUM_LEDS, color);
+  FastLED.show();
+}
+
+double mapf(double x, double in_min, double in_max, double out_min, double out_max)
+{
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
