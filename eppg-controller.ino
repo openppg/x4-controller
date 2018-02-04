@@ -30,6 +30,8 @@ unsigned long previousMillis = 0; // will store last time LED was updated
 CRGBPalette16 currentPalette;
 TBlendType currentBlending;
 
+#pragma message "Warning: OpenPPG software is in beta"
+
 void setup() {
   delay(1500); // power-up safety delay
   Serial.begin(9600);
