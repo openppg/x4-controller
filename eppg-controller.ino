@@ -10,12 +10,11 @@
 // Arduino Pins
 #define THROTTLE_PIN  A7 // throttle pot input
 #define HAPTIC_PIN    3  // Vibration motor
-#define LED_PIN       5  // LED on button
 #define BUZZER_PIN    8  // output for LED on button switch 
 #define LED_SW        4  // output for LED on button switch 
 #define ESC_PIN       2  // the ESC signal output 
-#define BATT_IN       A6 //Battery voltage in (5v max)
-#define OLED_RESET    4 // ?
+#define BATT_IN       A6 // Battery voltage in (5v max)
+#define OLED_RESET    4  // ?
 #define BUTTON_PIN    6 // arm button
 
 Adafruit_SSD1306 display(OLED_RESET);
@@ -53,7 +52,7 @@ void setup() {
   delay(500);
 
   //handleBattery();
-  checkArmRange(); 
+  //checkArmRange(); 
   // Arming range check exited so continue
 
   // analogWrite(HAPTIC_PIN, 200);
