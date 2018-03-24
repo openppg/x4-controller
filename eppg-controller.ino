@@ -1,21 +1,21 @@
 // Zach Whitehead - 2018
 
-#include <Servo.h> //To control ESCs
-#include <ResponsiveAnalogRead.h>
+#include <Servo.h> // to control ESCs
+#include <ResponsiveAnalogRead.h> // smoothing for throttle
 #include <SPI.h>
 #include <Wire.h>
-#include <Adafruit_SSD1306.h>
-#include <Bounce2.h>
+#include <Adafruit_SSD1306.h> // screen
+#include <Bounce2.h> // debounce input buttons
 
 // Arduino Pins
 #define THROTTLE_PIN  A7 // throttle pot input
-#define HAPTIC_PIN    3  // Vibration motor
-#define BUZZER_PIN    8  // output for LED on button switch 
+#define HAPTIC_PIN    3  // vibration motor - not used in V1
+#define BUZZER_PIN    8  // output for buzzer speaker
 #define LED_SW        4  // output for LED on button switch 
-#define ESC_PIN       2  // the ESC signal output 
+#define ESC_PIN       10 // the ESC signal output 
 #define BATT_IN       A6 // Battery voltage in (5v max)
 #define OLED_RESET    4  // ?
-#define BUTTON_PIN    6 // arm button
+#define BUTTON_PIN    6  // arm/disarm button
 
 Adafruit_SSD1306 display(OLED_RESET);
 
@@ -28,36 +28,36 @@ const long initInterval = 750; // throttle check (milliseconds)
 const long bgInterval = 1500;  // background updates (milliseconds)
 
 unsigned long previousMillis = 0; // will store last time LED was updated
+unsigned long previousDisarmMillis = 0; // will store last time LED was updated
+
 int buttonState = 0;
+bool disarmButtonHeld = false;
+
 #pragma message "Warning: OpenPPG software is in beta"
 
 void setup() {
   delay(500); // power-up safety delay
   Serial.begin(9600);
-  
+  Serial.println(F("Booting up OpenPPG"));
   pinMode(LED_BUILTIN, OUTPUT); //onboard LED
   pinMode(LED_SW, OUTPUT); //setup the external LED pin
   pinMode(BUTTON_PIN, INPUT);
 
   // After setting up the button, setup the Bounce instance :
   debouncer.attach(BUTTON_PIN);
-  debouncer.interval(1000); // interval in ms
+  debouncer.interval(250); // interval in ms
 
   //pinMode(HAPTIC_PIN, OUTPUT);
   initDisplay();
 
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(0); //make sure off
-  
+ 
   delay(500);
 
   //handleBattery();
-  //checkArmRange(); 
+  checkArmRange(); 
   // Arming range check exited so continue
-
-  // analogWrite(HAPTIC_PIN, 200);
-  // delay(1500); // TODO move to timer with callback
-  // analogWrite(HAPTIC_PIN, 0);
   armSystem();
 }
 
@@ -70,7 +70,7 @@ void checkArmRange() {
   display.setTextSize(2);
   display.setTextColor(WHITE);
   display.setCursor(0,0);
-  display.println("Disarmed");
+  display.println(F("Disarmed"));
   display.display();
   display.clearDisplay();
  
@@ -109,6 +109,7 @@ void loop() {
   if (currentMillis - previousMillis >= bgInterval) {
     // handle background tasks
     previousMillis = currentMillis; // reset
+    handleDisarm();
     //handleBattery();
   }
 }
@@ -130,6 +131,34 @@ void handleBattery() {
   // TODO handle low battery
 }
 
+void handleDisarm(){
+  int disarmHoldInterval = 1500; // 1.5 seconds
+  bool disarmButtonPressed = false;
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousDisarmMillis >= disarmHoldInterval) {
+    Serial.print('Checking disarm ');
+    // save the last time disarm button checked
+    previousDisarmMillis = currentMillis;
+    debouncer.update();
+
+    disarmButtonPressed = debouncer.read();
+    //Serial.println(disarmButtonPressed);
+
+    if (disarmButtonPressed && disarmButtonHeld){ // disarm
+      Serial.println(F("disarming"));
+      esc.writeMicroseconds(0);
+      disarmButtonHeld = false;
+      disarmButtonPressed = false;
+      delay(4000);
+      checkArmRange();
+      return;
+    }else if(disarmButtonPressed){
+      Serial.println("initial press, checking again in 1.5 secs");
+      disarmButtonHeld = true; 
+    }
+  }
+}
+
 void initDisplay(){
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
 
@@ -139,7 +168,7 @@ void initDisplay(){
   display.setTextSize(2);
   display.setTextColor(WHITE);
   display.setCursor(0,0);
-  display.println("OpenPPG");
+  display.println(F("OpenPPG"));
   display.display();
   display.clearDisplay();
 }
@@ -148,7 +177,7 @@ void handleThrottle() {
   analog.update();
   int rawval = analog.getValue();
   int val = map(rawval, 0, 1023, 1160, 2000); //mapping val to minimum and maximum
-  Serial.println(val);
+  // Serial.println(val);
   esc.writeMicroseconds(val); //using val as the signal to esc
 }
 
