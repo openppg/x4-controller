@@ -5,7 +5,10 @@
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_SSD1306.h> // screen
-#include <Bounce2.h> // debounce input buttons
+#include <AceButton.h>
+#include <AdjustableButtonConfig.h>
+
+using namespace ace_button;
 
 // Arduino Pins
 #define THROTTLE_PIN  A7 // throttle pot input
@@ -22,7 +25,8 @@ Adafruit_SSD1306 display(OLED_RESET);
 Servo esc; //Creating a servo class with name as esc
 
 ResponsiveAnalogRead analog(THROTTLE_PIN, false);
-Bounce debouncer = Bounce();
+AceButton button(BUTTON_PIN);
+AdjustableButtonConfig adjustableButtonConfig;
 
 const long initInterval = 750; // throttle check (milliseconds)
 const long bgInterval = 1500;  // background updates (milliseconds)
@@ -30,8 +34,7 @@ const long bgInterval = 1500;  // background updates (milliseconds)
 unsigned long previousMillis = 0; // will store last time LED was updated
 unsigned long previousDisarmMillis = 0; // will store last time LED was updated
 
-int buttonState = 0;
-bool disarmButtonHeld = false;
+bool armed = false;
 
 #pragma message "Warning: OpenPPG software is in beta"
 
@@ -43,74 +46,47 @@ void setup() {
   pinMode(LED_SW, OUTPUT); //setup the external LED pin
   pinMode(BUTTON_PIN, INPUT);
 
-  // After setting up the button, setup the Bounce instance :
-  debouncer.attach(BUTTON_PIN);
-  debouncer.interval(250); // interval in ms
+  button.setButtonConfig(&adjustableButtonConfig);
+  adjustableButtonConfig.setEventHandler(handleEvent);
+  adjustableButtonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
+  adjustableButtonConfig.setFeature(ButtonConfig::kFeatureLongPress);
+  adjustableButtonConfig.setDebounceDelay(55);
+  adjustableButtonConfig.setLongPressDelay(2500);
 
   //pinMode(HAPTIC_PIN, OUTPUT);
   initDisplay();
 
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(0); //make sure off
- 
-  delay(500);
 
   //handleBattery();
-  checkArmRange(); 
-  // Arming range check exited so continue
-  armSystem();
 }
 
-void checkArmRange() {
-  bool disarmed = true;
-  unsigned long currentMillis = millis();
-  int ledState = LOW;
-  Serial.println(F("Checking throttle"));
-  
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.println(F("Disarmed"));
-  display.display();
-  display.clearDisplay();
- 
-  while (disarmed) {
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= initInterval) {
-      // save the last time throttle checked and LED blinked
+void blinkLED() {
+  unsigned long currentMillis = millis(); 
+  if (currentMillis - previousMillis >= initInterval) {
+    // save the last time LED blinked
+    previousMillis = currentMillis;
+    int ledState = !digitalRead(LED_BUILTIN);
 
-      previousMillis = currentMillis;
-      analog.update();
-      debouncer.update();
- 
-      buttonState = debouncer.read();
-
-      if(buttonState == HIGH && analog.getValue() < 100) {
-        disarmed = false;  
-      }
-
-      // if the LED is off turn it on and vice-versa:
-      if (ledState == LOW) {
-        ledState = HIGH;
-      } else {
-        ledState = LOW;
-      }
- 
-      // set the LED with the ledState of the variable:
-      digitalWrite(LED_BUILTIN, ledState);
-      digitalWrite(LED_SW, ledState);
-    }
+    digitalWrite(LED_BUILTIN, ledState);
+    digitalWrite(LED_SW, ledState);
   }
 }
 
 void loop() {
-  handleThrottle();
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousMillis >= bgInterval) {
-    // handle background tasks
-    previousMillis = currentMillis; // reset
-    handleDisarm();
-    //handleBattery();
+  button.check();
+  if(armed){
+    handleThrottle();
+    
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= bgInterval) {
+      // handle background tasks
+      previousMillis = currentMillis; // reset
+      //handleBattery();
+    }
+  }else{
+    blinkLED();
   }
 }
 
@@ -131,32 +107,23 @@ void handleBattery() {
   // TODO handle low battery
 }
 
-void handleDisarm(){
-  int disarmHoldInterval = 1500; // 1.5 seconds
-  bool disarmButtonPressed = false;
-  unsigned long currentMillis = millis();
-  if (currentMillis - previousDisarmMillis >= disarmHoldInterval) {
-    Serial.print('Checking disarm ');
-    // save the last time disarm button checked
-    previousDisarmMillis = currentMillis;
-    debouncer.update();
+void disarmSystem(){
+  int melody[] = { 2093, 1976, 880};
+  Serial.println(F("disarming"));
 
-    disarmButtonPressed = debouncer.read();
-    //Serial.println(disarmButtonPressed);
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.println(F("Disarmed"));
+  display.display();
+  display.clearDisplay();
 
-    if (disarmButtonPressed && disarmButtonHeld){ // disarm
-      Serial.println(F("disarming"));
-      esc.writeMicroseconds(0);
-      disarmButtonHeld = false;
-      disarmButtonPressed = false;
-      delay(4000);
-      checkArmRange();
-      return;
-    }else if(disarmButtonPressed){
-      Serial.println("initial press, checking again in 1.5 secs");
-      disarmButtonHeld = true; 
-    }
-  }
+  esc.writeMicroseconds(0);
+  armed = false;
+  Serial.println(F("disarmed"));
+  playMelody(melody, 3);
+  delay(2000); // dont allow immediate rearming
+  return;
 }
 
 void initDisplay(){
@@ -200,9 +167,47 @@ void armSystem(){
 
   digitalWrite(LED_SW, LOW);
   digitalWrite(LED_BUILTIN, HIGH);
-
+  armed = true;
   // iterate over the notes of the melody:
-  for (int thisNote = 0; thisNote < 3; thisNote++) {
+  playMelody(melody, 3);
+}
+
+double mapf(double x, double in_min, double in_max, double out_min, double out_max)
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+// The event handler for the button.
+void handleEvent(AceButton* button, uint8_t eventType, uint8_t buttonState) {
+
+  switch (eventType) {
+    case AceButton::kEventDoubleClicked:
+     Serial.println(F("double clicked"));
+     if(armed){ 
+      disarmSystem();
+     }else if(throttleSafe()){
+      armSystem();
+     }
+     break;
+    case AceButton::kEventLongPressed:
+     Serial.println(F("long clicked"));
+     //if(!armed && throttleSafe()){ armSystem();}
+     break;
+  }
+}
+
+bool throttleSafe(){
+  analog.update();
+
+  if(analog.getValue() < 100) {
+    return true;
+  }else{
+    return false;  
+  } 
+}
+
+void playMelody(int melody[], int siz){
+  for (int thisNote = 0; thisNote < siz; thisNote++) {
 
     //quarter note = 1000 / 4, eighth note = 1000/8, etc.
     int noteDuration = 1000 / 8;
@@ -213,10 +218,5 @@ void armSystem(){
     // stop the tone playing:
     noTone(BUZZER_PIN);
   }
-}
-
-double mapf(double x, double in_min, double in_max, double out_min, double out_max)
-{
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
