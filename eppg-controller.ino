@@ -28,7 +28,6 @@ ResponsiveAnalogRead analog(THROTTLE_PIN, false);
 AceButton button(BUTTON_PIN);
 AdjustableButtonConfig adjustableButtonConfig;
 
-const long initInterval = 750; // throttle check (milliseconds)
 const long bgInterval = 1500;  // background updates (milliseconds)
 
 unsigned long previousMillis = 0; // will store last time LED was updated
@@ -62,7 +61,7 @@ void setup() {
 
 void blinkLED() {
   unsigned long currentMillis = millis(); 
-  if (currentMillis - previousMillis >= initInterval) {
+  if (currentMillis - previousMillis >= 750) {
     // save the last time LED blinked
     previousMillis = currentMillis;
     int ledState = !digitalRead(LED_BUILTIN);
@@ -76,29 +75,31 @@ void loop() {
   button.check();
   if(armed){
     handleThrottle();
-    
-    unsigned long currentMillis = millis();
-    if (currentMillis - previousMillis >= bgInterval) {
-      // handle background tasks
-      previousMillis = currentMillis; // reset
-      //handleBattery();
-    }
   }else{
     blinkLED();
   }
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= bgInterval) {
+    // handle background tasks
+    previousMillis = currentMillis; // reset
+    updateDisplay();
+  }
+}
+
+float getBatteryVolts(){
+  int sensorValue = analogRead(BATT_IN);
+  float converted = sensorValue * (5.0 / 1023.0);
+  return converted *10;
 }
 
 void handleBattery() {
-  int sensorValue = analogRead(BATT_IN);
-  float voltage = sensorValue * (5.0 / 1023.0);
-  float percent = mapf(voltage, 4.2, 5, 1, 10);
-  int numLedsToLight = 1;
-  
+  float voltage = getBatteryVolts();
+  float percent = mapf(voltage, 42, 50, 1, 10);
+
   if (percent < 0) {percent = 0;}
-  
-  numLedsToLight = round(percent);
-  if (numLedsToLight < 1) {numLedsToLight =1;}
-  
+
+  percent = round(percent);
+
   //Serial.print(voltage);
 
   // TODO display battery info
@@ -107,17 +108,9 @@ void handleBattery() {
 
 void disarmSystem(){
   int melody[] = { 2093, 1976, 880};
-  Serial.println(F("disarming"));
-
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.println(F("Disarmed"));
-  display.display();
-  display.clearDisplay();
-
   esc.writeMicroseconds(0);
   armed = false;
+  updateDisplay();
   Serial.println(F("disarmed"));
   playMelody(melody, 3);
   delay(2000); // dont allow immediate rearming
@@ -126,18 +119,15 @@ void disarmSystem(){
 
 void initDisplay(){
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
-
+  float volts = getBatteryVolts();
   // Clear the buffer.
   display.clearDisplay();
   display.setRotation(2); // for right hand throttle
 
-  display.setTextSize(2);
+  display.setTextSize(3);
   display.setTextColor(WHITE);
   display.setCursor(0,0);
   display.println(F("OpenPPG"));
-  display.println(F("Disarmed"));
-  display.setTextSize(4);
-  display.println(F("B:69%"));  //placeholder
   display.display();
   display.clearDisplay();
 }
@@ -153,25 +143,13 @@ void handleThrottle() {
 void armSystem(){
   int melody[] = { 1760, 1976, 2093 };
 
-  digitalWrite(LED_BUILTIN, HIGH);
-  digitalWrite(LED_SW, HIGH);
-
   Serial.println(F("Sending Arm Signal"));
   esc.writeMicroseconds(1000); //initialize the signal to 1000
 
-  display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.println("Armed");
-  display.println("Batt: 0%");
-  display.display();
-  display.clearDisplay();
-
+  armed = true;
+  playMelody(melody, 3);
   digitalWrite(LED_SW, LOW);
   digitalWrite(LED_BUILTIN, HIGH);
-  armed = true;
-  // iterate over the notes of the melody:
-  playMelody(melody, 3);
 }
 
 double mapf(double x, double in_min, double in_max, double out_min, double out_max)
@@ -203,16 +181,15 @@ bool throttleSafe(){
 
   if(analog.getValue() < 100) {
     return true;
-  }else{
-    return false;  
-  } 
+  }
+  return false; 
 }
 
 void playMelody(int melody[], int siz){
   for (int thisNote = 0; thisNote < siz; thisNote++) {
 
     //quarter note = 1000 / 4, eighth note = 1000/8, etc.
-    int noteDuration = 1000 / 8;
+    int noteDuration = 125;
     tone(BUZZER_PIN, melody[thisNote], noteDuration);
 
     // to distinguish the notes, set a minimum time between them.
@@ -220,5 +197,20 @@ void playMelody(int melody[], int siz){
     // stop the tone playing:
     noTone(BUZZER_PIN);
   }
+}
+
+void updateDisplay(){
+  float volts = getBatteryVolts();
+  String status = (armed) ? "Armed" : "Disarmd";
+  
+  display.setTextSize(3);
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.println(status);
+  display.setTextSize(4);
+  display.print(volts, 1); 
+  display.println(F("V"));
+  display.display();
+  display.clearDisplay();
 }
 
