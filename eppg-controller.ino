@@ -32,8 +32,6 @@ const long initInterval = 750; // throttle check (milliseconds)
 const long bgInterval = 1500;  // background updates (milliseconds)
 
 unsigned long previousMillis = 0; // will store last time LED was updated
-unsigned long previousDisarmMillis = 0; // will store last time LED was updated
-
 bool armed = false;
 
 #pragma message "Warning: OpenPPG software is in beta"
@@ -131,11 +129,15 @@ void initDisplay(){
 
   // Clear the buffer.
   display.clearDisplay();
+  display.setRotation(2); // for right hand throttle
 
   display.setTextSize(2);
   display.setTextColor(WHITE);
   display.setCursor(0,0);
   display.println(F("OpenPPG"));
+  display.println(F("Disarmed"));
+  display.setTextSize(4);
+  display.println(F("B:69%"));  //placeholder
   display.display();
   display.clearDisplay();
 }
@@ -160,8 +162,8 @@ void armSystem(){
   display.setTextSize(2);
   display.setTextColor(WHITE);
   display.setCursor(0,0);
-  display.println("Flight");
-  display.println("Mode");
+  display.println("Armed");
+  display.println("Batt: 0%");
   display.display();
   display.clearDisplay();
 
