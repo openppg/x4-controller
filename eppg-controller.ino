@@ -19,6 +19,7 @@ using namespace ace_button;
 #define BATT_IN       A6 // Battery voltage in (5v max)
 #define OLED_RESET    4  // ?
 #define BUTTON_PIN    7  // arm/disarm button
+#define FULL_BATT    858 // 60v/14s(max) = 1023(5v) and 50v/12s(max) = ~858
 
 Adafruit_SSD1306 display(OLED_RESET);
 
@@ -86,7 +87,7 @@ float getBatteryVolts(){
   int sensorValue = analogBatt.getValue();
   //Serial.print(sensorValue);
   //Serial.println(" sensor");
-  float converted = sensorValue * (5.0 / 1023.0);
+  float converted = sensorValue * (5.0 / FULL_BATT);
   return converted *10;
 }
 
@@ -98,6 +99,7 @@ int getBatteryPercent() {
   //Serial.print(percent);
   //Serial.println(" percentage");
   if (percent < 0) {percent = 0;}
+  else if (percent > 100) {percent = 100;}
 
   return round(percent);
 
