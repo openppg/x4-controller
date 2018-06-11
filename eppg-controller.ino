@@ -19,7 +19,7 @@ using namespace ace_button;
 #define BATT_IN       A6 // Battery voltage in (5v max)
 #define OLED_RESET    4  // ?
 #define BUTTON_PIN    7  // arm/disarm button
-#define FULL_BATT    858 // 60v/14s(max) = 1023(5v) and 50v/12s(max) = ~858
+#define FULL_BATT    920 // 60v/14s(max) = 1023(5v) and 50v/12s(max) = ~920
 
 Adafruit_SSD1306 display(OLED_RESET);
 
@@ -34,6 +34,7 @@ const long bgInterval = 750;  // background updates (milliseconds)
 
 unsigned long previousMillis = 0; // will store last time LED was updated
 bool armed = false;
+bool displayVolts = true;
 
 #pragma message "Warning: OpenPPG software is in beta"
 
@@ -95,7 +96,7 @@ int getBatteryPercent() {
   float voltage = getBatteryVolts();
   //Serial.print(voltage);
   //Serial.println(" volts");
-  float percent = mapf(voltage, 40, 50, 1, 100);
+  float percent = mapf(voltage, 42, 50, 1, 100);
   //Serial.print(percent);
   //Serial.println(" percentage");
   if (percent < 0) {percent = 0;}
@@ -194,8 +195,6 @@ void playMelody(int melody[], int siz){
 }
 
 void updateDisplay(){
-  //float volts = getBatteryVolts();
-  int percentage = getBatteryPercent();
   String status = (armed) ? "Armed" : "Disarmd";
  
   display.setTextSize(3);
@@ -203,11 +202,18 @@ void updateDisplay(){
   display.setCursor(0,0);
   display.println(status);
   display.setTextSize(4);
-  //display.print(volts, 1); 
-  //display.println(F("V"));
-  display.print(percentage, 1);
-  display.println(F("%"));
+  if (displayVolts){
+    float voltage = getBatteryVolts();
+    voltage = voltage/12;
+    display.print(voltage, 2); 
+    display.println(F("V"));
+  } else {
+    int percentage = getBatteryPercent();
+    display.print(percentage, 1);
+    display.println(F("%"));
+  }
   display.display();
   display.clearDisplay();
+  displayVolts = !displayVolts;
 }
 
