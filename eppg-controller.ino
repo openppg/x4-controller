@@ -204,8 +204,7 @@ void updateDisplay(){
   display.setTextSize(4);
   if (displayVolts){
     float voltage = getBatteryVolts();
-    voltage = voltage/12;
-    display.print(voltage, 2); 
+    display.print(voltage, 1); 
     display.println(F("V"));
   } else {
     int percentage = getBatteryPercent();
