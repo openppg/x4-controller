@@ -33,7 +33,7 @@ ResponsiveAnalogRead analogBatt(BATT_IN, false);
 AceButton button(BUTTON_PIN);
 AdjustableButtonConfig adjustableButtonConfig;
 
-const long bgInterval = 750;  // background updates (milliseconds)
+const long bgInterval = 500;  // background updates (milliseconds)
 
 unsigned long previousMillis = 0; // will store last time LED was updated
 unsigned long timerMilis  = 0; // will store last time LED was updated
@@ -83,9 +83,9 @@ void loop() {
   if (currentMillis - previousMillis >= bgInterval) {
     // handle background tasks
     previousMillis = currentMillis; // reset
-    updateDisplay();
+    //updateDisplay();
     if(!armed){ blinkLED();}
-    timeprint(millis() / 1000);
+    displayTime(millis() / 1000);
   }
 }
 
@@ -222,25 +222,29 @@ void updateDisplay(){
   displayVolts = !displayVolts;
 }
 
-void timeprint(long val){  
-  int days = elapsedDays(val);
-  int hours = numberOfHours(val);
-  int minutes = numberOfMinutes(val);
+void displayTime(long val){  
+  display.setTextColor(WHITE);
+  display.setCursor(0,0);
+  display.setTextSize(4);
+ 
+  int minutes = val/60;
   int seconds = numberOfSeconds(val);
   
    // digital clock display of current time
-   Serial.print(days,DEC);  
-   printDigits(hours);  
    printDigits(minutes);
+   display.print(":");
    printDigits(seconds);
+   display.display();
+   display.clearDisplay();
    Serial.println();  
- 
 }
 
 void printDigits(byte digits){
  // utility function for digital clock display: prints colon and leading 0
- Serial.print(":");
- if(digits < 10)
-   Serial.print('0');
- Serial.print(digits,DEC);  
+ if(digits < 10){
+   Serial.print("0");
+   display.print("0");
+   }
+   Serial.print(digits,DEC); 
+   display.print(digits);
 }
