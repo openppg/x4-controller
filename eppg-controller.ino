@@ -36,9 +36,11 @@ AdjustableButtonConfig adjustableButtonConfig;
 const long bgInterval = 500;  // background updates (milliseconds)
 
 unsigned long previousMillis = 0; // will store last time LED was updated
-unsigned long timerMilis  = 0; // will store last time LED was updated
+unsigned long armedAtMilis = 0;
 bool armed = false;
 bool displayVolts = true;
+
+char page = 'p';
 
 #pragma message "Warning: OpenPPG software is in beta"
 
@@ -62,8 +64,7 @@ void setup() {
 
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(0); //make sure off
-
-  timerMilis = 0;
+  armedAtMilis = millis(); //TODO move to arm
   //handleBattery();
 }
 
@@ -83,9 +84,8 @@ void loop() {
   if (currentMillis - previousMillis >= bgInterval) {
     // handle background tasks
     previousMillis = currentMillis; // reset
-    //updateDisplay();
+    updateDisplay();
     if(!armed){ blinkLED();}
-    displayTime(millis() / 1000);
   }
 }
 
@@ -99,10 +99,10 @@ float getBatteryVolts(){
 }
 
 int getBatteryPercent() {
-  float voltage = getBatteryVolts();
+  float volts = getBatteryVolts();
   //Serial.print(voltage);
   //Serial.println(" volts");
-  float percent = mapf(voltage, 42, 50, 1, 100);
+  float percent = mapf(volts, 42, 50, 1, 100);
   //Serial.print(percent);
   //Serial.println(" percentage");
   if (percent < 0) {percent = 0;}
@@ -208,25 +208,34 @@ void updateDisplay(){
   display.setCursor(0,0);
   display.println(status);
   display.setTextSize(4);
-  if (displayVolts){
-    float voltage = getBatteryVolts();
-    display.print(voltage, 1); 
-    display.println(F("V"));
-  } else {
-    int percentage = getBatteryPercent();
-    display.print(percentage, 1);
-    display.println(F("%"));
+
+  float voltage = getBatteryVolts();
+  int percentage = getBatteryPercent();
+  long elapsedSec = (millis() - armedAtMilis) / 1000;
+  switch (page) {
+    case 'v':
+      display.print(voltage, 1); 
+      display.println(F("V"));
+      page = 'p';
+      break;
+    case 'p':
+      display.print(percentage, 1);
+      display.println(F("%"));
+      page = 't';
+      break;
+    case 't':
+      displayTime(elapsedSec);
+      page = 'v';
+      break;
+     default:
+      display.println(F("Error"));
+      break;
   }
   display.display();
   display.clearDisplay();
-  displayVolts = !displayVolts;
 }
 
-void displayTime(long val){  
-  display.setTextColor(WHITE);
-  display.setCursor(0,0);
-  display.setTextSize(4);
- 
+void displayTime(long val){   
   int minutes = val/60;
   int seconds = numberOfSeconds(val);
   
@@ -234,17 +243,15 @@ void displayTime(long val){
    printDigits(minutes);
    display.print(":");
    printDigits(seconds);
-   display.display();
-   display.clearDisplay();
    Serial.println();  
 }
 
 void printDigits(byte digits){
- // utility function for digital clock display: prints colon and leading 0
+ // utility function for digital clock display: printsleading 0
  if(digits < 10){
    Serial.print("0");
    display.print("0");
-   }
+  }
    Serial.print(digits,DEC); 
    display.print(digits);
 }
