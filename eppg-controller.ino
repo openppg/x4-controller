@@ -1,15 +1,14 @@
-#include <Time.h>
-#include <TimeLib.h>
 
 // Zach Whitehead - 2018
 
-#include <Servo.h> // to control ESCs
-#include <ResponsiveAnalogRead.h> // smoothing for throttle
-#include <SPI.h>
-#include <Wire.h>
-#include <Adafruit_SSD1306.h> // screen
 #include <AceButton.h>
+#include <Adafruit_SSD1306.h> // screen
 #include <AdjustableButtonConfig.h>
+#include <ResponsiveAnalogRead.h> // smoothing for throttle
+#include <Servo.h> // to control ESCs
+#include <SPI.h>
+#include <TimeLib.h>
+#include <Wire.h>
 
 using namespace ace_button;
 
@@ -35,12 +34,11 @@ AdjustableButtonConfig adjustableButtonConfig;
 
 const long bgInterval = 500;  // background updates (milliseconds)
 
-unsigned long previousMillis = 0; // will store last time LED was updated
-unsigned long armedAtMilis = 0;
 bool armed = false;
 bool displayVolts = true;
-
 char page = 'p';
+unsigned long armedAtMilis = 0;
+unsigned long previousMillis = 0; // will store last time LED was updated
 
 #pragma message "Warning: OpenPPG software is in beta"
 
@@ -77,7 +75,7 @@ void blinkLED() {
 
 void loop() {
   button.check();
-  if(armed){
+  if (armed) {
     handleThrottle();
   }
   unsigned long currentMillis = millis();
@@ -89,13 +87,13 @@ void loop() {
   }
 }
 
-float getBatteryVolts(){
+float getBatteryVolts() {
   analogBatt.update();
   int sensorValue = analogBatt.getValue();
   //Serial.print(sensorValue);
   //Serial.println(" sensor");
   float converted = sensorValue * (5.0 / FULL_BATT);
-  return converted *10;
+  return converted * 10;
 }
 
 int getBatteryPercent() {
@@ -124,8 +122,8 @@ void disarmSystem(){
   return;
 }
 
-void initDisplay(){
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
+void initDisplay() {
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // initialize with the I2C addr 0x3C (for the 128x32)
   //float volts = getBatteryVolts();
   // Clear the buffer.
   display.clearDisplay();
@@ -133,7 +131,7 @@ void initDisplay(){
 
   display.setTextSize(3);
   display.setTextColor(WHITE);
-  display.setCursor(0,0);
+  display.setCursor(0, 0);
   display.println(F("OpenPPG"));
   display.display();
   display.clearDisplay();
@@ -159,35 +157,34 @@ void armSystem(){
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
-double mapf(double x, double in_min, double in_max, double out_min, double out_max)
-{
+double mapf(double x, double in_min, double in_max, double out_min, double out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 // The event handler for the button.
-void handleEvent(AceButton* button, uint8_t eventType, uint8_t buttonState) {
+void handleEvent(AceButton * button, uint8_t eventType, uint8_t buttonState) {
 
   switch (eventType) {
-    case AceButton::kEventClicked:
-     Serial.println(F("double clicked"));
-     if(armed){ 
+  case AceButton::kEventClicked:
+    Serial.println(F("double clicked"));
+    if (armed) {
       disarmSystem();
-     }else if(throttleSafe()){
+    } else if (throttleSafe()) {
       armSystem();
-     }
-     break;
+    }
+    break;
   }
 }
 
-bool throttleSafe(){
+bool throttleSafe() {
   analog.update();
-  if(analog.getValue() < 100) {
+  if (analog.getValue() < 100) {
     return true;
   }
-  return false; 
+  return false;
 }
 
-void playMelody(int melody[], int siz){
+void playMelody(int melody[], int siz) {
   for (int thisNote = 0; thisNote < siz; thisNote++) {
     //quarter note = 1000 / 4, eighth note = 1000/8, etc.
     int noteDuration = 125;
@@ -200,12 +197,12 @@ void playMelody(int melody[], int siz){
   }
 }
 
-void updateDisplay(){
+void updateDisplay() {
   String status = (armed) ? "Armed" : "Disarmd";
- 
+
   display.setTextSize(3);
   display.setTextColor(WHITE);
-  display.setCursor(0,0);
+  display.setCursor(0, 0);
   display.println(status);
   display.setTextSize(4);
 
@@ -213,45 +210,44 @@ void updateDisplay(){
   int percentage = getBatteryPercent();
   long elapsedSec = (millis() - armedAtMilis) / 1000;
   switch (page) {
-    case 'v':
-      display.print(voltage, 1); 
-      display.println(F("V"));
-      page = 'p';
-      break;
-    case 'p':
-      display.print(percentage, 1);
-      display.println(F("%"));
-      page = 't';
-      break;
-    case 't':
-      displayTime(elapsedSec);
-      page = 'v';
-      break;
-     default:
-      display.println(F("Error"));
-      break;
+  case 'v':
+    display.print(voltage, 1);
+    display.println(F("V"));
+    page = 'p';
+    break;
+  case 'p':
+    display.print(percentage, 1);
+    display.println(F("%"));
+    page = 't';
+    break;
+  case 't':
+    displayTime(elapsedSec);
+    page = 'v';
+    break;
+  default:
+    display.println(F("Error"));
+    break;
   }
   display.display();
   display.clearDisplay();
 }
 
-void displayTime(long val){   
-  int minutes = val/60;
+void displayTime(long val) {
+  int minutes = val / 60;
   int seconds = numberOfSeconds(val);
-  
-   // digital clock display of current time
-   printDigits(minutes);
-   display.print(":");
-   printDigits(seconds);
-   Serial.println();  
+
+  printDigits(minutes);
+  display.print(":");
+  printDigits(seconds);
+  Serial.println();
 }
 
-void printDigits(byte digits){
- // utility function for digital clock display: printsleading 0
- if(digits < 10){
-   Serial.print("0");
-   display.print("0");
+void printDigits(byte digits) {
+  // utility function for digital clock display: printsleading 0
+  if (digits < 10) {
+    Serial.print("0");
+    display.print("0");
   }
-   Serial.print(digits,DEC); 
-   display.print(digits);
+  Serial.print(digits, DEC);
+  display.print(digits);
 }
