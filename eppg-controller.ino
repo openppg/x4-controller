@@ -32,7 +32,7 @@ ResponsiveAnalogRead analogBatt(BATT_IN, false);
 AceButton button(BUTTON_PIN);
 AdjustableButtonConfig adjustableButtonConfig;
 
-const long bgInterval = 500;  // background updates (milliseconds)
+const long bgInterval = 750;  // background updates (milliseconds)
 
 bool armed = false;
 bool displayVolts = true;
