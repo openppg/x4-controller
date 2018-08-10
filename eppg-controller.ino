@@ -38,7 +38,8 @@ bool armed = false;
 bool displayVolts = true;
 char page = 'p';
 unsigned long armedAtMilis = 0;
-unsigned long previousMillis = 0; // will store last time LED was updated
+unsigned int armedSecs = 0;
+unsigned long previousMillis = 0; // stores last time background tasks done
 
 #pragma message "Warning: OpenPPG software is in beta"
 
@@ -62,8 +63,6 @@ void setup() {
 
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(0); //make sure off
-  armedAtMilis = millis(); //TODO move to arm
-  //handleBattery();
 }
 
 void blinkLED() {
@@ -152,6 +151,7 @@ void armSystem(){
   esc.writeMicroseconds(1000); //initialize the signal to 1000
 
   armed = true;
+  armedAtMilis = millis(); //TODO move to arm
   playMelody(melody, 3);
   digitalWrite(LED_SW, HIGH);
   digitalWrite(LED_BUILTIN, HIGH);
@@ -163,7 +163,6 @@ double mapf(double x, double in_min, double in_max, double out_min, double out_m
 
 // The event handler for the button.
 void handleEvent(AceButton * button, uint8_t eventType, uint8_t buttonState) {
-
   switch (eventType) {
   case AceButton::kEventClicked:
     Serial.println(F("double clicked"));
@@ -198,7 +197,13 @@ void playMelody(int melody[], int siz) {
 }
 
 void updateDisplay() {
-  String status = (armed) ? "Armed" : "Disarmd";
+  String status;
+  if (armed){
+    status = F("Armed");
+    armedSecs = (millis() - armedAtMilis) / 1000; // update time while armed
+  }else{
+    status = F("Disarmd");
+  }
 
   display.setTextSize(3);
   display.setTextColor(WHITE);
@@ -208,7 +213,7 @@ void updateDisplay() {
 
   float voltage = getBatteryVolts();
   int percentage = getBatteryPercent();
-  long elapsedSec = (millis() - armedAtMilis) / 1000;
+
   switch (page) {
   case 'v':
     display.print(voltage, 1);
@@ -221,7 +226,7 @@ void updateDisplay() {
     page = 't';
     break;
   case 't':
-    displayTime(elapsedSec);
+    displayTime(armedSecs);
     page = 'v';
     break;
   default:
@@ -232,7 +237,7 @@ void updateDisplay() {
   display.clearDisplay();
 }
 
-void displayTime(long val) {
+void displayTime(int val) {
   int minutes = val / 60;
   int seconds = numberOfSeconds(val);
 
