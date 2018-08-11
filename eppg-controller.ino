@@ -26,7 +26,7 @@ using namespace ace_button;
 
 Adafruit_SSD1306 display(OLED_RESET);
 
-Servo esc; //Creating a servo class with name of esc
+Servo esc; // Creating a servo class with name of esc
 
 ResponsiveAnalogRead analog(THROTTLE_PIN, false);
 ResponsiveAnalogRead analogBatt(BATT_IN, false);
@@ -49,8 +49,8 @@ void setup() {
   Serial.begin(9600);
   Serial.println(F("Booting up OpenPPG"));
   pinMode(BUTTON_PIN, INPUT);
-  pinMode(LED_BUILTIN, OUTPUT); //onboard LED
-  pinMode(LED_SW, OUTPUT); //setup the external LED pin
+  pinMode(LED_BUILTIN, OUTPUT); // onboard LED
+  pinMode(LED_SW, OUTPUT); // setup the external LED pin
 
   button.setButtonConfig(&adjustableButtonConfig);
   adjustableButtonConfig.setDebounceDelay(55);
@@ -62,14 +62,17 @@ void setup() {
   initDisplay();
 
   esc.attach(ESC_PIN);
-  esc.writeMicroseconds(0); //make sure off
+  esc.writeMicroseconds(0); // make sure motors off
 }
 
 void blinkLED() {
   int ledState = !digitalRead(LED_BUILTIN);
+  setLED(ledState);
+}
 
-  digitalWrite(LED_BUILTIN, ledState);
-  digitalWrite(LED_SW, ledState);
+void setLED(int state) {
+  digitalWrite(LED_BUILTIN, state);
+  digitalWrite(LED_SW, state);
 }
 
 void loop() {
@@ -145,8 +148,7 @@ void armSystem(){
   armed = true;
   armedAtMilis = millis();
   playMelody(melody, 3);
-  digitalWrite(LED_SW, HIGH);
-  digitalWrite(LED_BUILTIN, HIGH);
+  setLED(HIGH);
 }
 
 // Utility to map float values
@@ -188,7 +190,10 @@ void playMelody(int melody[], int siz) {
 }
 
 void updateDisplay() {
+  float voltage;
+  int percentage;
   String status;
+  
   if (armed) {
     status = F("Armed");
     armedSecs = (millis() - armedAtMilis) / 1000; // update time while armed
@@ -202,16 +207,15 @@ void updateDisplay() {
   display.println(status);
   display.setTextSize(4);
 
-  float voltage = getBatteryVolts();
-  int percentage = getBatteryPercent();
-
   switch (page) {
   case 'v':
+    voltage = getBatteryVolts();
     display.print(voltage, 1);
     display.println(F("V"));
     page = 'p';
     break;
   case 'p':
+    percentage = getBatteryPercent();
     display.print(percentage, 1);
     display.println(F("%"));
     page = 't';
@@ -228,6 +232,7 @@ void updateDisplay() {
   display.clearDisplay();
 }
 
+// displays number of minutes and seconds (since armed)
 void displayTime(int val) {
   int minutes = val / 60;
   int seconds = numberOfSeconds(val);
