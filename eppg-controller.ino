@@ -33,7 +33,7 @@ ResponsiveAnalogRead analogBatt(BATT_IN, false);
 AceButton button(BUTTON_PIN);
 AdjustableButtonConfig adjustableButtonConfig;
 
-const long bgInterval = 750;  // background updates (milliseconds)
+const int bgInterval = 750;  // background updates (milliseconds)
 
 bool armed = false;
 bool displayVolts = true;
@@ -66,11 +66,11 @@ void setup() {
 }
 
 void blinkLED() {
-  int ledState = !digitalRead(LED_BUILTIN);
+  byte ledState = !digitalRead(LED_BUILTIN);
   setLED(ledState);
 }
 
-void setLED(int state) {
+void setLED(byte state) {
   digitalWrite(LED_BUILTIN, state);
   digitalWrite(LED_SW, state);
 }
@@ -96,7 +96,7 @@ float getBatteryVolts() {
   return converted * 10;
 }
 
-int getBatteryPercent() {
+byte getBatteryPercent() {
   float volts = getBatteryVolts();
   // Serial.print(voltage);
   // Serial.println(" volts");
@@ -141,7 +141,7 @@ void handleThrottle() {
 }
 
 void armSystem(){
-  int melody[] = { 1760, 1976, 2093 };
+  unsigned int melody[] = { 1760, 1976, 2093 };
   // Serial.println(F("Sending Arm Signal"));
   esc.writeMicroseconds(1000); // initialize the signal to 1000
 
@@ -179,21 +179,21 @@ bool throttleSafe() {
   return false;
 }
 
-void playMelody(int melody[], int siz) {
+void playMelody(unsigned int melody[], int siz) {
   for (int thisNote = 0; thisNote < siz; thisNote++) {
     // quarter note = 1000 / 4, eighth note = 1000/8, etc.
     int noteDuration = 125;
     tone(BUZZER_PIN, melody[thisNote], noteDuration);
     delay(noteDuration); // to distinguish the notes, delay a minimal time between them.    
-    noTone(BUZZER_PIN); // stop the tone playing:
   }
+  noTone(BUZZER_PIN);
 }
 
 void updateDisplay() {
   float voltage;
-  int percentage;
+  byte percentage;
   String status;
-  
+
   if (armed) {
     status = F("Armed");
     armedSecs = (millis() - armedAtMilis) / 1000; // update time while armed
