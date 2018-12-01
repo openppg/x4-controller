@@ -20,7 +20,7 @@ The Arduino nano inside the controller uses the CH340G chip to connect over USB.
 
 ### Download and Prepare OpenPPG Code
 
-1. Download the latest controller code zip from [here](https://github.com/openppg/eppg-controller/archive/master.zip)
+1. Download the latest controller code zip from [here](https://github.com/openppg/eppg-controller/archive/batch-2.zip)
 2. Extract and open "eppg-controller.ino" in the Arduino IDE
 3. Open Library Manager (Sketch -> Include Library -> Manage Libraries)
 4. Install the following libraries by searching and installing the latest versions:
