@@ -29,13 +29,6 @@ The Arduino nano inside the controller uses the CH340G chip to connect over USB.
 - `Adafruit GFX Library`
 - `AceButton`
 
-#### Configure for the OLED Screen
-
-1. Open up the file named "Adafruit_SSD1306.h" by going to `/Users/USERNAME/Documents/Arduino/libraries/Adafruit_SSD1306/` in your favorite text/code editor
-2. Uncomment line 73 where it says `#define SSD1306_128_64`
-3. Comment out the line below so it says `//   #define SSD1306_128_32`
-4. Save and close the file
-
 ### Flash the OpenPPG Code
 
 1. First make sure the code compiles by hitting the check button in the top right name "Verify"

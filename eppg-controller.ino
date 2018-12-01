@@ -21,10 +21,9 @@ using namespace ace_button;
 #define FULL_BATT     920 // 60v/14s(max) = 1023(5v) and 50v/12s(max) = ~920
 #define HAPTIC_PIN    3   // vibration motor - not used in V1
 #define LED_SW        4   // output for LED on button switch 
-#define OLED_RESET    4   // ?
 #define THROTTLE_PIN  A7  // throttle pot input
 
-Adafruit_SSD1306 display(OLED_RESET);
+Adafruit_SSD1306 display(128, 64, &Wire, 4);
 
 Servo esc; // Creating a servo class with name of esc
 
