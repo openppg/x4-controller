@@ -3,6 +3,7 @@
 
 
 #include <AceButton.h>
+#include <Adafruit_DRV2605.h> // haptic controller
 #include <Adafruit_SSD1306.h> // screen
 #include <AdjustableButtonConfig.h>
 #include <ResponsiveAnalogRead.h> // smoothing for throttle
@@ -14,23 +15,26 @@
 using namespace ace_button;
 
 // Arduino Pins
-#define BATT_IN       A6  // Battery voltage in (5v max)
-#define BUTTON_PIN    7   // arm/disarm button
+#define BATT_IN       A2  // Battery voltage in (3.3v max)
+#define BUTTON_TOP    6   // arm/disarm button_top
+#define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    5   // output for buzzer speaker
-#define ESC_PIN       10  // the ESC signal output 
-#define FULL_BATT     920 // 60v/14s(max) = 1023(5v) and 50v/12s(max) = ~920
-#define HAPTIC_PIN    3   // vibration motor - not used in V1
-#define LED_SW        4   // output for LED on button switch 
-#define OLED_RESET    4   // ?
-#define THROTTLE_PIN  A7  // throttle pot input
+#define ESC_PIN       10  // the ESC signal output
+#define FULL_BATT     3430 // 60v/14s(max) = 4095(3.3v) and 50v/12s(max) = ~3430
+#define LED_SW        9  // output for LED on button_top switch 
+#define LED_2         0  // output for LED 2 
+#define LED_3         38  // output for LED 3
+#define THROTTLE_PIN  A0  // throttle pot input
 
-Adafruit_SSD1306 display(OLED_RESET);
+Adafruit_SSD1306 display(128, 64, &Wire, 4);
+Adafruit_DRV2605 drv;
 
 Servo esc; // Creating a servo class with name of esc
 
-ResponsiveAnalogRead analog(THROTTLE_PIN, false);
+ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 ResponsiveAnalogRead analogBatt(BATT_IN, false);
-AceButton button(BUTTON_PIN);
+AceButton button_top(BUTTON_TOP, INPUT_PULLUP);
+AceButton button_side(BUTTON_SIDE, INPUT_PULLUP);
 AdjustableButtonConfig adjustableButtonConfig;
 
 const int bgInterval = 750;  // background updates (milliseconds)
@@ -46,37 +50,51 @@ unsigned long previousMillis = 0; // stores last time background tasks done
 
 void setup() {
   delay(500); // power-up safety delay
-  Serial.begin(9600);
-  Serial.println(F("Booting up OpenPPG"));
-  pinMode(BUTTON_PIN, INPUT);
-  pinMode(LED_BUILTIN, OUTPUT); // onboard LED
-  pinMode(LED_SW, OUTPUT); // setup the external LED pin
+  Serial.begin(115200);
+  Serial.println(F("Booting up OpenPPG V2"));
+  pinMode(BUTTON_TOP, INPUT);
+  pinMode(LED_SW, OUTPUT);      // set up the external LED pin
+  pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
+  pinMode(LED_3, OUTPUT);       // set up the internal LED3 pin
+  analogReadResolution(12);     // M0 chip provides 12bit resolution
+  pot.setAnalogResolution(4096);
+  analogBatt.setAnalogResolution(4096);
 
-  button.setButtonConfig(&adjustableButtonConfig);
+  button_top.setButtonConfig(&adjustableButtonConfig);
+  button_side.setButtonConfig(&adjustableButtonConfig);
   adjustableButtonConfig.setDebounceDelay(55);
   adjustableButtonConfig.setEventHandler(handleEvent);
   adjustableButtonConfig.setFeature(ButtonConfig::kFeatureClick);
   adjustableButtonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
   adjustableButtonConfig.setLongPressDelay(2500);
-
+  
   initDisplay();
+  
+  drv.begin();
+  drv.setWaveform(0, 29); // play effect 1
+  drv.setWaveform(1, 29); // play effect 1
+  drv.setWaveform(2, 0);  // end waveform
+
+  // play the effect!
+  drv.go();
 
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(0); // make sure motors off
 }
 
 void blinkLED() {
-  byte ledState = !digitalRead(LED_BUILTIN);
+  byte ledState = !digitalRead(LED_2);
   setLED(ledState);
 }
 
 void setLED(byte state) {
-  digitalWrite(LED_BUILTIN, state);
+  digitalWrite(LED_2, state);
   digitalWrite(LED_SW, state);
 }
 
 void loop() {
-  button.check();
+  button_top.check();
+  button_side.check();
   if (armed) {
     handleThrottle();
   }
@@ -92,7 +110,7 @@ void loop() {
 float getBatteryVolts() {
   analogBatt.update();
   int sensorValue = analogBatt.getValue();
-  float converted = sensorValue * (5.0 / FULL_BATT);
+  float converted = sensorValue * (3.3 / FULL_BATT);
   return converted * 10;
 }
 
@@ -110,13 +128,18 @@ byte getBatteryPercent() {
 }
 
 void disarmSystem() {
-  int melody[] = { 2093, 1976, 880};
+  unsigned int disarm_melody[] = { 2093, 1976, 880};
   esc.writeMicroseconds(0);
   armed = false;
   updateDisplay();
+  drv.setWaveform(0, 70); // play effect
+  drv.setWaveform(1, 70); // play effect
+  drv.setWaveform(2, 33);
+  drv.setWaveform(3, 0);   // end waveform
+  drv.go();
   // Serial.println(F("disarmed"));
-  playMelody(melody, 3);
-  delay(2000); // dont allow immediate rearming
+  playMelody(disarm_melody, 3);
+  delay(1500); // dont allow immediate rearming
 }
 
 void initDisplay() {
@@ -134,20 +157,28 @@ void initDisplay() {
 }
 
 void handleThrottle() {
-  analog.update();
-  int rawval = analog.getValue();
-  int val = map(rawval, 0, 1023, 1110, 2000); // mapping val to minimum and maximum
+  pot.update();
+  int rawval = pot.getValue();
+  int val = map(rawval, 0, 4095, 1110, 2000); // mapping val to minimum and maximum
   esc.writeMicroseconds(val); // using val as the signal to esc
 }
 
 void armSystem(){
-  unsigned int melody[] = { 1760, 1976, 2093 };
+  unsigned int arm_melody[] = { 1760, 1976, 2093 };
   // Serial.println(F("Sending Arm Signal"));
   esc.writeMicroseconds(1000); // initialize the signal to 1000
 
   armed = true;
   armedAtMilis = millis();
-  playMelody(melody, 3);
+
+  drv.setWaveform(0, 83); // play effect
+  drv.setWaveform(1, 83); // play effect
+  drv.setWaveform(2, 27);
+  drv.setWaveform(3, 0);   // end waveform
+  drv.go();
+  
+  playMelody(arm_melody, 3);
+
   setLED(HIGH);
 }
 
@@ -156,9 +187,12 @@ double mapf(double x, double in_min, double in_max, double out_min, double out_m
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// The event handler for the button
-void handleEvent(AceButton * button, uint8_t eventType, uint8_t buttonState) {
-  switch (eventType) {
+// The event handler for the the buttons
+void handleEvent(AceButton *button, uint8_t eventType, uint8_t buttonState)
+{
+  Serial.println(eventType);
+  // TODO handle multiple buttons
+  switch (eventType){
   case AceButton::kEventClicked:
     // Serial.println(F("double clicked"));
     if (armed) {
@@ -172,8 +206,9 @@ void handleEvent(AceButton * button, uint8_t eventType, uint8_t buttonState) {
 
 // Returns true if the throttle/pot is below the safe threshold
 bool throttleSafe() {
-  analog.update();
-  if (analog.getValue() < 100) {
+  pot.update();
+  Serial.println(pot.getValue());
+  if (pot.getValue() < 100) {
     return true;
   }
   return false;
