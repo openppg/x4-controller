@@ -1,7 +1,6 @@
 // Copyright 2018 <Zach Whitehead>
 // OpenPPG
 
-
 #include <AceButton.h>
 #include <Adafruit_DRV2605.h> // haptic controller
 #include <Adafruit_SSD1306.h> // screen
@@ -19,7 +18,7 @@ using namespace ace_button;
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    5   // output for buzzer speaker
-#define ESC_PIN       10  // the ESC signal output
+#define ESC_PIN       12  // the ESC signal output
 #define FULL_BATT     3430 // 60v/14s(max) = 4095(3.3v) and 50v/12s(max) = ~3430
 #define LED_SW        9  // output for LED on button_top switch 
 #define LED_2         0  // output for LED 2 
@@ -33,9 +32,9 @@ Servo esc; // Creating a servo class with name of esc
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 ResponsiveAnalogRead analogBatt(BATT_IN, false);
-AceButton button_top(BUTTON_TOP, INPUT_PULLUP);
-AceButton button_side(BUTTON_SIDE, INPUT_PULLUP);
-AdjustableButtonConfig adjustableButtonConfig;
+AceButton button_top(BUTTON_TOP);
+AceButton button_side(BUTTON_SIDE);
+AdjustableButtonConfig buttonConfig;
 
 const int bgInterval = 750;  // background updates (milliseconds)
 
@@ -52,7 +51,10 @@ void setup() {
   delay(500); // power-up safety delay
   Serial.begin(115200);
   Serial.println(F("Booting up OpenPPG V2"));
-  pinMode(BUTTON_TOP, INPUT);
+
+  pinMode(BUTTON_TOP, INPUT_PULLUP);
+  pinMode(BUTTON_SIDE, INPUT_PULLUP);
+
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
   pinMode(LED_3, OUTPUT);       // set up the internal LED3 pin
@@ -60,19 +62,19 @@ void setup() {
   pot.setAnalogResolution(4096);
   analogBatt.setAnalogResolution(4096);
 
-  button_top.setButtonConfig(&adjustableButtonConfig);
-  button_side.setButtonConfig(&adjustableButtonConfig);
-  adjustableButtonConfig.setDebounceDelay(55);
-  adjustableButtonConfig.setEventHandler(handleEvent);
-  adjustableButtonConfig.setFeature(ButtonConfig::kFeatureClick);
-  adjustableButtonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
-  adjustableButtonConfig.setLongPressDelay(2500);
-  
+  button_side.setButtonConfig(&buttonConfig);
+  button_top.setButtonConfig(&buttonConfig);
+  buttonConfig.setEventHandler(handleButtonEvent);
+  buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
+  buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterClick);
+  buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
+  buttonConfig.setLongPressDelay(2500);
+
   initDisplay();
   
   drv.begin();
-  drv.setWaveform(0, 29); // play effect 1
-  drv.setWaveform(1, 29); // play effect 1
+  drv.setWaveform(0, 29); // play effect 29
+  drv.setWaveform(1, 29);
   drv.setWaveform(2, 0);  // end waveform
 
   // play the effect!
@@ -84,17 +86,17 @@ void setup() {
 
 void blinkLED() {
   byte ledState = !digitalRead(LED_2);
-  setLED(ledState);
+  setLEDs(ledState);
 }
 
-void setLED(byte state) {
+void setLEDs(byte state) {
   digitalWrite(LED_2, state);
   digitalWrite(LED_SW, state);
 }
 
 void loop() {
-  button_top.check();
   button_side.check();
+  button_top.check();
   if (armed) {
     handleThrottle();
   }
@@ -133,7 +135,7 @@ void disarmSystem() {
   armed = false;
   updateDisplay();
   drv.setWaveform(0, 70); // play effect
-  drv.setWaveform(1, 70); // play effect
+  drv.setWaveform(1, 70); 
   drv.setWaveform(2, 33);
   drv.setWaveform(3, 0);   // end waveform
   drv.go();
@@ -172,33 +174,40 @@ void armSystem(){
   armedAtMilis = millis();
 
   drv.setWaveform(0, 83); // play effect
-  drv.setWaveform(1, 83); // play effect
+  drv.setWaveform(1, 83);
   drv.setWaveform(2, 27);
   drv.setWaveform(3, 0);   // end waveform
   drv.go();
   
   playMelody(arm_melody, 3);
 
-  setLED(HIGH);
-}
-
-// Utility to map float values
-double mapf(double x, double in_min, double in_max, double out_min, double out_max) {
-  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+  setLEDs(HIGH);
 }
 
 // The event handler for the the buttons
-void handleEvent(AceButton *button, uint8_t eventType, uint8_t buttonState)
-{
-  Serial.println(eventType);
+void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState){
+  uint8_t pin = button->getPin();
+
+  //Serial.println(eventType);
   // TODO handle multiple buttons
   switch (eventType){
-  case AceButton::kEventClicked:
-    // Serial.println(F("double clicked"));
-    if (armed) {
-      disarmSystem();
-    } else if (throttleSafe()) {
-      armSystem();
+  case AceButton::kEventReleased:
+    Serial.println(F("normal clicked"));
+
+    break;
+  case AceButton::kEventDoubleClicked:
+    Serial.print(F("double clicked "));
+    if(pin == BUTTON_SIDE){
+    Serial.println(F("side"));
+    }else{
+      Serial.println(F("top"));
+    }
+    if (digitalRead(BUTTON_TOP) == LOW) {
+      if (armed) {
+        disarmSystem();
+      } else if (throttleSafe()) {
+        armSystem();
+      }
     }
     break;
   }
@@ -209,8 +218,10 @@ bool throttleSafe() {
   pot.update();
   Serial.println(pot.getValue());
   if (pot.getValue() < 100) {
+        Serial.println(F("safe pot"));
     return true;
   }
+  Serial.println(F("not safe"));
   return false;
 }
 
@@ -278,11 +289,3 @@ void displayTime(int val) {
   // Serial.println();
 }
 
-// utility function for digital time display - prints leading 0
-void printDigits(byte digits) {
-  if (digits < 10) {
-    display.print("0");
-  }
-  // Serial.print(digits, DEC);
-  display.print(digits);
-}
