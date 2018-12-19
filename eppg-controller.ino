@@ -14,12 +14,12 @@
 using namespace ace_button;
 
 // Arduino Pins
-#define BATT_IN       A2  // Battery voltage in (3.3v max)
+#define BATT_IN       A1  // Battery voltage in (3.3v max)
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    5   // output for buzzer speaker
 #define ESC_PIN       12  // the ESC signal output
-#define FULL_BATT     3430 // 60v/14s(max) = 4095(3.3v) and 50v/12s(max) = ~3430
+#define FULL_BATT     3400 // 60v/14s(max) = 3920(3.3v) and 50v/12s(max) = ~3400
 #define LED_SW        9  // output for LED on button_top switch 
 #define LED_2         0  // output for LED 2 
 #define LED_3         38  // output for LED 3
@@ -118,14 +118,14 @@ void loop() {
 float getBatteryVolts() {
   analogBatt.update();
   int sensorValue = analogBatt.getValue();
-  float converted = sensorValue * (3.3 / FULL_BATT);
-  return converted * 10;
+  return mapf(sensorValue, 0, FULL_BATT, 0, 50.4);
 }
 
 byte getBatteryPercent() {
   float volts = getBatteryVolts();
   // Serial.print(voltage);
   // Serial.println(" volts");
+  // TODO: LiPo curve
   float percent = mapf(volts, 42, 50, 1, 100);
   // Serial.print(percent);
   // Serial.println(" percentage");

@@ -1,10 +1,13 @@
 # EPPG Controller
+
 Arduino logic for OpenPPG Throttle Controller
 
 > For batch 2 (Arduino nano based) controllers please see the [batch-2 branch](https://github.com/openppg/eppg-controller/tree/batch-2).
 
 ## MacOS
+
 Tested on MacOS Mojave (10.14)
+
 ### Install Arduino IDE
 
 1. Download the latest version for Mac OS X [https://www.arduino.cc/en/Main/Software](https://www.arduino.cc/en/Main/Software)
