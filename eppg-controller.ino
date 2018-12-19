@@ -25,7 +25,11 @@ using namespace ace_button;
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
 
-#define AUTO_PAGING   false // use button by default to change page
+#define FEATURE_AUTO_PAGING   false // use button by default to change page
+#define FEATURE_CRUISE false
+
+#define CRUISE_GRACE 2 // 2 sec period to get off throttle
+#define CRUISE_MAX 300 // 5 min max cruising
 
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
 Adafruit_DRV2605 drv;
@@ -41,10 +45,11 @@ AdjustableButtonConfig buttonConfig;
 const int bgInterval = 750;  // background updates (milliseconds)
 
 bool armed = false;
-bool displayVolts = true;
 int page = 0;
 unsigned long armedAtMilis = 0;
+unsigned long cruisedAtMilis = 0;
 unsigned int armedSecs = 0;
+unsigned int last_throttle = 0;
 
 unsigned long previousMillis = 0; // stores last time background tasks done
 
@@ -79,8 +84,6 @@ void setup() {
   drv.setWaveform(0, 29); // play effect 29
   drv.setWaveform(1, 29);
   drv.setWaveform(2, 0);  // end waveform
-
-  // play the effect!
   drv.go();
 
   esc.attach(ESC_PIN);
@@ -126,8 +129,7 @@ byte getBatteryPercent() {
   float percent = mapf(volts, 42, 50, 1, 100);
   // Serial.print(percent);
   // Serial.println(" percentage");
-  if (percent < 0) {percent = 0;}
-  else if (percent > 100) {percent = 100;}
+  percent = constrain(percent, 0, 100);
 
   return round(percent);
 }
@@ -267,22 +269,20 @@ void updateDisplay() {
     voltage = getBatteryVolts();
     display.print(voltage, 1);
     display.println(F("V"));
-    if(AUTO_PAGING) nextPage();
     break;
   case 1:
     percentage = getBatteryPercent();
     display.print(percentage, 1);
     display.println(F("%"));
-    if(AUTO_PAGING) nextPage();
     break;
   case 2:
     displayTime(armedSecs);
-    if(AUTO_PAGING) nextPage();
     break;
   default:
-    display.println(F("Dsp Err"));
+    display.println(F("Dsp Err")); // should never hit this
     break;
   }
+  if(FEATURE_AUTO_PAGING) nextPage();
   display.display();
   display.clearDisplay();
 }
