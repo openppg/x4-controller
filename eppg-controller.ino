@@ -25,6 +25,8 @@ using namespace ace_button;
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
 
+#define AUTO_PAGING   false // use button by default to change page
+
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
 Adafruit_DRV2605 drv;
 
@@ -40,9 +42,10 @@ const int bgInterval = 750;  // background updates (milliseconds)
 
 bool armed = false;
 bool displayVolts = true;
-char page = 'p';
+int page = 0;
 unsigned long armedAtMilis = 0;
 unsigned int armedSecs = 0;
+
 unsigned long previousMillis = 0; // stores last time background tasks done
 
 #pragma message "Warning: OpenPPG software is in beta"
@@ -189,11 +192,10 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState
   uint8_t pin = button->getPin();
 
   //Serial.println(eventType);
-  // TODO handle multiple buttons
   switch (eventType){
-  case AceButton::kEventReleased:
+  case AceButton::kEventClicked:
     Serial.println(F("normal clicked"));
-
+    if(pin == BUTTON_TOP) nextPage();
     break;
   case AceButton::kEventDoubleClicked:
     Serial.print(F("double clicked "));
@@ -227,12 +229,19 @@ bool throttleSafe() {
 
 void playMelody(unsigned int melody[], int siz) {
   for (int thisNote = 0; thisNote < siz; thisNote++) {
-    // quarter note = 1000 / 4, eighth note = 1000/8, etc.
+    // quarter note = 1000 / 4, eigth note = 1000/8, etc.
     int noteDuration = 125;
     tone(BUZZER_PIN, melody[thisNote], noteDuration);
     delay(noteDuration); // to distinguish the notes, delay a minimal time between them.    
   }
   noTone(BUZZER_PIN);
+}
+
+int nextPage(){
+  if (page == 2) {
+    return page = 0;
+  }
+  return ++page;
 }
 
 void updateDisplay() {
@@ -254,24 +263,24 @@ void updateDisplay() {
   display.setTextSize(4);
 
   switch (page) {
-  case 'v':
+  case 0:
     voltage = getBatteryVolts();
     display.print(voltage, 1);
     display.println(F("V"));
-    page = 'p';
+    if(AUTO_PAGING) nextPage();
     break;
-  case 'p':
+  case 1:
     percentage = getBatteryPercent();
     display.print(percentage, 1);
     display.println(F("%"));
-    page = 't';
+    if(AUTO_PAGING) nextPage();
     break;
-  case 't':
+  case 2:
     displayTime(armedSecs);
-    page = 'v';
+    if(AUTO_PAGING) nextPage();
     break;
   default:
-    display.println(F("Error"));
+    display.println(F("Dsp Err"));
     break;
   }
   display.display();
