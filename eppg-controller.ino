@@ -19,7 +19,7 @@ using namespace ace_button;
 #define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    5   // output for buzzer speaker
 #define ESC_PIN       12  // the ESC signal output
-#define FULL_BATT     3400 // 60v/14s(max) = 3920(3.3v) and 50v/12s(max) = ~3400
+#define FULL_BATT     3420 // 60v/14s(max) = 3920(3.3v) and 50v/12s(max) = ~3420
 #define LED_SW        9  // output for LED on button_top switch 
 #define LED_2         0  // output for LED 2 
 #define LED_3         38  // output for LED 3
@@ -56,7 +56,7 @@ unsigned long previousMillis = 0; // stores last time background tasks done
 #pragma message "Warning: OpenPPG software is in beta"
 
 void setup() {
-  delay(500); // power-up safety delay
+  delay(250); // power-up safety delay
   Serial.begin(115200);
   Serial.println(F("Booting up OpenPPG V2"));
 
@@ -69,6 +69,7 @@ void setup() {
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   analogBatt.setAnalogResolution(4096);
+  analogBatt.setSnapMultiplier(0.01); // more smoothing
 
   button_side.setButtonConfig(&buttonConfig);
   button_top.setButtonConfig(&buttonConfig);
@@ -76,7 +77,6 @@ void setup() {
   buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
   buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterClick);
   buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
-  buttonConfig.setLongPressDelay(2500);
 
   initDisplay();
   
@@ -140,9 +140,8 @@ void disarmSystem() {
   armed = false;
   updateDisplay();
   drv.setWaveform(0, 70); // play effect
-  drv.setWaveform(1, 70); 
-  drv.setWaveform(2, 33);
-  drv.setWaveform(3, 0);   // end waveform
+  drv.setWaveform(1, 33);
+  drv.setWaveform(2, 0);   // end waveform
   drv.go();
   // Serial.println(F("disarmed"));
   playMelody(disarm_melody, 3);
@@ -159,6 +158,7 @@ void initDisplay() {
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
   display.println(F("OpenPPG"));
+  display.println(F("V2.0.1"));
   display.display();
   display.clearDisplay();
 }
@@ -179,9 +179,8 @@ void armSystem(){
   armedAtMilis = millis();
 
   drv.setWaveform(0, 83); // play effect
-  drv.setWaveform(1, 83);
-  drv.setWaveform(2, 27);
-  drv.setWaveform(3, 0);   // end waveform
+  drv.setWaveform(1, 27);
+  drv.setWaveform(2, 0);   // end waveform
   drv.go();
   
   playMelody(arm_melody, 3);
@@ -193,18 +192,17 @@ void armSystem(){
 void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState){
   uint8_t pin = button->getPin();
 
-  //Serial.println(eventType);
   switch (eventType){
-  case AceButton::kEventClicked:
-    Serial.println(F("normal clicked"));
-    if(pin == BUTTON_TOP) nextPage();
+  case AceButton::kEventReleased:
+    // Serial.println(F("normal clicked"));
+    if(pin == BUTTON_SIDE) nextPage();
     break;
   case AceButton::kEventDoubleClicked:
-    Serial.print(F("double clicked "));
+    // Serial.print(F("double clicked "));
     if(pin == BUTTON_SIDE){
-    Serial.println(F("side"));
+    // Serial.println(F("side"));
     }else{
-      Serial.println(F("top"));
+    // Serial.println(F("top"));
     }
     if (digitalRead(BUTTON_TOP) == LOW) {
       if (armed) {
@@ -295,6 +293,4 @@ void displayTime(int val) {
   printDigits(minutes);
   display.print(":");
   printDigits(seconds);
-  // Serial.println();
 }
-
