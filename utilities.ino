@@ -1,0 +1,13 @@
+// Map float values
+double mapf(double x, double in_min, double in_max, double out_min, double out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+// For digital time display - prints leading 0
+void printDigits(byte digits) {
+  if (digits < 10) {
+    display.print("0");
+  }
+  // Serial.print(digits, DEC);
+  display.print(digits);
+}
