@@ -240,13 +240,6 @@ void playMelody(unsigned int melody[], int siz) {
   noTone(BUZZER_PIN);
 }
 
-int nextPage(){
-  if (page == 2) {
-    return page = 0;
-  }
-  return ++page;
-}
-
 void updateDisplay() {
   float voltage;
   byte percentage;
