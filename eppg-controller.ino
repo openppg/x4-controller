@@ -60,9 +60,6 @@ void setup() {
   Serial.begin(115200);
   Serial.println(F("Booting up OpenPPG V2"));
 
-  pinMode(BUTTON_TOP, INPUT_PULLUP);
-  pinMode(BUTTON_SIDE, INPUT_PULLUP);
-
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
   pinMode(LED_3, OUTPUT);       // set up the internal LED3 pin
@@ -70,21 +67,11 @@ void setup() {
   pot.setAnalogResolution(4096);
   analogBatt.setAnalogResolution(4096);
   analogBatt.setSnapMultiplier(0.01); // more smoothing
+  unsigned int startup_vibes[] = { 29, 29, 0 };
+  runVibe(startup_vibes, 3);
 
-  button_side.setButtonConfig(&buttonConfig);
-  button_top.setButtonConfig(&buttonConfig);
-  buttonConfig.setEventHandler(handleButtonEvent);
-  buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
-  buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterClick);
-  buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
-
+  initButtons();
   initDisplay();
-  
-  drv.begin();
-  drv.setWaveform(0, 29); // play effect 29
-  drv.setWaveform(1, 29);
-  drv.setWaveform(2, 0);  // end waveform
-  drv.go();
 
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(0); // make sure motors off
@@ -136,16 +123,27 @@ byte getBatteryPercent() {
 
 void disarmSystem() {
   unsigned int disarm_melody[] = { 2093, 1976, 880};
+  unsigned int disarm_vibes[] = { 70, 33, 0 };
+
   esc.writeMicroseconds(0);
   armed = false;
   updateDisplay();
-  drv.setWaveform(0, 70); // play effect
-  drv.setWaveform(1, 33);
-  drv.setWaveform(2, 0);   // end waveform
-  drv.go();
   // Serial.println(F("disarmed"));
+  runVibe(disarm_vibes, 3);
   playMelody(disarm_melody, 3);
   delay(1500); // dont allow immediate rearming
+}
+
+void initButtons() {
+  pinMode(BUTTON_TOP, INPUT_PULLUP);
+  pinMode(BUTTON_SIDE, INPUT_PULLUP);
+
+  button_side.setButtonConfig(&buttonConfig);
+  button_top.setButtonConfig(&buttonConfig);
+  buttonConfig.setEventHandler(handleButtonEvent);
+  buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
+  buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterClick);
+  buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
 }
 
 void initDisplay() {
@@ -172,17 +170,14 @@ void handleThrottle() {
 
 void armSystem(){
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
+  unsigned int arm_vibes[] = { 83, 27, 0 };
   // Serial.println(F("Sending Arm Signal"));
   esc.writeMicroseconds(1000); // initialize the signal to 1000
 
   armed = true;
   armedAtMilis = millis();
 
-  drv.setWaveform(0, 83); // play effect
-  drv.setWaveform(1, 27);
-  drv.setWaveform(2, 0);   // end waveform
-  drv.go();
-  
+  runVibe(arm_vibes, 3);
   playMelody(arm_melody, 3);
 
   setLEDs(HIGH);
@@ -225,6 +220,14 @@ bool throttleSafe() {
   }
   Serial.println(F("not safe"));
   return false;
+}
+
+void runVibe(unsigned int sequence[], int siz) {
+  drv.begin();
+  for (int thisNote = 0; thisNote < siz; thisNote++) {
+    drv.setWaveform(thisNote, sequence[thisNote]);
+  }
+  drv.go();
 }
 
 void playMelody(unsigned int melody[], int siz) {
