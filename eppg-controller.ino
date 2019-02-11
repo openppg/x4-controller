@@ -57,8 +57,8 @@ unsigned long previousMillis = 0; // stores last time background tasks done
 
 void setup() {
   delay(250); // power-up safety delay
-  Serial.begin(115200);
-  Serial.println(F("Booting up OpenPPG V2"));
+  //Serial.begin(115200);
+  //Serial.println(F("Booting up OpenPPG V2"));
 
   pinMode(BUTTON_TOP, INPUT_PULLUP);
   pinMode(BUTTON_SIDE, INPUT_PULLUP);
@@ -218,12 +218,9 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState
 // Returns true if the throttle/pot is below the safe threshold
 bool throttleSafe() {
   pot.update();
-  Serial.println(pot.getValue());
   if (pot.getValue() < 100) {
-        Serial.println(F("safe pot"));
     return true;
   }
-  Serial.println(F("not safe"));
   return false;
 }
 
