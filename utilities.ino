@@ -11,3 +11,10 @@ void printDigits(byte digits) {
   // Serial.print(digits, DEC);
   display.print(digits);
 }
+ 
+int nextPage(){
+  if (page == 2) {
+    return page = 0;
+  }
+  return ++page;
+}
