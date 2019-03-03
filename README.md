@@ -28,6 +28,7 @@ The V2 OpenPPG controller is powered by Atmel’s SAMD21G18A MCU, featuring a 32
 - `Adafruit_DRV2605`
 - `Adafruit_SSD1306`
 - `ResponsiveAnalogRead`
+- `TimeLib` [link](https://github.com/PaulStoffregen/Time)
 
 ### Flash the OpenPPG Code
 
