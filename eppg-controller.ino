@@ -2,11 +2,11 @@
 // OpenPPG
 
 #include <AceButton.h>
-#include <Adafruit_DRV2605.h> // haptic controller
-#include <Adafruit_SSD1306.h> // screen
+#include <Adafruit_DRV2605.h>  // haptic controller
+#include <Adafruit_SSD1306.h>  // screen
 #include <AdjustableButtonConfig.h>
-#include <ResponsiveAnalogRead.h> // smoothing for throttle
-#include <Servo.h> // to control ESCs
+#include <ResponsiveAnalogRead.h>  // smoothing for throttle
+#include <Servo.h>  // to control ESCs
 #include <SPI.h>
 #include <TimeLib.h>
 #include <Wire.h>
@@ -25,16 +25,16 @@ using namespace ace_button;
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
 
-#define FEATURE_AUTO_PAGING   false // use button by default to change page
+#define FEATURE_AUTO_PAGING false  // use button by default to change page
 #define FEATURE_CRUISE false
 
-#define CRUISE_GRACE 2 // 2 sec period to get off throttle
-#define CRUISE_MAX 300 // 5 min max cruising
+#define CRUISE_GRACE 2  // 2 sec period to get off throttle
+#define CRUISE_MAX 300  // 5 min max cruising
 
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
 Adafruit_DRV2605 drv;
 
-Servo esc; // Creating a servo class with name of esc
+Servo esc;  // Creating a servo class with name of esc
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 ResponsiveAnalogRead analogBatt(BATT_IN, false);
@@ -51,7 +51,7 @@ unsigned long cruisedAtMilis = 0;
 unsigned int armedSecs = 0;
 unsigned int last_throttle = 0;
 
-unsigned long previousMillis = 0; // stores last time background tasks done
+unsigned long previousMillis = 0;  // stores last time background tasks done
 
 #pragma message "Warning: OpenPPG software is in beta"
 
@@ -66,7 +66,7 @@ void setup() {
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   analogBatt.setAnalogResolution(4096);
-  analogBatt.setSnapMultiplier(0.01); // more smoothing
+  analogBatt.setSnapMultiplier(0.01);  // more smoothing
   unsigned int startup_vibes[] = { 29, 29, 0 };
   runVibe(startup_vibes, 3);
 
@@ -74,7 +74,7 @@ void setup() {
   initDisplay();
 
   esc.attach(ESC_PIN);
-  esc.writeMicroseconds(0); // make sure motors off
+  esc.writeMicroseconds(0);  // make sure motors off
 }
 
 void blinkLED() {
@@ -98,7 +98,7 @@ void loop() {
     // handle background tasks
     previousMillis = currentMillis; // reset
     updateDisplay();
-    if(!armed){ blinkLED();}
+    if (!armed){ blinkLED();}
   }
 }
 
@@ -131,7 +131,7 @@ void disarmSystem() {
   // Serial.println(F("disarmed"));
   runVibe(disarm_vibes, 3);
   playMelody(disarm_melody, 3);
-  delay(1500); // dont allow immediate rearming
+  delay(1500);  // dont allow immediate rearming
 }
 
 void initButtons() {
@@ -142,15 +142,14 @@ void initButtons() {
   button_top.setButtonConfig(&buttonConfig);
   buttonConfig.setEventHandler(handleButtonEvent);
   buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
-  buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterClick);
   buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
 }
 
 void initDisplay() {
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // initialize with the I2C addr 0x3C (for the 128x32)
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
   // Clear the buffer.
   display.clearDisplay();
-  display.setRotation(2); // for right hand throttle
+  display.setRotation(2);  // for right hand throttle
 
   display.setTextSize(3);
   display.setTextColor(WHITE);
@@ -164,15 +163,15 @@ void initDisplay() {
 void handleThrottle() {
   pot.update();
   int rawval = pot.getValue();
-  int val = map(rawval, 0, 4095, 1110, 2000); // mapping val to minimum and maximum
-  esc.writeMicroseconds(val); // using val as the signal to esc
+  int val = map(rawval, 0, 4095, 1110, 2000);  // mapping val to minimum and maximum
+  esc.writeMicroseconds(val);  // using val as the signal to esc
 }
 
-void armSystem(){
+void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 83, 27, 0 };
   // Serial.println(F("Sending Arm Signal"));
-  esc.writeMicroseconds(1000); // initialize the signal to 1000
+  esc.writeMicroseconds(1000);  // initialize the signal to 1000
 
   armed = true;
   armedAtMilis = millis();
@@ -187,14 +186,14 @@ void armSystem(){
 void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState){
   uint8_t pin = button->getPin();
 
-  switch (eventType){
+  switch (eventType) {
   case AceButton::kEventReleased:
     // Serial.println(F("normal clicked"));
-    if(pin == BUTTON_SIDE) nextPage();
+    if (pin == BUTTON_SIDE) nextPage();
     break;
   case AceButton::kEventDoubleClicked:
     // Serial.print(F("double clicked "));
-    if(pin == BUTTON_SIDE){
+    if (pin == BUTTON_SIDE) {
     // Serial.println(F("side"));
     }else{
     // Serial.println(F("top"));
@@ -232,7 +231,7 @@ void playMelody(unsigned int melody[], int siz) {
     // quarter note = 1000 / 4, eigth note = 1000/8, etc.
     int noteDuration = 125;
     tone(BUZZER_PIN, melody[thisNote], noteDuration);
-    delay(noteDuration); // to distinguish the notes, delay a minimal time between them.    
+    delay(noteDuration);  // to distinguish the notes, delay a minimal time between them.
   }
   noTone(BUZZER_PIN);
 }
@@ -244,7 +243,7 @@ void updateDisplay() {
 
   if (armed) {
     status = F("Armed");
-    armedSecs = (millis() - armedAtMilis) / 1000; // update time while armed
+    armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
   } else {
     status = F("Disarmd");
   }
@@ -270,10 +269,10 @@ void updateDisplay() {
     displayTime(armedSecs);
     break;
   default:
-    display.println(F("Dsp Err")); // should never hit this
+    display.println(F("Dsp Err"));  // should never hit this
     break;
   }
-  if(FEATURE_AUTO_PAGING) nextPage();
+  if (FEATURE_AUTO_PAGING) nextPage();
   display.display();
   display.clearDisplay();
 }
