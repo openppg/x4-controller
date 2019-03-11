@@ -20,8 +20,8 @@ using namespace ace_button;
 #define BUZZER_PIN    5   // output for buzzer speaker
 #define ESC_PIN       12  // the ESC signal output
 #define FULL_BATT     3420 // 60v/14s(max) = 3920(3.3v) and 50v/12s(max) = ~3420
-#define LED_SW        9  // output for LED on button_top switch 
-#define LED_2         0  // output for LED 2 
+#define LED_SW        9  // output for LED on button_top switch
+#define LED_2         0  // output for LED 2
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
 
@@ -46,17 +46,40 @@ const int bgInterval = 750;  // background updates (milliseconds)
 
 bool armed = false;
 int page = 0;
-unsigned long armedAtMilis = 0;
-unsigned long cruisedAtMilis = 0;
+uint32_t armedAtMilis = 0;
+uint32_t cruisedAtMilis = 0;
 unsigned int armedSecs = 0;
 unsigned int last_throttle = 0;
 
-unsigned long previousMillis = 0;  // stores last time background tasks done
+uint32_t previousMillis = 0;  // stores last time background tasks done
 
 #pragma message "Warning: OpenPPG software is in beta"
 
+// TODO(zach): Move these to header type files
+typedef struct {
+  uint8_t version;
+  uint8_t id;
+  uint8_t length;
+  uint8_t armed;
+  uint16_t throttlePercent;  // 0 to 1000
+  uint16_t crc;
+}STR_CTRL2HUB_MSG;
+
+typedef struct {
+  uint8_t version;
+  uint8_t id;
+  uint8_t length;
+  uint32_t voltage;
+  uint32_t totalMah;
+  uint32_t totalCurrent;
+  uint16_t avgRpm;
+  uint8_t avgCapTemp;
+  uint8_t avgFetTemp;
+  uint16_t crc;
+}STR_HUB2CTRL_MSG;
+
 void setup() {
-  delay(250); // power-up safety delay
+  delay(250);  // power-up safety delay
   //Serial.begin(115200);
   //Serial.println(F("Booting up OpenPPG V2"));
 
@@ -84,6 +107,7 @@ void blinkLED() {
 
 void setLEDs(byte state) {
   digitalWrite(LED_2, state);
+  digitalWrite(LED_3, !state);
   digitalWrite(LED_SW, state);
 }
 
@@ -93,12 +117,12 @@ void loop() {
   if (armed) {
     handleThrottle();
   }
-  unsigned long currentMillis = millis();
+  uint32_t currentMillis = millis();
   if (currentMillis - previousMillis >= bgInterval) {
     // handle background tasks
-    previousMillis = currentMillis; // reset
+    previousMillis = currentMillis;  // reset
     updateDisplay();
-    if (!armed){ blinkLED();}
+    if (!armed) { blinkLED(); }
   }
 }
 
@@ -112,7 +136,7 @@ byte getBatteryPercent() {
   float volts = getBatteryVolts();
   // Serial.print(voltage);
   // Serial.println(" volts");
-  // TODO: LiPo curve
+  // TODO(zach): LiPo curve
   float percent = mapf(volts, 42, 50, 1, 100);
   // Serial.print(percent);
   // Serial.println(" percentage");
@@ -146,10 +170,10 @@ void initButtons() {
 }
 
 void initDisplay() {
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3C (for the 128x32)
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   // Clear the buffer.
   display.clearDisplay();
-  display.setRotation(2);  // for right hand throttle
+  display.setRotation(2);  // line required for right hand throttle
 
   display.setTextSize(3);
   display.setTextColor(WHITE);
@@ -188,7 +212,7 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState
 
   switch (eventType) {
   case AceButton::kEventReleased:
-    // Serial.println(F("normal clicked"));
+    //  Serial.println(F("normal clicked"));
     if (pin == BUTTON_SIDE) nextPage();
     break;
   case AceButton::kEventDoubleClicked:
@@ -228,7 +252,7 @@ void playMelody(unsigned int melody[], int siz) {
     // quarter note = 1000 / 4, eigth note = 1000/8, etc.
     int noteDuration = 125;
     tone(BUZZER_PIN, melody[thisNote], noteDuration);
-    delay(noteDuration);  // to distinguish the notes, delay a minimal time between them.
+    delay(noteDuration);  // to distinguish the notes, delay between them
   }
   noTone(BUZZER_PIN);
 }
