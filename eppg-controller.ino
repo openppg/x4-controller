@@ -195,10 +195,7 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState
     // Serial.print(F("double clicked "));
     if (pin == BUTTON_SIDE) {
     // Serial.println(F("side"));
-    }else{
-    // Serial.println(F("top"));
-    }
-    if (digitalRead(BUTTON_TOP) == LOW) {
+    } else if (pin == BUTTON_TOP) {
       if (armed) {
         disarmSystem();
       } else if (throttleSafe()) {
