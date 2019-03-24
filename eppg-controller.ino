@@ -10,6 +10,7 @@
 #include <SPI.h>
 #include <TimeLib.h>
 #include <Wire.h>
+#include <CRC.h>
 
 using namespace ace_button;
 
@@ -19,11 +20,14 @@ using namespace ace_button;
 #define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    5   // output for buzzer speaker
 #define ESC_PIN       12  // the ESC signal output
-#define FULL_BATT     3420 // 60v/14s(max) = 3920(3.3v) and 50v/12s(max) = ~3420
 #define LED_SW        9  // output for LED on button_top switch
 #define LED_2         0  // output for LED 2
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
+
+#define CTRL_VER 0x00
+#define CTRL2HUB_ID 0x10
+#define HUB2CTRL_ID 0x20
 
 #define FEATURE_AUTO_PAGING false  // use button by default to change page
 #define FEATURE_CRUISE false
@@ -56,6 +60,13 @@ uint32_t previousMillis = 0;  // stores last time background tasks done
 #pragma message "Warning: OpenPPG software is in beta"
 
 // TODO(zach): Move these to header type files
+
+#define INTERFACE_HUB
+#define CTRL_VER 0x00
+#define CTRL2HUB_ID 0x10
+#define HUB2CTRL_ID 0x20
+
+#pragma pack(push, 1)
 typedef struct {
   uint8_t version;
   uint8_t id;
@@ -78,10 +89,13 @@ typedef struct {
   uint16_t crc;
 }STR_HUB2CTRL_MSG;
 
+#pragma pack(pop);
+
 void setup() {
   delay(250);  // power-up safety delay
-  //Serial.begin(115200);
-  //Serial.println(F("Booting up OpenPPG V2"));
+  Serial.begin(115200);
+  SerialUSB.begin(115200);
+  SerialUSB.println(F("Booting up (USB) V2.1"));
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
@@ -101,6 +115,8 @@ void setup() {
 }
 
 void blinkLED() {
+  SerialUSB.println(F("USB"));
+
   byte ledState = !digitalRead(LED_2);
   setLEDs(ledState);
 }
@@ -127,9 +143,7 @@ void loop() {
 }
 
 float getBatteryVolts() {
-  analogBatt.update();
-  int sensorValue = analogBatt.getValue();
-  return mapf(sensorValue, 0, FULL_BATT, 0, 50.4);
+  return 50;  // TODO(zach) get from hub
 }
 
 byte getBatteryPercent() {
@@ -179,7 +193,7 @@ void initDisplay() {
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
   display.println(F("OpenPPG"));
-  display.println(F("V2.0.1"));
+  display.println(F("V2.1.0"));
   display.display();
   display.clearDisplay();
 }
@@ -187,9 +201,26 @@ void initDisplay() {
 void handleThrottle() {
   pot.update();
   int rawval = pot.getValue();
-  int val = map(rawval, 0, 4095, 1110, 2000);  // mapping val to minimum and maximum
-  esc.writeMicroseconds(val);  // using val as the signal to esc
+  int val = map(rawval, 0, 4095, 0, 1000);  // mapping val to min and max
+  STR_CTRL2HUB_MSG ctrlMsg;
+  ctrlMsg.version = CTRL_VER;
+  ctrlMsg.id = CTRL2HUB_ID;
+  ctrlMsg.armed = true;
+  ctrlMsg.armed = val;
+  ctrlMsg.crc = CRC::crc16((uint8_t*)&ctrlMsg, sizeof(ctrlMsg) - 2);
+  // Serial.write(ctrlMsg);
+  Serial.write('hello');  // for testing
+  // handleHubResonse();
 }
+
+void serialEvent() {
+  // while (Serial.available()) {
+  //   // get the new byte:
+  //   char inChar = (char)Serial.read();
+  // }
+}
+
+void handleHubResonse() {}
 
 void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
@@ -207,7 +238,7 @@ void armSystem() {
 }
 
 // The event handler for the the buttons
-void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState){
+void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState) {
   uint8_t pin = button->getPin();
 
   switch (eventType) {
