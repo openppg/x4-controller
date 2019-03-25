@@ -4,9 +4,9 @@
 #include <AceButton.h>
 #include <Adafruit_DRV2605.h>  // haptic controller
 #include <Adafruit_SSD1306.h>  // screen
+#include <Adafruit_SleepyDog.h> // watchdog
 #include <AdjustableButtonConfig.h>
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
-#include <Servo.h>  // to control ESCs
 #include <SPI.h>
 #include <TimeLib.h>
 #include <Wire.h>
@@ -19,7 +19,6 @@ using namespace ace_button;
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    5   // output for buzzer speaker
-#define ESC_PIN       12  // the ESC signal output
 #define LED_SW        9  // output for LED on button_top switch
 #define LED_2         0  // output for LED 2
 #define LED_3         38  // output for LED 3
@@ -36,9 +35,7 @@ using namespace ace_button;
 #define CRUISE_MAX 300  // 5 min max cruising
 
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
-Adafruit_DRV2605 drv;
-
-Servo esc;  // Creating a servo class with name of esc
+Adafruit_DRV2605 vibe;
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 ResponsiveAnalogRead analogBatt(BATT_IN, false);
@@ -110,8 +107,12 @@ void setup() {
   initButtons();
   initDisplay();
 
-  esc.attach(ESC_PIN);
-  esc.writeMicroseconds(0);  // make sure motors off
+  while(!USBSerial); // wait for Arduino Serial Monitor (native USB boards) TODO remove
+
+  int countdownMS = Watchdog.enable(3000); // 3 secs
+  SerialUSB.print("Enabled the watchdog with max countdown of ");
+  SerialUSB.print(countdownMS, DEC);
+  SerialUSB.println(" milliseconds!");
 }
 
 void blinkLED() {
@@ -128,8 +129,10 @@ void setLEDs(byte state) {
 }
 
 void loop() {
+  Watchdog.reset();
   button_side.check();
   button_top.check();
+  
   if (armed) {
     handleThrottle();
   }
@@ -163,7 +166,6 @@ void disarmSystem() {
   unsigned int disarm_melody[] = { 2093, 1976, 880};
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
-  esc.writeMicroseconds(0);
   armed = false;
   updateDisplay();
   // Serial.println(F("disarmed"));
@@ -226,7 +228,6 @@ void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 83, 27, 0 };
   // Serial.println(F("Sending Arm Signal"));
-  esc.writeMicroseconds(1000);  // initialize the signal to 1000
 
   armed = true;
   armedAtMilis = millis();
@@ -271,11 +272,11 @@ bool throttleSafe() {
 }
 
 void runVibe(unsigned int sequence[], int siz) {
-  drv.begin();
+  vibe.begin();
   for (int thisNote = 0; thisNote < siz; thisNote++) {
-    drv.setWaveform(thisNote, sequence[thisNote]);
+    vibe.setWaveform(thisNote, sequence[thisNote]);
   }
-  drv.go();
+  vibe.go();
 }
 
 void playMelody(unsigned int melody[], int siz) {
