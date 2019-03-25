@@ -10,7 +10,7 @@
 #include <SPI.h>
 #include <TimeLib.h>
 #include <Wire.h>
-#include <CRC.h>
+#include "crc.c"
 
 using namespace ace_button;
 
@@ -87,6 +87,7 @@ typedef struct {
 }STR_HUB2CTRL_MSG;
 
 #pragma pack(pop);
+static STR_CTRL2HUB_MSG controlData;
 
 void setup() {
   delay(250);  // power-up safety delay
@@ -107,19 +108,10 @@ void setup() {
   initButtons();
   initDisplay();
 
-  while(!USBSerial); // wait for Arduino Serial Monitor (native USB boards) TODO remove
-
-  int countdownMS = Watchdog.enable(3000); // 3 secs
-  SerialUSB.print("Enabled the watchdog with max countdown of ");
-  SerialUSB.print(countdownMS, DEC);
-  SerialUSB.println(" milliseconds!");
+  int countdownMS = Watchdog.enable(4000);
 }
 
 void blinkLED() {
-  uint8_t buff[8] = {0x00, 0x10, 0x08, 0x01, 0x40, 0x00, 0x65, 0xBB};
-  Serial.write(buff, 8);
-  int incomingByte = Serial1.read();
-  SerialUSB.println(incomingByte);
   while (Serial.available() > 0) {
     SerialUSB.println(0x05, HEX);
 
@@ -214,21 +206,26 @@ void handleThrottle() {
   pot.update();
   int rawval = pot.getValue();
   int val = map(rawval, 0, 4095, 0, 1000);  // mapping val to min and max
-  STR_CTRL2HUB_MSG ctrlMsg;
-  ctrlMsg.version = CTRL_VER;
-  ctrlMsg.id = CTRL2HUB_ID;
-  ctrlMsg.armed = true;
-  ctrlMsg.throttlePercent = val;
-  ctrlMsg.crc = CRC::crc16((uint8_t*)&ctrlMsg, sizeof(ctrlMsg) - 2);
-  // Serial.write(ctrlMsg);
-  //Serial.write('hello');  // for testing
-  delay(50); 
+  memset((uint8_t*)&controlData, 0, sizeof(STR_CTRL2HUB_MSG));
+
+  controlData.version = CTRL_VER;
+  controlData.id = CTRL2HUB_ID;
+  controlData.length = sizeof(STR_CTRL2HUB_MSG);
+  controlData.armed = true;
+  controlData.throttlePercent = val;
+  controlData.crc = crc16((uint8_t*)&controlData, sizeof(STR_CTRL2HUB_MSG) - 2);
+
+  Serial.write((uint8_t*)&controlData, 8);  // send to hub
+
+  delay(5);
   // handleHubResonse();
 }
+
 
 void serialEvent() {
   while (Serial.available()) {
     // get the new byte:
+    SerialUSB.print('response: ');
     int incomingByte = Serial.read();
     SerialUSB.println(incomingByte, HEX);
   }
