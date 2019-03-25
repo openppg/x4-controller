@@ -94,7 +94,7 @@ typedef struct {
 void setup() {
   delay(250);  // power-up safety delay
   Serial.begin(115200);
-  SerialUSB.begin(115200);
+  SerialUSB.begin(9600);
   SerialUSB.println(F("Booting up (USB) V2.1"));
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
@@ -115,7 +115,17 @@ void setup() {
 }
 
 void blinkLED() {
-  SerialUSB.println(F("USB"));
+  uint8_t buff[8] = {0x00, 0x10, 0x08, 0x01, 0x40, 0x00, 0x65, 0xBB};
+  Serial.write(buff, 8);
+  int incomingByte = Serial1.read();
+  SerialUSB.println(incomingByte);
+  while (Serial.available() > 0) {
+    SerialUSB.println(0x05, HEX);
+
+    // get the new byte:
+    int incomingByte = Serial.read();
+    SerialUSB.println(incomingByte, HEX);
+  }
 
   byte ledState = !digitalRead(LED_2);
   setLEDs(ledState);
@@ -206,18 +216,20 @@ void handleThrottle() {
   ctrlMsg.version = CTRL_VER;
   ctrlMsg.id = CTRL2HUB_ID;
   ctrlMsg.armed = true;
-  ctrlMsg.armed = val;
+  ctrlMsg.throttlePercent = val;
   ctrlMsg.crc = CRC::crc16((uint8_t*)&ctrlMsg, sizeof(ctrlMsg) - 2);
   // Serial.write(ctrlMsg);
-  Serial.write('hello');  // for testing
+  //Serial.write('hello');  // for testing
+  delay(50); 
   // handleHubResonse();
 }
 
 void serialEvent() {
-  // while (Serial.available()) {
-  //   // get the new byte:
-  //   char inChar = (char)Serial.read();
-  // }
+  while (Serial.available()) {
+    // get the new byte:
+    int incomingByte = Serial.read();
+    SerialUSB.println(incomingByte, HEX);
+  }
 }
 
 void handleHubResonse() {}
