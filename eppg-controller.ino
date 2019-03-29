@@ -88,11 +88,12 @@ typedef struct {
 
 #pragma pack(pop);
 static STR_CTRL2HUB_MSG controlData;
+static STR_HUB2CTRL_MSG hubData;
 
 void setup() {
   delay(250);  // power-up safety delay
   Serial.begin(115200);
-  SerialUSB.begin(9600);
+  SerialUSB.begin(115200);
   SerialUSB.println(F("Booting up (USB) V2.1"));
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
@@ -112,14 +113,6 @@ void setup() {
 }
 
 void blinkLED() {
-  while (Serial.available() > 0) {
-    SerialUSB.println(0x05, HEX);
-
-    // get the new byte:
-    int incomingByte = Serial.read();
-    SerialUSB.println(incomingByte, HEX);
-  }
-
   byte ledState = !digitalRead(LED_2);
   setLEDs(ledState);
 }
@@ -134,10 +127,8 @@ void loop() {
   Watchdog.reset();
   button_side.check();
   button_top.check();
-  
-  if (armed) {
-    handleThrottle();
-  }
+  handleHubResonse();
+  handleThrottle();
   uint32_t currentMillis = millis();
   if (currentMillis - previousMillis >= bgInterval) {
     // handle background tasks
@@ -211,7 +202,7 @@ void handleThrottle() {
   controlData.version = CTRL_VER;
   controlData.id = CTRL2HUB_ID;
   controlData.length = sizeof(STR_CTRL2HUB_MSG);
-  controlData.armed = true;
+  controlData.armed = armed;
   controlData.throttlePercent = val;
   controlData.crc = crc16((uint8_t*)&controlData, sizeof(STR_CTRL2HUB_MSG) - 2);
 
@@ -221,17 +212,47 @@ void handleThrottle() {
   // handleHubResonse();
 }
 
+void handleHubResonse() {
+  Serial.setTimeout(5);
+  uint8_t serialData[21];
 
-void serialEvent() {
-  while (Serial.available()) {
+  while (Serial.available() > 0) {
     // get the new byte:
-    SerialUSB.print('response: ');
-    int incomingByte = Serial.read();
-    SerialUSB.println(incomingByte, HEX);
+    Serial.readBytes(serialData, 21);
+    SerialUSB.print("x");
+    if (serialData[0]>0){
+      SerialUSB.print("done: ");
+      for(int i = 0; i < sizeof(serialData); i++) {
+        SerialUSB.print(serialData[i], HEX);
+        SerialUSB.print(" ");
+      }
+      SerialUSB.println(" ");
+    }
   }
 }
 
-void handleHubResonse() {}
+void receiveControlData(uint8_t *buf, uint32_t size) {
+  if(size != sizeof(STR_HUB2CTRL_MSG)) {
+    SerialUSB.println("wrong size ");
+    SerialUSB.print(size);
+    SerialUSB.println(" should be ");
+    SerialUSB.print(sizeof(STR_HUB2CTRL_MSG));
+
+    return;
+  }
+
+	memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
+	uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
+
+	if(crc != hubData.crc){
+    SerialUSB.println("wrong crc ");
+    SerialUSB.print(crc);
+    SerialUSB.println(" should be ");
+    SerialUSB.print(hubData.crc);
+		return;
+  }
+  // do stuff
+}
 
 void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
