@@ -95,6 +95,8 @@ static STR_HUB2CTRL_MSG hubData;
 void setup() {
   delay(250);  // power-up safety delay
   Serial.begin(115200);
+  Serial.setTimeout(5);
+
   SerialUSB.begin(115200);
   SerialUSB.println(F("Booting up (USB) V2.1"));
 
@@ -178,8 +180,7 @@ void initDisplay() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   // Clear the buffer.
   display.clearDisplay();
-  display.setRotation(2);  // line required for right hand throttle
-
+  display.setRotation(2);  // for right hand throttle
   display.setTextSize(3);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
@@ -204,13 +205,9 @@ void handleThrottle() {
 
   Serial.write((uint8_t*)&controlData, 8);  // send to hub
   Serial.flush();
-
-  delay(5);
-  // handleHubResonse();
 }
 
 void handleHubResonse() {
-  Serial.setTimeout(5);
   uint8_t serialData[21];
 
   while (Serial.available() > 0) {
@@ -250,7 +247,6 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
 void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 83, 27, 0 };
-  // Serial.println(F("Sending Arm Signal"));
 
   armed = true;
   ledThread.enabled = false;
@@ -269,13 +265,10 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState
 
   switch (eventType) {
   case AceButton::kEventReleased:
-    //  Serial.println(F("normal clicked"));
     if (pin == BUTTON_SIDE) nextPage();
     break;
   case AceButton::kEventDoubleClicked:
-    // Serial.print(F("double clicked "));
     if (pin == BUTTON_SIDE) {
-    // Serial.println(F("side"));
     } else if (pin == BUTTON_TOP) {
       if (armed) {
         disarmSystem();
@@ -294,24 +287,6 @@ bool throttleSafe() {
     return true;
   }
   return false;
-}
-
-void runVibe(unsigned int sequence[], int siz) {
-  vibe.begin();
-  for (int thisNote = 0; thisNote < siz; thisNote++) {
-    vibe.setWaveform(thisNote, sequence[thisNote]);
-  }
-  vibe.go();
-}
-
-void playMelody(unsigned int melody[], int siz) {
-  for (int thisNote = 0; thisNote < siz; thisNote++) {
-    // quarter note = 1000 / 4, eigth note = 1000/8, etc.
-    int noteDuration = 125;
-    tone(BUZZER_PIN, melody[thisNote], noteDuration);
-    delay(noteDuration);  // to distinguish the notes, delay between them
-  }
-  noTone(BUZZER_PIN);
 }
 
 void updateDisplay() {

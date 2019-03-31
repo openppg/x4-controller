@@ -29,3 +29,21 @@ void blinkLED() {
   byte ledState = !digitalRead(LED_2);
   setLEDs(ledState);
 }
+
+void runVibe(unsigned int sequence[], int siz) {
+  vibe.begin();
+  for (int thisNote = 0; thisNote < siz; thisNote++) {
+    vibe.setWaveform(thisNote, sequence[thisNote]);
+  }
+  vibe.go();
+}
+
+void playMelody(unsigned int melody[], int siz) {
+  for (int thisNote = 0; thisNote < siz; thisNote++) {
+    // quarter note = 1000 / 4, eigth note = 1000/8, etc.
+    int noteDuration = 125;
+    tone(BUZZER_PIN, melody[thisNote], noteDuration);
+    delay(noteDuration);  // to distinguish the notes, delay between them
+  }
+  noTone(BUZZER_PIN);
+}
