@@ -207,6 +207,7 @@ void handleThrottle() {
   controlData.crc = crc16((uint8_t*)&controlData, sizeof(STR_CTRL2HUB_MSG) - 2);
 
   Serial.write((uint8_t*)&controlData, 8);  // send to hub
+  Serial.flush();
 
   delay(5);
   // handleHubResonse();
@@ -218,22 +219,16 @@ void handleHubResonse() {
 
   while (Serial.available() > 0) {
     // get the new byte:
-    Serial.readBytes(serialData, 21);
-    SerialUSB.print("x");
-    if (serialData[0]>0){
-      SerialUSB.print("done: ");
-      for(int i = 0; i < sizeof(serialData); i++) {
-        SerialUSB.print(serialData[i], HEX);
-        SerialUSB.print(" ");
-      }
-      SerialUSB.println(" ");
-    }
+    memset(serialData, 0, sizeof(serialData));
+    int size = Serial.readBytes(serialData, 21);
+    receiveControlData(serialData, size);
   }
+  Serial.flush();
 }
 
 void receiveControlData(uint8_t *buf, uint32_t size) {
-  if(size != sizeof(STR_HUB2CTRL_MSG)) {
-    SerialUSB.println("wrong size ");
+  if (size != sizeof(STR_HUB2CTRL_MSG)) {
+    SerialUSB.print("wrong size ");
     SerialUSB.print(size);
     SerialUSB.println(" should be ");
     SerialUSB.print(sizeof(STR_HUB2CTRL_MSG));
@@ -244,13 +239,16 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
 	memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
 	uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
 
-	if(crc != hubData.crc){
-    SerialUSB.println("wrong crc ");
+  if (crc != hubData.crc) {
+    SerialUSB.print("wrong crc ");
     SerialUSB.print(crc);
     SerialUSB.println(" should be ");
     SerialUSB.print(hubData.crc);
-		return;
+    return;
   }
+  SerialUSB.print("valid! RPM ");
+  SerialUSB.println(hubData.avgRpm, DEC);
+
   // do stuff
 }
 
