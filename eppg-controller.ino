@@ -47,6 +47,7 @@ AdjustableButtonConfig buttonConfig;
 const int bgInterval = 100;  // background updates (milliseconds)
 
 Thread ledThread = Thread();
+Thread displayThread = Thread();
 
 bool armed = false;
 int page = 0;
@@ -54,8 +55,6 @@ uint32_t armedAtMilis = 0;
 uint32_t cruisedAtMilis = 0;
 unsigned int armedSecs = 0;
 unsigned int last_throttle = 0;
-
-uint32_t previousMillis = 0;  // stores last time background tasks done
 
 #pragma message "Warning: OpenPPG software is in beta"
 
@@ -113,14 +112,12 @@ void setup() {
   initDisplay();
 
   ledThread.onRun(blinkLED);
-	ledThread.setInterval(500);
+  ledThread.setInterval(500);
+
+  displayThread.onRun(updateDisplay);
+  displayThread.setInterval(100);
 
   int countdownMS = Watchdog.enable(4000);
-}
-
-void blinkLED() {
-  byte ledState = !digitalRead(LED_2);
-  setLEDs(ledState);
 }
 
 void loop() {
@@ -129,14 +126,11 @@ void loop() {
   button_top.check();
   handleHubResonse();
   handleThrottle();
-  uint32_t currentMillis = millis();
+
   if (ledThread.shouldRun())
       ledThread.run();
-  if (currentMillis - previousMillis >= bgInterval) {
-    // handle background tasks
-    previousMillis = currentMillis;  // reset
-    updateDisplay();
-  }
+  if (displayThread.shouldRun())
+      displayThread.run();
 }
 
 float getBatteryVolts() {

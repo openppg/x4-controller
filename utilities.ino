@@ -24,3 +24,8 @@ void setLEDs(byte state) {
   digitalWrite(LED_3, !state);
   digitalWrite(LED_SW, state);
 }
+
+void blinkLED() {
+  byte ledState = !digitalRead(LED_2);
+  setLEDs(ledState);
+}
