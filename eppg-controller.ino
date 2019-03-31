@@ -8,6 +8,7 @@
 #include <AdjustableButtonConfig.h>
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
+#include <Thread.h>
 #include <TimeLib.h>
 #include <Wire.h>
 #include "crc.c"
@@ -43,7 +44,9 @@ AceButton button_top(BUTTON_TOP);
 AceButton button_side(BUTTON_SIDE);
 AdjustableButtonConfig buttonConfig;
 
-const int bgInterval = 750;  // background updates (milliseconds)
+const int bgInterval = 100;  // background updates (milliseconds)
+
+Thread ledThread = Thread();
 
 bool armed = false;
 int page = 0;
@@ -109,18 +112,15 @@ void setup() {
   initButtons();
   initDisplay();
 
+  ledThread.onRun(blinkLED);
+	ledThread.setInterval(500);
+
   int countdownMS = Watchdog.enable(4000);
 }
 
 void blinkLED() {
   byte ledState = !digitalRead(LED_2);
   setLEDs(ledState);
-}
-
-void setLEDs(byte state) {
-  digitalWrite(LED_2, state);
-  digitalWrite(LED_3, !state);
-  digitalWrite(LED_SW, state);
 }
 
 void loop() {
@@ -130,11 +130,12 @@ void loop() {
   handleHubResonse();
   handleThrottle();
   uint32_t currentMillis = millis();
+  if (ledThread.shouldRun())
+      ledThread.run();
   if (currentMillis - previousMillis >= bgInterval) {
     // handle background tasks
     previousMillis = currentMillis;  // reset
     updateDisplay();
-    if (!armed) { blinkLED(); }
   }
 }
 
@@ -160,6 +161,7 @@ void disarmSystem() {
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
   armed = false;
+  ledThread.enabled = true;
   updateDisplay();
   // Serial.println(F("disarmed"));
   runVibe(disarm_vibes, 3);
@@ -248,7 +250,6 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
   }
   SerialUSB.print("valid! RPM ");
   SerialUSB.println(hubData.avgRpm, DEC);
-
   // do stuff
 }
 
@@ -258,6 +259,8 @@ void armSystem() {
   // Serial.println(F("Sending Arm Signal"));
 
   armed = true;
+  ledThread.enabled = false;
+
   armedAtMilis = millis();
 
   runVibe(arm_vibes, 3);
