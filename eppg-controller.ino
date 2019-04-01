@@ -9,6 +9,7 @@
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
 #include <Thread.h>
+#include <StaticThreadController.h>
 #include <TimeLib.h>
 #include <Wire.h>
 #include "crc.c"
@@ -49,6 +50,7 @@ const int bgInterval = 100;  // background updates (milliseconds)
 Thread ledThread = Thread();
 Thread displayThread = Thread();
 Thread throttleThread = Thread();
+StaticThreadController<3> threads (&ledThread, &displayThread, &throttleThread);
 
 bool armed = false;
 int page = 0;
@@ -133,12 +135,7 @@ void loop() {
   button_side.check();
   button_top.check();
 
-  if (ledThread.shouldRun())
-      ledThread.run();
-  if (displayThread.shouldRun())
-      displayThread.run();
-  if (throttleThread.shouldRun())
-      throttleThread.run();
+  threads.run();
 }
 
 byte getBatteryPercent() {
