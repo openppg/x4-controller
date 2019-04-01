@@ -64,6 +64,7 @@ unsigned int last_throttle = 0;
 #define CTRL_VER 0x00
 #define CTRL2HUB_ID 0x10
 #define HUB2CTRL_ID 0x20
+#define HUB2CTRL_SIZE 22
 
 #pragma pack(push, 1)
 typedef struct {
@@ -79,6 +80,7 @@ typedef struct {
   uint8_t version;
   uint8_t id;
   uint8_t length;
+  uint8_t armed;
   uint32_t voltage;
   uint32_t totalMah;
   uint32_t totalCurrent;
@@ -135,18 +137,10 @@ void loop() {
       displayThread.run();
 }
 
-float getBatteryVolts() {
-  return 50;  // TODO(zach) get from hub
-}
-
 byte getBatteryPercent() {
-  float volts = getBatteryVolts();
-  // Serial.print(voltage);
-  // Serial.println(" volts");
+  float voltage = hubData.voltage /1000;
   // TODO(zach): LiPo curve
-  float percent = mapf(volts, 42, 50, 1, 100);
-  // Serial.print(percent);
-  // Serial.println(" percentage");
+  float percent = mapf(voltage, 42, 50, 1, 100);
   percent = constrain(percent, 0, 100);
 
   return round(percent);
@@ -159,7 +153,6 @@ void disarmSystem() {
   armed = false;
   ledThread.enabled = true;
   updateDisplay();
-  // Serial.println(F("disarmed"));
   runVibe(disarm_vibes, 3);
   playMelody(disarm_melody, 3);
   delay(1500);  // dont allow immediate rearming
@@ -208,12 +201,12 @@ void handleThrottle() {
 }
 
 void handleHubResonse() {
-  uint8_t serialData[21];
+  uint8_t serialData[HUB2CTRL_SIZE];
 
   while (Serial.available() > 0) {
     // get the new byte:
     memset(serialData, 0, sizeof(serialData));
-    int size = Serial.readBytes(serialData, 21);
+    int size = Serial.readBytes(serialData, HUB2CTRL_SIZE);
     receiveControlData(serialData, size);
   }
   Serial.flush();
@@ -239,9 +232,6 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
     SerialUSB.print(hubData.crc);
     return;
   }
-  SerialUSB.print("valid! RPM ");
-  SerialUSB.println(hubData.avgRpm, DEC);
-  // do stuff
 }
 
 void armSystem() {
@@ -309,14 +299,13 @@ void updateDisplay() {
 
   switch (page) {
   case 0:
-    voltage = getBatteryVolts();
+    voltage = hubData.voltage /1000;
     display.print(voltage, 1);
     display.println(F("V"));
     break;
   case 1:
-    percentage = getBatteryPercent();
-    display.print(percentage, 1);
-    display.println(F("%"));
+    display.print(hubData.totalMah, 1);
+    display.println(F("ah"));
     break;
   case 2:
     displayTime(armedSecs);
