@@ -62,7 +62,6 @@ unsigned int last_throttle = 0;
 #pragma message "Warning: OpenPPG software is in beta"
 
 // TODO(zach): Move these to header type files
-
 #define INTERFACE_HUB
 #define CTRL_VER 0x00
 #define CTRL2HUB_ID 0x10
@@ -94,6 +93,7 @@ typedef struct {
 }STR_HUB2CTRL_MSG;
 
 #pragma pack(pop);
+
 static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;
 
@@ -172,7 +172,6 @@ void initButtons() {
 
 void initDisplay() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  // Clear the buffer.
   display.clearDisplay();
   display.setRotation(2);  // for right hand throttle
   display.setTextSize(3);
@@ -206,7 +205,6 @@ void handleHubResonse() {
   uint8_t serialData[HUB2CTRL_SIZE];
 
   while (Serial.available() > 0) {
-    // get the new byte:
     memset(serialData, 0, sizeof(serialData));
     int size = Serial.readBytes(serialData, HUB2CTRL_SIZE);
     receiveControlData(serialData, size);
@@ -220,7 +218,6 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
     SerialUSB.print(size);
     SerialUSB.println(" should be ");
     SerialUSB.print(sizeof(STR_HUB2CTRL_MSG));
-
     return;
   }
 
@@ -242,7 +239,6 @@ void armSystem() {
 
   armed = true;
   ledThread.enabled = false;
-
   armedAtMilis = millis();
 
   runVibe(arm_vibes, 3);
