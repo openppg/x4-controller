@@ -48,6 +48,7 @@ const int bgInterval = 100;  // background updates (milliseconds)
 
 Thread ledThread = Thread();
 Thread displayThread = Thread();
+Thread throttleThread = Thread();
 
 bool armed = false;
 int page = 0;
@@ -121,6 +122,9 @@ void setup() {
   displayThread.onRun(updateDisplay);
   displayThread.setInterval(100);
 
+  throttleThread.onRun(handleThrottle);
+  throttleThread.setInterval(22);
+
   int countdownMS = Watchdog.enable(4000);
 }
 
@@ -128,13 +132,13 @@ void loop() {
   Watchdog.reset();
   button_side.check();
   button_top.check();
-  handleHubResonse();
-  handleThrottle();
 
   if (ledThread.shouldRun())
       ledThread.run();
   if (displayThread.shouldRun())
       displayThread.run();
+  if (throttleThread.shouldRun())
+      throttleThread.run();
 }
 
 byte getBatteryPercent() {
@@ -184,6 +188,7 @@ void initDisplay() {
 }
 
 void handleThrottle() {
+  handleHubResonse();
   pot.update();
   int rawval = pot.getValue();
   int val = map(rawval, 0, 4095, 0, 1000);  // mapping val to min and max
