@@ -12,7 +12,6 @@
 #include <Thread.h>
 #include <StaticThreadController.h>
 #include <TimeLib.h>
-#include <Wire.h>
 
 using namespace ace_button;
 
@@ -86,7 +85,8 @@ void setup() {
   displayThread.setInterval(100);
 
   throttleThread.onRun(handleThrottle);
-  throttleThread.setInterval(22);
+  throttleThread.setInterval(20);
+  throttleThread.enabled = false;
 
   int countdownMS = Watchdog.enable(4000);
 
