@@ -25,6 +25,7 @@ using namespace ace_button;
 #define LED_2         0  // output for LED 2
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
+#define RX_TX_TOGGLE  11  // rs485
 
 #define CTRL_VER 0x00
 #define CTRL2HUB_ID 0x10
@@ -108,6 +109,8 @@ void setup() {
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
   pinMode(LED_3, OUTPUT);       // set up the internal LED3 pin
+  pinMode(RX_TX_TOGGLE, OUTPUT);
+  
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   analogBatt.setAnalogResolution(4096);
@@ -196,9 +199,11 @@ void handleThrottle() {
   controlData.armed = armed;
   controlData.throttlePercent = val;
   controlData.crc = crc16((uint8_t*)&controlData, sizeof(STR_CTRL2HUB_MSG) - 2);
-
+  
+  digitalWrite(RX_TX_TOGGLE, HIGH);
   Serial.write((uint8_t*)&controlData, 8);  // send to hub
   Serial.flush();
+  digitalWrite(RX_TX_TOGGLE, LOW);
 }
 
 void handleHubResonse() {
@@ -216,8 +221,8 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
   if (size != sizeof(STR_HUB2CTRL_MSG)) {
     SerialUSB.print("wrong size ");
     SerialUSB.print(size);
-    SerialUSB.println(" should be ");
-    SerialUSB.print(sizeof(STR_HUB2CTRL_MSG));
+    SerialUSB.print(" should be ");
+    SerialUSB.println(sizeof(STR_HUB2CTRL_MSG));
     return;
   }
 
@@ -279,6 +284,7 @@ bool throttleSafe() {
 
 void updateDisplay() {
   float voltage;
+  float amph;
   byte percentage;
   String status;
 
@@ -302,7 +308,8 @@ void updateDisplay() {
     display.println(F("V"));
     break;
   case 1:
-    display.print(hubData.totalMah, 1);
+    amph = hubData.totalMah /1000;
+    display.print(amph, 1);
     display.println(F("ah"));
     break;
   case 2:
