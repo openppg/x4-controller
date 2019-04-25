@@ -297,7 +297,6 @@ bool throttleSafe() {
 }
 
 void updateDisplay() {
-  float voltage;
   float mamph;
   float amph;
   byte percentage;
@@ -310,18 +309,23 @@ void updateDisplay() {
     status = F("Disarmd");
   }
 
-  display.setTextSize(3);
+  display.setTextSize(2);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
   display.println(status);
-  display.setTextSize(4);
+  display.setTextSize(3);
 
   switch (page) {
   case 0:
-    voltage = hubData.voltage /1000;
+    float voltage = hubData.voltage /1000;
+    float current = hubData.totalCurrent /1000;
     display.print(voltage, 1);
     display.setTextSize(2);
     display.println(F("V"));
+    display.setTextSize(3);
+    display.print(current, 0);
+    display.setTextSize(2);
+    display.println(F("A"));
     break;
   case 1:
     mamph = hubData.totalMah;
@@ -329,9 +333,10 @@ void updateDisplay() {
     display.print(amph, 1);
     display.setTextSize(2);
     display.println(F("ah"));
+    displayTime(armedSecs);
     break;
   case 2:
-    displayTime(armedSecs);
+    //displayTime(armedSecs);
     break;
   default:
     display.println(F("Dsp Err"));  // should never hit this
