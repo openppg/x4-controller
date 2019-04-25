@@ -13,10 +13,15 @@ void printDigits(byte digits) {
 }
 
 int nextPage() {
-  if (page == 2) {
+  if (page == 1) {
     return page = 0;
   }
   return ++page;
+}
+
+void addLineSpace() {
+  display.setTextSize(1);
+  display.println(" ");
 }
 
 void setLEDs(byte state) {
