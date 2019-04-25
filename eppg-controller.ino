@@ -48,10 +48,10 @@ AdjustableButtonConfig buttonConfig;
 
 const int bgInterval = 100;  // background updates (milliseconds)
 
-Thread ledThread = Thread();
+Thread ledBlinkThread = Thread();
 Thread displayThread = Thread();
 Thread throttleThread = Thread();
-StaticThreadController<3> threads (&ledThread, &displayThread, &throttleThread);
+StaticThreadController<3> threads (&ledBlinkThread, &displayThread, &throttleThread);
 
 bool armed = false;
 int page = 0;
@@ -122,8 +122,8 @@ void setup() {
   initButtons();
   initDisplay();
 
-  ledThread.onRun(blinkLED);
-  ledThread.setInterval(500);
+  ledBlinkThread.onRun(blinkLED);
+  ledBlinkThread.setInterval(500);
 
   displayThread.onRun(updateDisplay);
   displayThread.setInterval(100);
@@ -156,7 +156,7 @@ void disarmSystem() {
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
   armed = false;
-  ledThread.enabled = true;
+  ledBlinkThread.enabled = true;
   updateDisplay();
   runVibe(disarm_vibes, 3);
   playMelody(disarm_melody, 3);
@@ -257,7 +257,7 @@ void armSystem() {
     armed = false;
     return;
   }
-  ledThread.enabled = false;
+  ledBlinkThread.enabled = false;
   armedAtMilis = millis();
 
   runVibe(arm_vibes, 3);
