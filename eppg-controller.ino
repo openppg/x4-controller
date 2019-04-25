@@ -117,6 +117,7 @@ void setup() {
   analogBatt.setSnapMultiplier(0.01);  // more smoothing
   unsigned int startup_vibes[] = { 29, 29, 0 };
   runVibe(startup_vibes, 3);
+  digitalWrite(RX_TX_TOGGLE, LOW);
 
   initButtons();
   initDisplay();
@@ -228,7 +229,6 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
 
 	memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
 	uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
-
   if (crc != hubData.crc) {
     SerialUSB.print("wrong crc ");
     SerialUSB.print(crc);
@@ -284,6 +284,7 @@ bool throttleSafe() {
 
 void updateDisplay() {
   float voltage;
+  float mamph;
   float amph;
   byte percentage;
   String status;
@@ -305,11 +306,14 @@ void updateDisplay() {
   case 0:
     voltage = hubData.voltage /1000;
     display.print(voltage, 1);
+    display.setTextSize(2);
     display.println(F("V"));
     break;
   case 1:
-    amph = hubData.totalMah /1000;
+    mamph = hubData.totalMah;
+    amph = mamph /1000;
     display.print(amph, 1);
+    display.setTextSize(2);
     display.println(F("ah"));
     break;
   case 2:
