@@ -192,15 +192,19 @@ void handleThrottle() {
   pot.update();
   int rawval = pot.getValue();
   int val = map(rawval, 0, 4095, 0, 1000);  // mapping val to min and max
+  sendToHub(val);
+}
+
+void sendToHub(int throttle_val) {
   memset((uint8_t*)&controlData, 0, sizeof(STR_CTRL2HUB_MSG));
 
   controlData.version = CTRL_VER;
   controlData.id = CTRL2HUB_ID;
   controlData.length = sizeof(STR_CTRL2HUB_MSG);
   controlData.armed = armed;
-  controlData.throttlePercent = val;
+  controlData.throttlePercent = throttle_val;
   controlData.crc = crc16((uint8_t*)&controlData, sizeof(STR_CTRL2HUB_MSG) - 2);
-  
+
   digitalWrite(RX_TX_TOGGLE, HIGH);
   Serial.write((uint8_t*)&controlData, 8);  // send to hub
   Serial.flush();
@@ -227,8 +231,8 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
     return;
   }
 
-	memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
-	uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
+  memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
+  uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
   if (crc != hubData.crc) {
     SerialUSB.print("wrong crc ");
     SerialUSB.print(crc);
@@ -240,9 +244,19 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
 
 void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
+  unsigned int arm_fail_melody[] = { 1976, 1876, 0 };
   unsigned int arm_vibes[] = { 83, 27, 0 };
 
   armed = true;
+  sendToHub(0);
+  delay(2);  // wait for response
+  handleHubResonse();
+
+  if (hubData.armed == 0) {
+    playMelody(arm_fail_melody, 3);
+    armed = false;
+    return;
+  }
   ledThread.enabled = false;
   armedAtMilis = millis();
 
