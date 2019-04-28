@@ -244,7 +244,7 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
 
 void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
-  unsigned int arm_fail_melody[] = { 1976, 1876, 0 };
+  unsigned int arm_fail_melody[] = { 1560, 1560, 0 };
   unsigned int arm_vibes[] = { 83, 27, 0 };
 
   armed = true;
