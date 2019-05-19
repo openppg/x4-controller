@@ -313,9 +313,11 @@ void updateDisplay() {
 
   if (armed) {
     status = F("Armed");
+    display.fillCircle(122, 5, 5, WHITE);
     armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
   } else {
-    status = F("Disarmd");
+    status = F("Disarmed");
+    display.drawCircle(122, 5, 5, WHITE);
   }
 
   display.setTextSize(1);
