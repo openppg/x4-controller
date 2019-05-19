@@ -31,7 +31,6 @@ using namespace ace_button;
 #define CTRL2HUB_ID 0x10
 #define HUB2CTRL_ID 0x20
 
-#define FEATURE_AUTO_PAGING false  // use button by default to change page
 #define FEATURE_CRUISE false
 
 #define CRUISE_GRACE 2  // 2 sec period to get off throttle
@@ -110,7 +109,7 @@ void setup() {
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
   pinMode(LED_3, OUTPUT);       // set up the internal LED3 pin
   pinMode(RX_TX_TOGGLE, OUTPUT);
-  
+
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   analogBatt.setAnalogResolution(4096);
@@ -138,7 +137,6 @@ void loop() {
   Watchdog.reset();
   button_side.check();
   button_top.check();
-
   threads.run();
 }
 
@@ -301,6 +299,7 @@ void updateDisplay() {
   float amph = mamph /1000;
   float voltage = hubData.voltage /1000;
   float current = hubData.totalCurrent /1000;
+  float kw = voltage * current;
   byte percentage;
   String status;
 
@@ -318,7 +317,7 @@ void updateDisplay() {
   display.setTextSize(3);
 
   switch (page) {
-  case 0:
+  case 0: // shows current voltage and amperage
     display.print(voltage, 1);
     display.setTextSize(2);
     display.println(F("V"));
@@ -328,7 +327,7 @@ void updateDisplay() {
     display.setTextSize(2);
     display.println(F("A"));
     break;
-  case 1:
+  case 1: // shows total amp hrs and timer
     display.print(amph, 1);
     display.setTextSize(2);
     display.println(F("ah"));
@@ -336,11 +335,20 @@ void updateDisplay() {
     display.setTextSize(3);
     displayTime(armedSecs);
     break;
+  case 2: // shows volts and kw
+    display.print(voltage, 1);
+    display.setTextSize(2);
+    display.println(F("V"));
+    addLineSpace();
+    display.setTextSize(3);
+    display.print(kw, 0);
+    display.setTextSize(2);
+    display.println(F("kw"));
+    break;
   default:
     display.println(F("Dsp Err"));  // should never hit this
     break;
   }
-  if (FEATURE_AUTO_PAGING) nextPage();
   display.display();
   display.clearDisplay();
 }
