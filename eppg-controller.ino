@@ -50,7 +50,9 @@ const int bgInterval = 100;  // background updates (milliseconds)
 Thread ledBlinkThread = Thread();
 Thread displayThread = Thread();
 Thread throttleThread = Thread();
-StaticThreadController<3> threads (&ledBlinkThread, &displayThread, &throttleThread);
+Thread butttonThread = Thread();
+StaticThreadController<4> threads(&ledBlinkThread, &displayThread,
+                                  &throttleThread, &butttonThread);
 
 bool armed = false;
 int page = 0;
@@ -127,6 +129,9 @@ void setup() {
   displayThread.onRun(updateDisplay);
   displayThread.setInterval(100);
 
+  butttonThread.onRun(checkButtons);
+  butttonThread.setInterval(25);
+
   throttleThread.onRun(handleThrottle);
   throttleThread.setInterval(22);
 
@@ -135,9 +140,12 @@ void setup() {
 
 void loop() {
   Watchdog.reset();
+  threads.run();
+}
+
+void checkButtons() {
   button_side.check();
   button_top.check();
-  threads.run();
 }
 
 byte getBatteryPercent() {
