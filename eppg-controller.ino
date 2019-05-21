@@ -12,7 +12,7 @@
 #include <StaticThreadController.h>
 #include <TimeLib.h>
 #include <Wire.h>
-#include "crc.c"
+#include "libraries/crc.c"
 
 using namespace ace_button;
 
@@ -94,7 +94,7 @@ typedef struct {
   uint16_t crc;
 }STR_HUB2CTRL_MSG;
 
-#pragma pack(pop);
+#pragma pack(pop)
 
 static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;
@@ -303,11 +303,7 @@ bool throttleSafe() {
 }
 
 void updateDisplay() {
-  float mamph = hubData.totalMah;
-  float amph = mamph /1000;
-  float voltage = hubData.voltage /1000;
-  float current = hubData.totalCurrent /1000;
-  float kw = voltage * current;
+  
   byte percentage;
   String status;
 
@@ -328,32 +324,12 @@ void updateDisplay() {
 
   switch (page) {
   case 0: // shows current voltage and amperage
-    display.print(voltage, 1);
-    display.setTextSize(2);
-    display.println(F("V"));
-    addLineSpace();
-    display.setTextSize(3);
-    display.print(current, 0);
-    display.setTextSize(2);
-    display.println(F("A"));
     break;
   case 1: // shows total amp hrs and timer
-    display.print(amph, 1);
-    display.setTextSize(2);
-    display.println(F("ah"));
-    addLineSpace();
-    display.setTextSize(3);
-    displayTime(armedSecs);
+    displayPage1();
     break;
   case 2: // shows volts and kw
-    display.print(voltage, 1);
-    display.setTextSize(2);
-    display.println(F("V"));
-    addLineSpace();
-    display.setTextSize(3);
-    display.print(kw, 0);
-    display.setTextSize(2);
-    display.println(F("kw"));
+    displayPage2();
     break;
   default:
     display.println(F("Dsp Err"));  // should never hit this
@@ -371,4 +347,41 @@ void displayTime(int val) {
   printDigits(minutes);
   display.print(":");
   printDigits(seconds);
+}
+
+void displayPage0() {
+  float voltage = hubData.voltage /1000;
+  float current = hubData.totalCurrent /1000;
+  display.print(voltage, 1);
+  display.setTextSize(2);
+  display.println(F("V"));
+  addLineSpace();
+  display.setTextSize(3);
+  display.print(current, 0);
+  display.setTextSize(2);
+  display.println(F("A"));
+}
+
+void displayPage1() {
+  float amph = hubData.totalMah /1000;
+  display.print(amph, 1);
+  display.setTextSize(2);
+  display.println(F("ah"));
+  addLineSpace();
+  display.setTextSize(3);
+  displayTime(armedSecs);
+}
+
+void displayPage2() {
+  float voltage = hubData.voltage /1000;
+  float current = hubData.totalCurrent /1000;
+  float kw = voltage * current;
+  display.print(voltage, 1);
+  display.setTextSize(2);
+  display.println(F("V"));
+  addLineSpace();
+  display.setTextSize(3);
+  display.print(kw, 0);
+  display.setTextSize(2);
+  display.println(F("kw"));
 }

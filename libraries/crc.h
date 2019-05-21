@@ -1,9 +1,9 @@
 /*
   *  crc.h
   *
-  *    Created  on:  Mar  3   2019
-  *            Author:  MiguelFAlvarez
-  */
+ *  Created on: Mar 3, 2019
+ *      Author: MiguelFAlvarez
+ */
 
 #ifndef  CRC_H_
 #define  CRC_H_
