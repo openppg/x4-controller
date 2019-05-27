@@ -116,7 +116,7 @@ void setup() {
   pot.setAnalogResolution(4096);
   analogBatt.setAnalogResolution(4096);
   analogBatt.setSnapMultiplier(0.01);  // more smoothing
-  unsigned int startup_vibes[] = { 29, 29, 0 };
+  unsigned int startup_vibes[] = { 27, 27, 0 };
   runVibe(startup_vibes, 3);
   digitalWrite(RX_TX_TOGGLE, LOW);
 
@@ -250,8 +250,9 @@ void receiveControlData(uint8_t *buf, uint32_t size) {
 
 void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
-  unsigned int arm_fail_melody[] = { 1560, 1560, 0 };
+  unsigned int arm_fail_melody[] = { 1560, 1560 };
   unsigned int arm_vibes[] = { 83, 27, 0 };
+  unsigned int arm_fail_vibes[] = { 14, 3, 0 };
 
   armed = true;
   sendToHub(0);
@@ -259,7 +260,8 @@ void armSystem() {
   handleHubResonse();
 
   if (hubData.armed == 0) {
-    playMelody(arm_fail_melody, 3);
+    runVibe(arm_fail_vibes, 3);
+    playMelody(arm_fail_melody, 2);
     armed = false;
     return;
   }
@@ -324,6 +326,7 @@ void updateDisplay() {
 
   switch (page) {
   case 0: // shows current voltage and amperage
+    displayPage0();
     break;
   case 1: // shows total amp hrs and timer
     displayPage1();
