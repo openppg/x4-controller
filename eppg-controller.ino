@@ -31,7 +31,7 @@ using namespace ace_button;
 #define CTRL2HUB_ID 0x10
 #define HUB2CTRL_ID 0x20
 
-#define FEATURE_CRUISE false
+#define ARM_VERIFY false
 
 #define CRUISE_GRACE 2  // 2 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
@@ -259,7 +259,7 @@ void armSystem() {
   delay(2);  // wait for response
   handleHubResonse();
 
-  if (hubData.armed == 0) {
+  if (hubData.armed == 0 && ARM_VERIFY) {
     runVibe(arm_fail_vibes, 3);
     playMelody(arm_fail_melody, 2);
     armed = false;
