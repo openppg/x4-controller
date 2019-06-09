@@ -6,7 +6,7 @@
 #include <Adafruit_SSD1306.h>  // screen
 #include <Adafruit_SleepyDog.h>  // watchdog
 #include <AdjustableButtonConfig.h>
-#include <extEEPROM.h>    //https://github.com/PaoloP74/extEEPROM
+#include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
 #include <Thread.h>  // run tasks at different intervals
@@ -201,7 +201,9 @@ void initDisplay() {
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
   display.println(F("OpenPPG"));
-  display.println(F("V2.1.0"));
+  display.print(F("V"));
+  display.print(VERSION_MAJOR);
+  display.print(VERSION_MINOR);
   display.display();
   display.clearDisplay();
 }
@@ -236,12 +238,12 @@ void handleHubResonse() {
   while (Serial.available() > 0) {
     memset(serialData, 0, sizeof(serialData));
     int size = Serial.readBytes(serialData, HUB2CTRL_SIZE);
-    receiveControlData(serialData, size);
+    receiveHubData(serialData, size);
   }
   Serial.flush();
 }
 
-void receiveControlData(uint8_t *buf, uint32_t size) {
+void receiveHubData(uint8_t *buf, uint32_t size) {
   if (size != sizeof(STR_HUB2CTRL_MSG)) {
     SerialUSB.print("wrong size ");
     SerialUSB.print(size);
