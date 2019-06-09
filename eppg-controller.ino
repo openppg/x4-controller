@@ -4,16 +4,16 @@
 #include <AceButton.h>
 #include <Adafruit_DRV2605.h>  // haptic controller
 #include <Adafruit_SSD1306.h>  // screen
-#include <Adafruit_SleepyDog.h> // watchdog
+#include <Adafruit_SleepyDog.h>  // watchdog
 #include <AdjustableButtonConfig.h>
 #include <extEEPROM.h>    //https://github.com/PaoloP74/extEEPROM
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
-#include <Thread.h>
+#include <Thread.h>  // run tasks at different intervals
 #include <StaticThreadController.h>
-#include <TimeLib.h>
+#include <TimeLib.h>  // convert time to hours mins etc
 #include <Wire.h>
-#include "libraries/crc.c"
+#include "libraries/crc.c"  // packet error checking
 
 using namespace ace_button;
 
@@ -288,7 +288,7 @@ void armSystem() {
 }
 
 // The event handler for the the buttons
-void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState) {
+void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
   uint8_t pin = button->getPin();
 
   switch (eventType) {
@@ -318,7 +318,6 @@ bool throttleSafe() {
 }
 
 void updateDisplay() {
-  
   byte percentage;
   String status;
 
@@ -338,13 +337,13 @@ void updateDisplay() {
   display.setTextSize(3);
 
   switch (page) {
-  case 0: // shows current voltage and amperage
+  case 0:  // shows current voltage and amperage
     displayPage0();
     break;
-  case 1: // shows total amp hrs and timer
+  case 1:  // shows total amp hrs and timer
     displayPage1();
     break;
-  case 2: // shows volts and kw
+  case 2:  // shows volts and kw
     displayPage2();
     break;
   default:
