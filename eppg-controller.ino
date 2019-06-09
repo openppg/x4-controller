@@ -1,4 +1,4 @@
-// Copyright 2018 <Zach Whitehead>
+// Copyright 2019 <Zach Whitehead>
 // OpenPPG
 
 #include <AceButton.h>
@@ -6,6 +6,7 @@
 #include <Adafruit_SSD1306.h>  // screen
 #include <Adafruit_SleepyDog.h> // watchdog
 #include <AdjustableButtonConfig.h>
+#include <extEEPROM.h>    //https://github.com/PaoloP74/extEEPROM
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
 #include <Thread.h>
@@ -32,6 +33,11 @@ using namespace ace_button;
 #define HUB2CTRL_ID 0x20
 
 #define ARM_VERIFY false
+#define CURRENT_DIVIDE 100
+#define VOLTAGE_DIVIDE 1000
+
+#define VERSION_MAJOR 3
+#define VERSION_MINOR 0
 
 #define CRUISE_GRACE 2  // 2 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
@@ -44,6 +50,7 @@ ResponsiveAnalogRead analogBatt(BATT_IN, false);
 AceButton button_top(BUTTON_TOP);
 AceButton button_side(BUTTON_SIDE);
 AdjustableButtonConfig buttonConfig;
+extEEPROM eep(kbits_64, 1, 64);
 
 const int bgInterval = 100;  // background updates (milliseconds)
 
@@ -104,8 +111,14 @@ void setup() {
   Serial.begin(115200);
   Serial.setTimeout(5);
 
-  SerialUSB.begin(115200);
-  SerialUSB.println(F("Booting up (USB) V2.1"));
+  uint8_t eepStatus = eep.begin(eep.twiClock400kHz);  // go fast
+
+  SerialUSB.print(F("Booting up (USB) V"));
+  SerialUSB.print(VERSION_MAJOR);
+  SerialUSB.println(VERSION_MINOR);
+
+  byte i2cStat = eep.write(0, VERSION_MAJOR);
+  // SerialUSB.println(eep.read(0));
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
@@ -149,7 +162,7 @@ void checkButtons() {
 }
 
 byte getBatteryPercent() {
-  float voltage = hubData.voltage /1000;
+  float voltage = hubData.voltage /VOLTAGE_DIVIDE;
   // TODO(zach): LiPo curve
   float percent = mapf(voltage, 42, 50, 1, 100);
   percent = constrain(percent, 0, 100);
@@ -353,8 +366,8 @@ void displayTime(int val) {
 }
 
 void displayPage0() {
-  float voltage = hubData.voltage /1000;
-  float current = hubData.totalCurrent /1000;
+  float voltage = hubData.voltage /VOLTAGE_DIVIDE;
+  float current = hubData.totalCurrent /CURRENT_DIVIDE;
   display.print(voltage, 1);
   display.setTextSize(2);
   display.println(F("V"));
@@ -366,7 +379,7 @@ void displayPage0() {
 }
 
 void displayPage1() {
-  float amph = hubData.totalMah /1000;
+  float amph = hubData.totalMah /10;
   display.print(amph, 1);
   display.setTextSize(2);
   display.println(F("ah"));
@@ -376,8 +389,8 @@ void displayPage1() {
 }
 
 void displayPage2() {
-  float voltage = hubData.voltage /1000;
-  float current = hubData.totalCurrent /1000;
+  float voltage = hubData.voltage /VOLTAGE_DIVIDE;
+  float current = hubData.totalCurrent /CURRENT_DIVIDE;
   float kw = voltage * current;
   display.print(voltage, 1);
   display.setTextSize(2);
