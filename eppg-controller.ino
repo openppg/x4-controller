@@ -117,10 +117,9 @@ void setup() {
   uint8_t eepStatus = eep.begin(eep.twiClock400kHz);  // go fast
 
   SerialUSB.print(F("Booting up (USB) V"));
-  SerialUSB.print(VERSION_MAJOR);
-  SerialUSB.println(VERSION_MINOR);
+  SerialUSB.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
-  byte i2cStat = eep.write(0, VERSION_MAJOR);
+  // byte i2cStat = eep.write(0, VERSION_MAJOR);
   // SerialUSB.println(eep.read(0));
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
