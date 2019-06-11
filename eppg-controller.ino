@@ -36,6 +36,9 @@ using namespace ace_button;
 #define CURRENT_DIVIDE 100
 #define VOLTAGE_DIVIDE 1000
 
+// Calibration
+#define MAMP_OFFSET 200
+
 #define VERSION_MAJOR 3
 #define VERSION_MINOR 0
 
@@ -261,6 +264,7 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
     SerialUSB.print(hubData.crc);
     return;
   }
+  if (hubData.totalCurrent > MAMP_OFFSET) { hubData.totalCurrent -= MAMP_OFFSET;}
 }
 
 void armSystem() {
