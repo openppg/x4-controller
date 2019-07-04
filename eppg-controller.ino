@@ -104,10 +104,16 @@ typedef struct {
   uint16_t crc;
 }STR_HUB2CTRL_MSG;
 
+typedef struct {
+  boolean valid;
+  char version[10];
+  uint16_t armed_time;
+}DEVICE_DATA;
 #pragma pack(pop)
 
 static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;
+static DEVICE_DATA deviceData;
 
 void setup() {
   delay(250);  // power-up safety delay
