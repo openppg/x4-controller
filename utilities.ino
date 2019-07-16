@@ -27,13 +27,13 @@ void addLineSpace() {
 }
 
 void setLEDs(byte state) {
-  digitalWrite(LED_2, state);
-  digitalWrite(LED_3, !state);
+  // digitalWrite(LED_2, state);
+  digitalWrite(LED_3, state);
   digitalWrite(LED_SW, state);
 }
 
 void blinkLED() {
-  byte ledState = !digitalRead(LED_2);
+  byte ledState = !digitalRead(LED_SW);
   setLEDs(ledState);
 }
 

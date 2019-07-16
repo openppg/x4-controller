@@ -105,15 +105,16 @@ typedef struct {
 }STR_HUB2CTRL_MSG;
 
 typedef struct {
-  boolean valid;
-  char version[10];
+  uint8_t version_major;
+  uint8_t version_minor;
   uint16_t armed_time;
-}DEVICE_DATA;
+  uint16_t crc;
+}STR_DEVICE_DATA;
 #pragma pack(pop)
 
 static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;
-static DEVICE_DATA deviceData;
+static STR_DEVICE_DATA deviceData;
 
 void setup() {
   delay(250);  // power-up safety delay
@@ -122,11 +123,11 @@ void setup() {
 
   uint8_t eepStatus = eep.begin(eep.twiClock400kHz);  // go fast
 
+  SerialUSB.begin(115200);
   SerialUSB.print(F("Booting up (USB) V"));
   SerialUSB.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   // byte i2cStat = eep.write(0, VERSION_MAJOR);
-  // SerialUSB.println(eep.read(0));
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
@@ -157,6 +158,53 @@ void setup() {
   throttleThread.setInterval(22);
 
   int countdownMS = Watchdog.enable(4000);
+  refreshDeviceData();
+  printDeviceData();
+}
+
+// for debugging 
+void printDeviceData(){
+  SerialUSB.print("version major ");
+  SerialUSB.println(deviceData.version_major);
+  SerialUSB.print("version minor ");
+  SerialUSB.println(deviceData.version_minor);
+  SerialUSB.print("armed_time ");
+  SerialUSB.println(deviceData.armed_time);
+  SerialUSB.print("crc ");
+  SerialUSB.println(deviceData.crc);
+}
+
+void refreshDeviceData(){
+  uint8_t tempBuf[sizeof(STR_DEVICE_DATA)];
+  if (0 != eep.read(0, tempBuf, sizeof(STR_DEVICE_DATA))){
+    SerialUSB.println(F("error reading EEPROM"));
+  };
+  memcpy((uint8_t*)&deviceData, tempBuf, sizeof(STR_DEVICE_DATA));
+  uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
+  if (crc != deviceData.crc) {
+    SerialUSB.print("wrong crc ");
+    SerialUSB.print(crc);
+    SerialUSB.println(" should be ");
+    SerialUSB.print(deviceData.crc);
+
+    STR_DEVICE_DATA fresh;
+    deviceData = fresh;
+    deviceData.version_major = VERSION_MAJOR;
+    deviceData.version_minor = VERSION_MINOR;
+    writeDeviceData();
+    return;
+  }
+  SerialUSB.println("Finished reading");
+}
+
+void writeDeviceData(){
+  SerialUSB.println(deviceData.version_major);
+  deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
+
+  if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))){
+    SerialUSB.println(F("error writing EEPROM"));
+  };
+  SerialUSB.println("Finished writing");
 }
 
 void loop() {
@@ -187,6 +235,10 @@ void disarmSystem() {
   updateDisplay();
   runVibe(disarm_vibes, 3);
   playMelody(disarm_melody, 3);
+  // update armed_time
+  refreshDeviceData();
+  writeDeviceData();
+
   delay(1500);  // dont allow immediate rearming
 }
 
@@ -402,9 +454,9 @@ void displayPage2() {
   float voltage = hubData.voltage /VOLTAGE_DIVIDE;
   float current = hubData.totalCurrent /CURRENT_DIVIDE;
   float kw = voltage * current;
-  display.print(voltage, 1);
+  display.print(getBatteryPercent());
   display.setTextSize(2);
-  display.println(F("V"));
+  display.println(F("%"));
   addLineSpace();
   display.setTextSize(3);
   display.print(kw, 0);
