@@ -15,13 +15,13 @@ void printDigits(byte digits) {
 }
 
 int nextPage() {
-  if (page == LAST_PAGE) {
+  if (page >= LAST_PAGE) {
     return page = 0;
   }
   return ++page;
 }
 
-void addLineSpace() {
+void addVSpace() {
   display.setTextSize(1);
   display.println(" ");
 }

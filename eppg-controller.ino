@@ -187,8 +187,7 @@ void refreshDeviceData(){
     SerialUSB.println(" should be ");
     SerialUSB.print(deviceData.crc);
 
-    STR_DEVICE_DATA fresh;
-    deviceData = fresh;
+    deviceData = STR_DEVICE_DATA();
     deviceData.version_major = VERSION_MAJOR;
     deviceData.version_minor = VERSION_MINOR;
     writeDeviceData();
@@ -237,6 +236,7 @@ void disarmSystem() {
   playMelody(disarm_melody, 3);
   // update armed_time
   refreshDeviceData();
+  deviceData.armed_time += round(armedSecs / 60); // convert to mins
   writeDeviceData();
 
   delay(1500);  // dont allow immediate rearming
@@ -250,6 +250,7 @@ void initButtons() {
   button_top.setButtonConfig(&buttonConfig);
   buttonConfig.setEventHandler(handleButtonEvent);
   buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
+  buttonConfig.setFeature(ButtonConfig::kFeatureLongPress);
   buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
 }
 
@@ -359,13 +360,22 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
     if (pin == BUTTON_SIDE) nextPage();
     break;
   case AceButton::kEventDoubleClicked:
-    if (pin == BUTTON_SIDE) {
-    } else if (pin == BUTTON_TOP) {
+    if (pin == BUTTON_SIDE) {} 
+    else if (pin == BUTTON_TOP) {
       if (armed) {
         disarmSystem();
       } else if (throttleSafe()) {
         armSystem();
       }
+    }
+    break;
+  case AceButton::kEventLongPressed:
+    int side_state = digitalRead(BUTTON_SIDE);
+    int top_state = digitalRead(BUTTON_TOP);
+    // SerialUSB.println(side_state);
+    // SerialUSB.println(top_state);
+    if (top_state == LOW && side_state == LOW){
+      page = 3;
     }
     break;
   }
@@ -409,6 +419,9 @@ void updateDisplay() {
   case 2:  // shows volts and kw
     displayPage2();
     break;
+  case 3:  // shows version and hour meter
+    displayVersions();
+    break;
   default:
     display.println(F("Dsp Err"));  // should never hit this
     break;
@@ -419,7 +432,7 @@ void updateDisplay() {
 
 // displays number of minutes and seconds (since armed)
 void displayTime(int val) {
-  int minutes = val / 60;
+  int minutes = val / 60; // numberOfMinutes(val);
   int seconds = numberOfSeconds(val);
 
   printDigits(minutes);
@@ -433,7 +446,7 @@ void displayPage0() {
   display.print(voltage, 1);
   display.setTextSize(2);
   display.println(F("V"));
-  addLineSpace();
+  addVSpace();
   display.setTextSize(3);
   display.print(current, 0);
   display.setTextSize(2);
@@ -445,7 +458,7 @@ void displayPage1() {
   display.print(amph, 1);
   display.setTextSize(2);
   display.println(F("ah"));
-  addLineSpace();
+  addVSpace();
   display.setTextSize(3);
   displayTime(armedSecs);
 }
@@ -457,9 +470,21 @@ void displayPage2() {
   display.print(getBatteryPercent());
   display.setTextSize(2);
   display.println(F("%"));
-  addLineSpace();
+  addVSpace();
   display.setTextSize(3);
   display.print(kw, 0);
   display.setTextSize(2);
   display.println(F("kw"));
+}
+
+void displayVersions() {
+  display.setTextSize(2);
+  display.print("v");
+  display.print(VERSION_MAJOR);
+  display.print(".");
+  display.println(VERSION_MINOR);
+  addVSpace();
+  display.setTextSize(2);
+  displayTime(deviceData.armed_time);
+  display.print(" h:m");
 }
