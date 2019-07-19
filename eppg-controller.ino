@@ -466,13 +466,13 @@ void displayPage1() {
 void displayPage2() {
   float voltage = hubData.voltage /VOLTAGE_DIVIDE;
   float current = hubData.totalCurrent /CURRENT_DIVIDE;
-  float kw = voltage * current;
+  float kw = (voltage * current)/1000;
   display.print(getBatteryPercent());
   display.setTextSize(2);
   display.println(F("%"));
   addVSpace();
   display.setTextSize(3);
-  display.print(kw, 0);
+  display.print(kw, 2);
   display.setTextSize(2);
   display.println(F("kw"));
 }
