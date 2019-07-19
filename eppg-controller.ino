@@ -39,7 +39,7 @@ using namespace ace_button;
 // Calibration
 #define MAMP_OFFSET 200
 
-#define VERSION_MAJOR 3
+#define VERSION_MAJOR 4
 #define VERSION_MINOR 0
 
 #define CRUISE_GRACE 2  // 2 sec period to get off throttle
@@ -127,8 +127,6 @@ void setup() {
   SerialUSB.print(F("Booting up (USB) V"));
   SerialUSB.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
-  // byte i2cStat = eep.write(0, VERSION_MAJOR);
-
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
   pinMode(LED_3, OUTPUT);       // set up the internal LED3 pin
@@ -159,7 +157,6 @@ void setup() {
 
   int countdownMS = Watchdog.enable(4000);
   refreshDeviceData();
-  printDeviceData();
 }
 
 // for debugging 
@@ -182,10 +179,7 @@ void refreshDeviceData(){
   memcpy((uint8_t*)&deviceData, tempBuf, sizeof(STR_DEVICE_DATA));
   uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
   if (crc != deviceData.crc) {
-    SerialUSB.print("wrong crc ");
-    SerialUSB.print(crc);
-    SerialUSB.println(" should be ");
-    SerialUSB.print(deviceData.crc);
+    SerialUSB.print(F("Memory CRC mismatch. Resetting"));
 
     deviceData = STR_DEVICE_DATA();
     deviceData.version_major = VERSION_MAJOR;
@@ -193,19 +187,17 @@ void refreshDeviceData(){
     writeDeviceData();
     return;
   }
-  SerialUSB.println("Finished reading");
 }
 
 void writeDeviceData(){
-  SerialUSB.println(deviceData.version_major);
   deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
 
   if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))){
     SerialUSB.println(F("error writing EEPROM"));
   };
-  SerialUSB.println("Finished writing");
 }
 
+// main loop - everything runs in threads
 void loop() {
   Watchdog.reset();
   threads.run();
@@ -264,6 +256,7 @@ void initDisplay() {
   display.println(F("OpenPPG"));
   display.print(F("V"));
   display.print(VERSION_MAJOR);
+  display.print(F("."));
   display.print(VERSION_MINOR);
   display.display();
   display.clearDisplay();
@@ -316,10 +309,7 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
   memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
   uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
   if (crc != hubData.crc) {
-    SerialUSB.print("wrong crc ");
-    SerialUSB.print(crc);
-    SerialUSB.println(" should be ");
-    SerialUSB.print(hubData.crc);
+    SerialUSB.print(F("hub crc mismatch"));
     return;
   }
   if (hubData.totalCurrent > MAMP_OFFSET) { hubData.totalCurrent -= MAMP_OFFSET;}
@@ -372,8 +362,7 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
   case AceButton::kEventLongPressed:
     int side_state = digitalRead(BUTTON_SIDE);
     int top_state = digitalRead(BUTTON_TOP);
-    // SerialUSB.println(side_state);
-    // SerialUSB.println(top_state);
+
     if (top_state == LOW && side_state == LOW){
       page = 3;
     }
@@ -436,7 +425,7 @@ void displayTime(int val) {
   int seconds = numberOfSeconds(val);
 
   printDigits(minutes);
-  display.print(":");
+  display.print(F(":"));
   printDigits(seconds);
 }
 
@@ -479,12 +468,12 @@ void displayPage2() {
 
 void displayVersions() {
   display.setTextSize(2);
-  display.print("v");
+  display.print(F("v"));
   display.print(VERSION_MAJOR);
-  display.print(".");
+  display.print(F("."));
   display.println(VERSION_MINOR);
   addVSpace();
   display.setTextSize(2);
   displayTime(deviceData.armed_time);
-  display.print(" h:m");
+  display.print(F(" h:m"));
 }
