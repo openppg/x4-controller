@@ -1,19 +1,19 @@
 // Copyright 2019 <Zach Whitehead>
 // OpenPPG
 
+#include "libraries/crc.c" // packet error checking
 #include <AceButton.h>
-#include <Adafruit_DRV2605.h>  // haptic controller
-#include <Adafruit_SSD1306.h>  // screen
-#include <Adafruit_SleepyDog.h>  // watchdog
+#include <Adafruit_DRV2605.h>   // haptic controller
+#include <Adafruit_SSD1306.h>   // screen
+#include <Adafruit_SleepyDog.h> // watchdog
 #include <AdjustableButtonConfig.h>
-#include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
-#include <Thread.h>  // run tasks at different intervals
 #include <StaticThreadController.h>
+#include <Thread.h>  // run tasks at different intervals
 #include <TimeLib.h>  // convert time to hours mins etc
 #include <Wire.h>
-#include "libraries/crc.c"  // packet error checking
+#include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
 using namespace ace_button;
 
@@ -135,7 +135,7 @@ void setup() {
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   analogBatt.setAnalogResolution(4096);
-  analogBatt.setSnapMultiplier(0.01);  // more smoothing
+  analogBatt.setSnapMultiplier(0.01);   // more smoothing
   unsigned int startup_vibes[] = { 27, 27, 0 };
   runVibe(startup_vibes, 3);
   digitalWrite(RX_TX_TOGGLE, LOW);
@@ -157,18 +157,6 @@ void setup() {
 
   int countdownMS = Watchdog.enable(4000);
   refreshDeviceData();
-}
-
-// for debugging 
-void printDeviceData(){
-  SerialUSB.print("version major ");
-  SerialUSB.println(deviceData.version_major);
-  SerialUSB.print("version minor ");
-  SerialUSB.println(deviceData.version_minor);
-  SerialUSB.print("armed_time ");
-  SerialUSB.println(deviceData.armed_time);
-  SerialUSB.print("crc ");
-  SerialUSB.println(deviceData.crc);
 }
 
 void refreshDeviceData(){
@@ -209,7 +197,7 @@ void checkButtons() {
 }
 
 byte getBatteryPercent() {
-  float voltage = hubData.voltage /VOLTAGE_DIVIDE;
+  float voltage = hubData.voltage / VOLTAGE_DIVIDE;
   // TODO(zach): LiPo curve
   float percent = mapf(voltage, 42, 50, 1, 100);
   percent = constrain(percent, 0, 100);
@@ -228,7 +216,7 @@ void disarmSystem() {
   playMelody(disarm_melody, 3);
   // update armed_time
   refreshDeviceData();
-  deviceData.armed_time += round(armedSecs / 60); // convert to mins
+  deviceData.armed_time += round(armedSecs / 60);  // convert to mins
   writeDeviceData();
 
   delay(1500);  // dont allow immediate rearming
@@ -350,7 +338,7 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
     if (pin == BUTTON_SIDE) nextPage();
     break;
   case AceButton::kEventDoubleClicked:
-    if (pin == BUTTON_SIDE) {} 
+    if (pin == BUTTON_SIDE) {}
     else if (pin == BUTTON_TOP) {
       if (armed) {
         disarmSystem();
@@ -421,7 +409,7 @@ void updateDisplay() {
 
 // displays number of minutes and seconds (since armed)
 void displayTime(int val) {
-  int minutes = val / 60; // numberOfMinutes(val);
+  int minutes = val / 60;  // numberOfMinutes(val);
   int seconds = numberOfSeconds(val);
 
   printDigits(minutes);
@@ -430,8 +418,8 @@ void displayTime(int val) {
 }
 
 void displayPage0() {
-  float voltage = hubData.voltage /VOLTAGE_DIVIDE;
-  float current = hubData.totalCurrent /CURRENT_DIVIDE;
+  float voltage = hubData.voltage / VOLTAGE_DIVIDE;
+  float current = hubData.totalCurrent / CURRENT_DIVIDE;
   display.print(voltage, 1);
   display.setTextSize(2);
   display.println(F("V"));
@@ -443,7 +431,7 @@ void displayPage0() {
 }
 
 void displayPage1() {
-  float amph = hubData.totalMah /10;
+  float amph = hubData.totalMah / 10;
   display.print(amph, 1);
   display.setTextSize(2);
   display.println(F("ah"));
@@ -453,9 +441,9 @@ void displayPage1() {
 }
 
 void displayPage2() {
-  float voltage = hubData.voltage /VOLTAGE_DIVIDE;
-  float current = hubData.totalCurrent /CURRENT_DIVIDE;
-  float kw = (voltage * current)/1000;
+  float voltage = hubData.voltage / VOLTAGE_DIVIDE;
+  float current = hubData.totalCurrent / CURRENT_DIVIDE;
+  float kw = (voltage * current) / 1000;
   display.print(getBatteryPercent());
   display.setTextSize(2);
   display.println(F("%"));

@@ -54,3 +54,15 @@ void playMelody(unsigned int melody[], int siz) {
   }
   noTone(BUZZER_PIN);
 }
+
+// for debugging
+void printDeviceData(){
+  SerialUSB.print("version major ");
+  SerialUSB.println(deviceData.version_major);
+  SerialUSB.print("version minor ");
+  SerialUSB.println(deviceData.version_minor);
+  SerialUSB.print("armed_time ");
+  SerialUSB.println(deviceData.armed_time);
+  SerialUSB.print("crc ");
+  SerialUSB.println(deviceData.crc);
+}
