@@ -30,6 +30,9 @@ using namespace ace_button;
 #define FEATURE_AUTO_PAGING   false  // use button by default to change page
 #define FEATURE_CRUISE false
 
+#define VERSION_MAJOR 3
+#define VERSION_MINOR 1
+
 #define CRUISE_GRACE 2  // 2 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
 
@@ -62,8 +65,9 @@ unsigned int last_throttle = 0;
 
 void setup() {
   delay(250); // power-up safety delay
-  //Serial.begin(115200);
-  //Serial.println(F("Booting up OpenPPG V2"));
+  Serial.begin(115200);
+  Serial.print(F("Booting up (USB) V"));
+  Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
@@ -157,7 +161,10 @@ void initDisplay() {
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
   display.println(F("OpenPPG"));
-  display.println(F("V2.0.1"));
+  display.print(F("V"));
+  display.print(VERSION_MAJOR);
+  display.print(F("."));
+  display.print(VERSION_MINOR);
   display.display();
   display.clearDisplay();
 }
@@ -210,6 +217,14 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState
       }
     }
     break;
+  case AceButton::kEventLongPressed:
+    int side_state = digitalRead(BUTTON_SIDE);
+    int top_state = digitalRead(BUTTON_TOP);
+
+    if (top_state == LOW && side_state == LOW){
+      page = 3;
+    }
+    break;
   }
 }
 
@@ -229,12 +244,14 @@ void updateDisplay() {
 
   if (armed) {
     status = F("Armed");
+    display.fillCircle(122, 5, 5, WHITE);
     armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
   } else {
-    status = F("Disarmd");
+    status = F("Disarmed");
+    display.drawCircle(122, 5, 5, WHITE);
   }
 
-  display.setTextSize(3);
+  display.setTextSize(1);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
   display.println(status);
@@ -254,6 +271,9 @@ void updateDisplay() {
   case 2:
     displayTime(armedSecs);
     break;
+  case 3:  // shows version and hour meter
+    displayVersions();
+    break;
   default:
     display.println(F("Dsp Err"));  // should never hit this
     break;
@@ -271,4 +291,12 @@ void displayTime(int val) {
   printDigits(minutes);
   display.print(":");
   printDigits(seconds);
+}
+
+void displayVersions() {
+  display.setTextSize(2);
+  display.print(F("v"));
+  display.print(VERSION_MAJOR);
+  display.print(F("."));
+  display.println(VERSION_MINOR);
 }
