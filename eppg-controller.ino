@@ -33,8 +33,8 @@ using namespace ace_button;
 #define HUB2CTRL_ID 0x20
 
 #define ARM_VERIFY false
-#define CURRENT_DIVIDE 100
-#define VOLTAGE_DIVIDE 1000
+#define CURRENT_DIVIDE 100.0
+#define VOLTAGE_DIVIDE 1000.0
 
 // Calibration
 #define MAMP_OFFSET 200
