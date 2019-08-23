@@ -306,7 +306,7 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
 void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_fail_melody[] = { 1560, 1560 };
-  unsigned int arm_vibes[] = { 83, 27, 0 };
+  unsigned int arm_vibes[] = { 70, 33, 0 };
   unsigned int arm_fail_vibes[] = { 14, 3, 0 };
 
   armed = true;
