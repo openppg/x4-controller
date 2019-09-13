@@ -41,7 +41,7 @@ The Batch 3+ OpenPPG controller is powered by Atmel’s SAMD21G18A MCU, featurin
 1. First make sure the code compiles by hitting the check button in the top right name "Verify"
 2. Connect the controller to your computer by using the USB mini port on the bottom of the controller
 3. Select the proper port (Tools -> Port). It should show up as something like `COM5 (Arduino/Genuino Zero (Native USB port))` or `/dev/cu.usbmodem14201`
-4. Select the proper board (Tools -> Board -> Adafruit Feather M0).
+4. Select the proper board (Tools -> Board -> Arduino/Genuino Zero (Native USB Port)).
 5. Click the right arrow in the top right named "Upload"
 6. Wait for the code to flash and the Arduino IDE to say "Done" at the bottom. Success!
 

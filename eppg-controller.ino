@@ -33,8 +33,8 @@ using namespace ace_button;
 #define HUB2CTRL_ID 0x20
 
 #define ARM_VERIFY false
-#define CURRENT_DIVIDE 100
-#define VOLTAGE_DIVIDE 1000
+#define CURRENT_DIVIDE 100.0
+#define VOLTAGE_DIVIDE 1000.0
 
 // Calibration
 #define MAMP_OFFSET 200
@@ -306,7 +306,7 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
 void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_fail_melody[] = { 1560, 1560 };
-  unsigned int arm_vibes[] = { 83, 27, 0 };
+  unsigned int arm_vibes[] = { 70, 33, 0 };
   unsigned int arm_fail_vibes[] = { 14, 3, 0 };
 
   armed = true;
