@@ -27,7 +27,6 @@ using namespace ace_button;
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
 
-#define FEATURE_AUTO_PAGING   false  // use button by default to change page
 #define FEATURE_CRUISE false
 
 #define VERSION_MAJOR 3
@@ -262,29 +261,28 @@ void updateDisplay() {
     voltage = getBatteryVolts();
     display.print(voltage, 1);
     display.println(F("V"));
+    displayTime(armedSecs);
     break;
   case 1:
     percentage = getBatteryPercent();
     display.print(percentage, 1);
     display.println(F("%"));
-    break;
-  case 2:
     displayTime(armedSecs);
     break;
-  case 3:  // shows version and hour meter
+  case 2:  // shows version
     displayVersions();
     break;
   default:
     display.println(F("Dsp Err"));  // should never hit this
     break;
   }
-  if (FEATURE_AUTO_PAGING) nextPage();
   display.display();
   display.clearDisplay();
 }
 
 // displays number of minutes and seconds (since armed)
 void displayTime(int val) {
+  display.setTextSize(3);
   int minutes = val / 60;
   int seconds = numberOfSeconds(val);
 
