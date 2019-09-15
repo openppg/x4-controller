@@ -146,7 +146,7 @@ void initButtons() {
   button_top.setButtonConfig(&buttonConfig);
   buttonConfig.setEventHandler(handleButtonEvent);
   buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
-  buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterClick);
+  buttonConfig.setFeature(ButtonConfig::kFeatureLongPress);
   buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
 }
 
@@ -203,12 +203,8 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState
     break;
   case AceButton::kEventDoubleClicked:
     // Serial.print(F("double clicked "));
-    if (pin == BUTTON_SIDE) {
-    // Serial.println(F("side"));
-    } else {
-    // Serial.println(F("top"));
-    }
-    if (digitalRead(BUTTON_TOP) == LOW) {
+    if (pin == BUTTON_TOP) {} // ignore top double clicks
+    else if (digitalRead(BUTTON_TOP) == LOW) { // make sure top button is held
       if (armed) {
         disarmSystem();
       } else if (throttleSafe()) {
@@ -221,7 +217,7 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t buttonState
     int top_state = digitalRead(BUTTON_TOP);
 
     if (top_state == LOW && side_state == LOW){
-      page = 3;
+      page = 2;
     }
     break;
   }
