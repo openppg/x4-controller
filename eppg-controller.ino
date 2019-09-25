@@ -1,7 +1,7 @@
 // Copyright 2019 <Zach Whitehead>
 // OpenPPG
 
-#include "libraries/crc.c" // packet error checking
+#include "libraries/crc.c"      // packet error checking
 #include <AceButton.h>
 #include <Adafruit_DRV2605.h>   // haptic controller
 #include <Adafruit_SSD1306.h>   // screen
@@ -10,7 +10,7 @@
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
 #include <StaticThreadController.h>
-#include <Thread.h>  // run tasks at different intervals
+#include <Thread.h>   // run tasks at different intervals
 #include <TimeLib.h>  // convert time to hours mins etc
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
@@ -159,11 +159,11 @@ void setup() {
   refreshDeviceData();
 }
 
-void refreshDeviceData(){
+void refreshDeviceData() {
   uint8_t tempBuf[sizeof(STR_DEVICE_DATA)];
-  if (0 != eep.read(0, tempBuf, sizeof(STR_DEVICE_DATA))){
+  if (0 != eep.read(0, tempBuf, sizeof(STR_DEVICE_DATA))) {
     SerialUSB.println(F("error reading EEPROM"));
-  };
+  }
   memcpy((uint8_t*)&deviceData, tempBuf, sizeof(STR_DEVICE_DATA));
   uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
   if (crc != deviceData.crc) {
@@ -177,12 +177,12 @@ void refreshDeviceData(){
   }
 }
 
-void writeDeviceData(){
+void writeDeviceData() {
   deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
 
   if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))){
     SerialUSB.println(F("error writing EEPROM"));
-  };
+  }
 }
 
 // main loop - everything runs in threads
@@ -305,7 +305,6 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
 
 void armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
-  unsigned int arm_fail_melody[] = { 1560, 1560 };
   unsigned int arm_vibes[] = { 70, 33, 0 };
   unsigned int arm_fail_vibes[] = { 14, 3, 0 };
 
@@ -316,7 +315,7 @@ void armSystem() {
 
   if (hubData.armed == 0 && ARM_VERIFY) {
     runVibe(arm_fail_vibes, 3);
-    playMelody(arm_fail_melody, 2);
+    handleArmFail();
     armed = false;
     return;
   }
@@ -324,9 +323,8 @@ void armSystem() {
   armedAtMilis = millis();
 
   runVibe(arm_vibes, 3);
-  playMelody(arm_melody, 3);
-
   setLEDs(HIGH);
+  playMelody(arm_melody, 3);
 }
 
 // The event handler for the the buttons
@@ -344,6 +342,8 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
         disarmSystem();
       } else if (throttleSafe()) {
         armSystem();
+      } else {
+        handleArmFail();
       }
     }
     break;
@@ -351,7 +351,7 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
     int side_state = digitalRead(BUTTON_SIDE);
     int top_state = digitalRead(BUTTON_TOP);
 
-    if (top_state == LOW && side_state == LOW){
+    if (top_state == LOW && side_state == LOW) {
       page = 3;
     }
     break;

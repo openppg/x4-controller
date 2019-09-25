@@ -1,3 +1,6 @@
+// Copyright 2019 <Zach Whitehead>
+// OpenPPG
+
 #define LAST_PAGE 2  // starts at 0
 
 // Map float values
@@ -55,8 +58,13 @@ void playMelody(unsigned int melody[], int siz) {
   noTone(BUZZER_PIN);
 }
 
+void handleArmFail() {
+  unsigned int arm_fail_melody[] = { 820, 640 };
+  playMelody(arm_fail_melody, 2);
+}
+
 // for debugging
-void printDeviceData(){
+void printDeviceData() {
   SerialUSB.print("version major ");
   SerialUSB.println(deviceData.version_major);
   SerialUSB.print("version minor ");
