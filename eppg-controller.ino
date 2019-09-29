@@ -22,8 +22,8 @@ using namespace ace_button;
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    5   // output for buzzer speaker
-#define LED_SW        9  // output for LED on button_top switch
-#define LED_2         0  // output for LED 2
+#define LED_SW        9   // output for LED on button_top switch
+#define LED_2         0   // output for LED 2
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
 #define RX_TX_TOGGLE  11  // rs485
@@ -35,6 +35,9 @@ using namespace ace_button;
 #define ARM_VERIFY false
 #define CURRENT_DIVIDE 100.0
 #define VOLTAGE_DIVIDE 1000.0
+
+#define BATT_MIN_V 49    // 42v for 6S
+#define BATT_MAX_V 58.8  // 50v for 6S
 
 // Calibration
 #define MAMP_OFFSET 200
@@ -199,7 +202,7 @@ void checkButtons() {
 byte getBatteryPercent() {
   float voltage = hubData.voltage / VOLTAGE_DIVIDE;
   // TODO(zach): LiPo curve
-  float percent = mapf(voltage, 42, 50, 1, 100);
+  float percent = mapf(voltage, BATT_MIN_V, BATT_MAX_V, 0, 100);
   percent = constrain(percent, 0, 100);
 
   return round(percent);
