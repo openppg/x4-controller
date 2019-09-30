@@ -65,12 +65,12 @@ void handleArmFail() {
 
 // for debugging
 void printDeviceData() {
-  SerialUSB.print("version major ");
-  SerialUSB.println(deviceData.version_major);
-  SerialUSB.print("version minor ");
-  SerialUSB.println(deviceData.version_minor);
-  SerialUSB.print("armed_time ");
-  SerialUSB.println(deviceData.armed_time);
-  SerialUSB.print("crc ");
-  SerialUSB.println(deviceData.crc);
+  Serial.print("version major ");
+  Serial.println(deviceData.version_major);
+  Serial.print("version minor ");
+  Serial.println(deviceData.version_minor);
+  Serial.print("armed_time ");
+  Serial.println(deviceData.armed_time);
+  Serial.print("crc ");
+  Serial.println(deviceData.crc);
 }

@@ -121,14 +121,14 @@ static STR_DEVICE_DATA deviceData;
 
 void setup() {
   delay(250);  // power-up safety delay
-  Serial.begin(115200);
-  Serial.setTimeout(5);
+  Serial5.begin(115200);
+  Serial5.setTimeout(5);
 
   uint8_t eepStatus = eep.begin(eep.twiClock400kHz);  // go fast
 
-  SerialUSB.begin(115200);
-  SerialUSB.print(F("Booting up (USB) V"));
-  SerialUSB.print(VERSION_MAJOR + "." + VERSION_MINOR);
+  Serial.begin(115200);
+  Serial.print(F("Booting up (USB) V"));
+  Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
@@ -165,12 +165,12 @@ void setup() {
 void refreshDeviceData() {
   uint8_t tempBuf[sizeof(STR_DEVICE_DATA)];
   if (0 != eep.read(0, tempBuf, sizeof(STR_DEVICE_DATA))) {
-    SerialUSB.println(F("error reading EEPROM"));
+    Serial.println(F("error reading EEPROM"));
   }
   memcpy((uint8_t*)&deviceData, tempBuf, sizeof(STR_DEVICE_DATA));
   uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
   if (crc != deviceData.crc) {
-    SerialUSB.print(F("Memory CRC mismatch. Resetting"));
+    Serial.print(F("Memory CRC mismatch. Resetting"));
 
     deviceData = STR_DEVICE_DATA();
     deviceData.version_major = VERSION_MAJOR;
@@ -184,7 +184,7 @@ void writeDeviceData() {
   deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
 
   if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))){
-    SerialUSB.println(F("error writing EEPROM"));
+    Serial.println(F("error writing EEPROM"));
   }
 }
 
@@ -272,35 +272,35 @@ void sendToHub(int throttle_val) {
   controlData.crc = crc16((uint8_t*)&controlData, sizeof(STR_CTRL2HUB_MSG) - 2);
 
   digitalWrite(RX_TX_TOGGLE, HIGH);
-  Serial.write((uint8_t*)&controlData, 8);  // send to hub
-  Serial.flush();
+  Serial5.write((uint8_t*)&controlData, 8);  // send to hub
+  Serial5.flush();
   digitalWrite(RX_TX_TOGGLE, LOW);
 }
 
 void handleHubResonse() {
   uint8_t serialData[HUB2CTRL_SIZE];
 
-  while (Serial.available() > 0) {
+  while (Serial5.available() > 0) {
     memset(serialData, 0, sizeof(serialData));
-    int size = Serial.readBytes(serialData, HUB2CTRL_SIZE);
+    int size = Serial5.readBytes(serialData, HUB2CTRL_SIZE);
     receiveHubData(serialData, size);
   }
-  Serial.flush();
+  Serial5.flush();
 }
 
 void receiveHubData(uint8_t *buf, uint32_t size) {
   if (size != sizeof(STR_HUB2CTRL_MSG)) {
-    SerialUSB.print("wrong size ");
-    SerialUSB.print(size);
-    SerialUSB.print(" should be ");
-    SerialUSB.println(sizeof(STR_HUB2CTRL_MSG));
+    Serial.print("wrong size ");
+    Serial.print(size);
+    Serial.print(" should be ");
+    Serial.println(sizeof(STR_HUB2CTRL_MSG));
     return;
   }
 
   memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
   uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
   if (crc != hubData.crc) {
-    SerialUSB.print(F("hub crc mismatch"));
+    Serial.print(F("hub crc mismatch"));
     return;
   }
   if (hubData.totalCurrent > MAMP_OFFSET) { hubData.totalCurrent -= MAMP_OFFSET;}
