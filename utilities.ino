@@ -9,12 +9,11 @@ double mapf(double x, double in_min, double in_max, double out_min, double out_m
 }
 
 // For digital time display - prints leading 0
-void printDigits(byte digits) {
-  if (digits < 10) {
-    display.print("0");
-  }
-  // Serial.print(digits, DEC);
-  display.print(digits);
+String convertToDigits(byte digits) {
+  String digits_string = "";
+  if (digits < 10) digits_string.concat("0");
+  digits_string.concat(digits);
+  return digits_string;
 }
 
 int nextPage() {

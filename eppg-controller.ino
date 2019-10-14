@@ -44,7 +44,7 @@ using namespace ace_button;
 #define MAMP_OFFSET 200
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 0
+#define VERSION_MINOR 1
 
 #define CRUISE_GRACE 2  // 2 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
@@ -185,7 +185,7 @@ void loop() {
   // from WebUSB to both Serial & webUSB
   if (usb_web.available()) echo_all(usb_web.read());
   // From Serial to both Serial & webUSB
-  if (Serial.available())   echo_all(Serial.read());
+  if (Serial.available())  echo_all(Serial.read());
   threads.run();
 }
 
@@ -216,7 +216,7 @@ void refreshDeviceData() {
 void writeDeviceData() {
   deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
 
-  if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))){
+  if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))) {
     Serial.println(F("error writing EEPROM"));
   }
 }
@@ -330,7 +330,7 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
     Serial.print(F("hub crc mismatch"));
     return;
   }
-  if (hubData.totalCurrent > MAMP_OFFSET) { hubData.totalCurrent -= MAMP_OFFSET;}
+  if (hubData.totalCurrent > MAMP_OFFSET) {hubData.totalCurrent -= MAMP_OFFSET;}
 }
 
 void armSystem() {
@@ -442,9 +442,9 @@ void displayTime(int val) {
   int minutes = val / 60;  // numberOfMinutes(val);
   int seconds = numberOfSeconds(val);
 
-  printDigits(minutes);
+  display.print(convertToDigits(minutes));
   display.print(F(":"));
-  printDigits(seconds);
+  display.print(convertToDigits(seconds));
 }
 
 void displayPage0() {
