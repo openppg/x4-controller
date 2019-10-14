@@ -6,6 +6,7 @@
 #include <Adafruit_DRV2605.h>   // haptic controller
 #include <Adafruit_SSD1306.h>   // screen
 #include <Adafruit_SleepyDog.h> // watchdog
+#include "Adafruit_TinyUSB.h"
 #include <AdjustableButtonConfig.h>
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
@@ -50,6 +51,10 @@ using namespace ace_button;
 
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
 Adafruit_DRV2605 vibe;
+
+// USB WebUSB object
+Adafruit_USBD_WebUSB usb_web;
+WEBUSB_URL_DEF(landingPage, 1 /*https*/, "adafruit.github.io/Adafruit_TinyUSB_Arduino/examples/webusb-serial");
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 ResponsiveAnalogRead analogBatt(BATT_IN, false);
@@ -119,14 +124,18 @@ static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;
 static STR_DEVICE_DATA deviceData;
 
+// the setup function runs once when you press reset or power the board
 void setup() {
-  delay(250);  // power-up safety delay
+  pinMode(LED_SW, OUTPUT);
+
+  usb_web.begin();
+  usb_web.setLandingPage(&landingPage);
+  usb_web.setLineStateCallback(line_state_callback);
+
+  Serial.begin(115200);
   Serial5.begin(115200);
   Serial5.setTimeout(5);
 
-  uint8_t eepStatus = eep.begin(eep.twiClock400kHz);  // go fast
-
-  Serial.begin(115200);
   Serial.print(F("Booting up (USB) V"));
   Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
@@ -159,18 +168,42 @@ void setup() {
   throttleThread.setInterval(22);
 
   int countdownMS = Watchdog.enable(4000);
+  uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   refreshDeviceData();
+}
+
+// function to echo to both Serial and WebUSB
+void echo_all(char chr) { // from adafruit example
+  Serial.write(chr);
+  if ( chr == '\r' ) Serial.write('\n');
+  usb_web.write(chr);
+}
+
+// main loop - everything runs in threads
+void loop() {
+  Watchdog.reset();
+  // from WebUSB to both Serial & webUSB
+  if (usb_web.available()) echo_all(usb_web.read());
+  // From Serial to both Serial & webUSB
+  if (Serial.available())   echo_all(Serial.read());
+  threads.run();
+}
+
+void line_state_callback(bool connected) {
+  digitalWrite(LED_2, connected);
+
+  if ( connected ) usb_web.println("OpenPPG WebUSB Serial example");
 }
 
 void refreshDeviceData() {
   uint8_t tempBuf[sizeof(STR_DEVICE_DATA)];
   if (0 != eep.read(0, tempBuf, sizeof(STR_DEVICE_DATA))) {
-    Serial.println(F("error reading EEPROM"));
+    //Serial.println(F("error reading EEPROM"));
   }
   memcpy((uint8_t*)&deviceData, tempBuf, sizeof(STR_DEVICE_DATA));
   uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
   if (crc != deviceData.crc) {
-    Serial.print(F("Memory CRC mismatch. Resetting"));
+    //Serial.print(F("Memory CRC mismatch. Resetting"));
 
     deviceData = STR_DEVICE_DATA();
     deviceData.version_major = VERSION_MAJOR;
@@ -186,12 +219,6 @@ void writeDeviceData() {
   if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))){
     Serial.println(F("error writing EEPROM"));
   }
-}
-
-// main loop - everything runs in threads
-void loop() {
-  Watchdog.reset();
-  threads.run();
 }
 
 void checkButtons() {
