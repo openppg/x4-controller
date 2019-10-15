@@ -54,7 +54,7 @@ Adafruit_DRV2605 vibe;
 
 // USB WebUSB object
 Adafruit_USBD_WebUSB usb_web;
-WEBUSB_URL_DEF(landingPage, 1 /*https*/, "adafruit.github.io/Adafruit_TinyUSB_Arduino/examples/webusb-serial");
+WEBUSB_URL_DEF(landingPage, 1 /*https*/, "openppg.github.io/openppg-config");
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 ResponsiveAnalogRead analogBatt(BATT_IN, false);
