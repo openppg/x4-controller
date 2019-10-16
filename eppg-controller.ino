@@ -78,6 +78,8 @@ uint32_t armedAtMilis = 0;
 uint32_t cruisedAtMilis = 0;
 unsigned int armedSecs = 0;
 unsigned int last_throttle = 0;
+int screen_rotation = 2;
+
 
 #pragma message "Warning: OpenPPG software is in beta"
 
@@ -176,6 +178,13 @@ void setup() {
 void echo_all(char chr) { // from adafruit example
   Serial.write(chr);
   if ( chr == '\r' ) Serial.write('\n');
+  if ( chr == 'r' ) {
+    screen_rotation = 2;
+    initDisplay();
+  } else if ( chr == 'l' ) {
+    screen_rotation = 0;
+    initDisplay();
+  };
   usb_web.write(chr);
 }
 
@@ -267,7 +276,7 @@ void initButtons() {
 void initDisplay() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.clearDisplay();
-  display.setRotation(2);  // for right hand throttle
+  display.setRotation(screen_rotation);  // for right hand throttle
   display.setTextSize(3);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
