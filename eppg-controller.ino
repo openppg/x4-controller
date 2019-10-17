@@ -8,6 +8,7 @@
 #include <Adafruit_SleepyDog.h> // watchdog
 #include "Adafruit_TinyUSB.h"
 #include <AdjustableButtonConfig.h>
+#include <ArduinoJson.h>
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
 #include <StaticThreadController.h>
@@ -78,8 +79,6 @@ uint32_t armedAtMilis = 0;
 uint32_t cruisedAtMilis = 0;
 unsigned int armedSecs = 0;
 unsigned int last_throttle = 0;
-int screen_rotation = 2;
-
 
 #pragma message "Warning: OpenPPG software is in beta"
 
@@ -118,9 +117,11 @@ typedef struct {
   uint8_t version_major;
   uint8_t version_minor;
   uint16_t armed_time;
+  uint8_t screen_rotation;
   uint16_t crc;
 }STR_DEVICE_DATA;
 #pragma pack(pop)
+// TODO: Handle multiple versions of device data and migrate
 
 static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;
@@ -178,13 +179,7 @@ void setup() {
 void echo_all(char chr) { // from adafruit example
   Serial.write(chr);
   if ( chr == '\r' ) Serial.write('\n');
-  if ( chr == 'r' ) {
-    screen_rotation = 2;
-    initDisplay();
-  } else if ( chr == 'l' ) {
-    screen_rotation = 0;
-    initDisplay();
-  };
+
   usb_web.write(chr);
 }
 
@@ -192,7 +187,7 @@ void echo_all(char chr) { // from adafruit example
 void loop() {
   Watchdog.reset();
   // from WebUSB to both Serial & webUSB
-  if (usb_web.available()) echo_all(usb_web.read());
+  if (usb_web.available()) parse_usb_serial();
   // From Serial to both Serial & webUSB
   if (Serial.available())  echo_all(Serial.read());
   threads.run();
@@ -201,7 +196,7 @@ void loop() {
 void line_state_callback(bool connected) {
   digitalWrite(LED_2, connected);
 
-  if ( connected ) usb_web.println("OpenPPG WebUSB Serial example");
+  if ( connected ) send_usb_serial();
 }
 
 void refreshDeviceData() {
@@ -276,7 +271,7 @@ void initButtons() {
 void initDisplay() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.clearDisplay();
-  display.setRotation(screen_rotation);  // for right hand throttle
+  display.setRotation(deviceData.screen_rotation);
   display.setTextSize(3);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
@@ -503,4 +498,30 @@ void displayVersions() {
   display.setTextSize(2);
   displayTime(deviceData.armed_time);
   display.print(F(" h:m"));
+}
+
+void parse_usb_serial() {
+  deserializeJson(doc, usb_web);
+  int major_v = doc["major_v"];  // 4
+  int minor_v = doc["minor_v"];  // 1
+  const char* screen_rotation = doc["screen_rot"];  // "l/r"
+
+  deviceData.screen_rotation = (String)screen_rotation == "l" ? 2 : 0;
+  initDisplay();
+  writeDeviceData();
+  send_usb_serial();
+}
+
+void send_usb_serial() {
+  const size_t capacity = JSON_OBJECT_SIZE(4);
+  DynamicJsonDocument doc(capacity);
+
+  doc["major_v"] = VERSION_MAJOR;
+  doc["minor_v"] = VERSION_MINOR;
+  doc["screen_rot"] = deviceData.screen_rotation == 2 ? "l" : "r";
+  doc["armed_time"] = deviceData.armed_time;
+
+  char output[128];
+  serializeJson(doc, output);
+  usb_web.println(output);
 }
