@@ -104,6 +104,8 @@ typedef struct {
   uint16_t avgRpm;
   uint8_t avgCapTemp;
   uint8_t avgFetTemp;
+  int16_t baroTemp;
+  uint32_t baroPressure;
   uint16_t crc;
 }STR_HUB2CTRL_MSG;
 
@@ -418,6 +420,18 @@ void displayTime(int val) {
   printDigits(minutes);
   display.print(F(":"));
   printDigits(seconds);
+}
+
+void displayAlt() {
+  // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
+  float seaLevel = 1013.25;  // hardcode for now
+  float atmospheric = hubData.baroPressure / 100.0F;
+  float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
+
+  int ft = round(altitudeM * 3.28084);
+  display.print(ft, 1);
+  display.setTextSize(2);
+  display.println(F("ft"));
 }
 
 void displayPage0() {
