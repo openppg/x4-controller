@@ -81,7 +81,6 @@ unsigned int last_throttle = 0;
 #define CTRL_VER 0x00
 #define CTRL2HUB_ID 0x10
 #define HUB2CTRL_ID 0x20
-#define HUB2CTRL_SIZE 22
 
 #pragma pack(push, 1)
 typedef struct {
@@ -280,11 +279,12 @@ void sendToHub(int throttle_val) {
 }
 
 void handleHubResonse() {
-  uint8_t serialData[HUB2CTRL_SIZE];
+  int readSize = sizeof(STR_HUB2CTRL_MSG);
+  uint8_t serialData[readSize];
 
   while (Serial.available() > 0) {
     memset(serialData, 0, sizeof(serialData));
-    int size = Serial.readBytes(serialData, HUB2CTRL_SIZE);
+    int size = Serial.readBytes(serialData, readSize);
     receiveHubData(serialData, size);
   }
   Serial.flush();
@@ -425,11 +425,14 @@ void displayTime(int val) {
 void displayAlt() {
   // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
   float seaLevel = 1013.25;  // hardcode for now
+
   float atmospheric = hubData.baroPressure / 100.0F;
   float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
 
   int ft = round(altitudeM * 3.28084);
+  // int tempF = hubData.baroTemp * 9/5 + 32
   display.print(ft, 1);
+  // display.print(atmospheric, 1);
   display.setTextSize(2);
   display.println(F("ft"));
 }
@@ -454,6 +457,7 @@ void displayPage1() {
   display.println(F("ah"));
   addVSpace();
   display.setTextSize(3);
+  // displayAlt();
   displayTime(armedSecs);
 }
 
