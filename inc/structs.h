@@ -39,6 +39,7 @@ typedef struct {
   uint16_t sea_pressure;
   bool metric_temp;
   bool metric_alt;
+  uint16_t unused;
   uint16_t crc;
 }STR_DEVICE_DATA_V2;
 #pragma pack(pop)
