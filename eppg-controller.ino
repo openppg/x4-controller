@@ -519,6 +519,8 @@ void displayVersions() {
 }
 
 void parse_usb_serial() {
+  const size_t capacity = JSON_OBJECT_SIZE(4);
+  DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
   int major_v = doc["major_v"];  // 4
   int minor_v = doc["minor_v"];  // 1

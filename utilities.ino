@@ -85,8 +85,8 @@ void printChipId() {
   ptr++;
   val4 = *ptr;
 
-  SerialUSB.print("chip id: 0x");
+  Serial.print("chip id: 0x");
   char buf[33];
   sprintf(buf, "%8x%8x%8x%8x", val1, val2, val3, val4);
-  SerialUSB.println(buf);
+  Serial.println(buf);
 }
