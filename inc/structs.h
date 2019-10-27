@@ -42,7 +42,6 @@ typedef struct {
   uint16_t crc;
 }STR_DEVICE_DATA_V2;
 #pragma pack(pop)
-// TODO: Handle multiple versions of device data and migrate
 
 static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;

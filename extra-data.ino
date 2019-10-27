@@ -12,13 +12,44 @@ void refreshDeviceData() {
   }
   memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
   uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
-  if (crc != deviceData.crc) {
+  if(deviceData.version_major == 4 && deviceData.version_minor == 0){
+    bool upgraded = upgradeDeviceData();
+    // TODO: add upgrade complete melody
+  } else if (crc != deviceData.crc) {
     //Serial.print(F("Memory CRC mismatch. Resetting"));
     resetDeviceData();
     return;
   }
 }
 
+bool upgradeDeviceData(){
+  uint8_t tempBuf[sizeof(deviceDataV1)];
+
+  if (0 != eep.read(0, tempBuf, sizeof(deviceDataV1))) {
+    return false;
+  }
+  memcpy((uint8_t*)&deviceDataV1, tempBuf, sizeof(deviceDataV1));
+  uint16_t crc = crc16((uint8_t*)&deviceDataV1, sizeof(deviceDataV1) - 2);
+  if (crc != deviceData.crc) {
+    //Serial.print(F("Memory CRC mismatch. Resetting"));
+    resetDeviceData();
+    return false;
+  }
+
+  deviceData = STR_DEVICE_DATA_V2();
+  deviceData.version_major = VERSION_MAJOR;
+  deviceData.version_minor = VERSION_MINOR;
+  deviceData.screen_rotation = 2;
+  deviceData.sea_pressure = 101325; // 1013.25 mbar
+  deviceData.metric_temp = true;
+  deviceData.metric_alt = true;
+
+  deviceData.armed_time = deviceDataV1.armed_time;
+
+  writeDeviceData();
+
+  return true;
+}
 void resetDeviceData(){
     deviceData = STR_DEVICE_DATA_V2();
     deviceData.version_major = VERSION_MAJOR;
