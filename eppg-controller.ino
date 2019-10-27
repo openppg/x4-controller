@@ -6,7 +6,9 @@
 #include <Adafruit_DRV2605.h>   // haptic controller
 #include <Adafruit_SSD1306.h>   // screen
 #include <Adafruit_SleepyDog.h> // watchdog
+#include "Adafruit_TinyUSB.h"
 #include <AdjustableButtonConfig.h>
+#include <ArduinoJson.h>
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
 #include <StaticThreadController.h>
@@ -43,13 +45,17 @@ using namespace ace_button;
 #define MAMP_OFFSET 200
 
 #define VERSION_MAJOR 4
-#define VERSION_MINOR 0
+#define VERSION_MINOR 1
 
 #define CRUISE_GRACE 2  // 2 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
 
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
 Adafruit_DRV2605 vibe;
+
+// USB WebUSB object
+Adafruit_USBD_WebUSB usb_web;
+WEBUSB_URL_DEF(landingPage, 1 /*https*/, "openppg.github.io/openppg-config");
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 ResponsiveAnalogRead analogBatt(BATT_IN, false);
@@ -112,24 +118,30 @@ typedef struct {
   uint8_t version_major;
   uint8_t version_minor;
   uint16_t armed_time;
+  uint8_t screen_rotation;
   uint16_t crc;
 }STR_DEVICE_DATA;
 #pragma pack(pop)
+// TODO: Handle multiple versions of device data and migrate
 
 static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;
 static STR_DEVICE_DATA deviceData;
 
+// the setup function runs once when you press reset or power the board
 void setup() {
-  delay(250);  // power-up safety delay
+  pinMode(LED_SW, OUTPUT);
+
+  usb_web.begin();
+  usb_web.setLandingPage(&landingPage);
+  usb_web.setLineStateCallback(line_state_callback);
+
   Serial.begin(115200);
-  Serial.setTimeout(5);
+  Serial5.begin(115200);
+  Serial5.setTimeout(5);
 
-  uint8_t eepStatus = eep.begin(eep.twiClock400kHz);  // go fast
-
-  SerialUSB.begin(115200);
-  SerialUSB.print(F("Booting up (USB) V"));
-  SerialUSB.print(VERSION_MAJOR + "." + VERSION_MINOR);
+  Serial.print(F("Booting up (USB) V"));
+  Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
@@ -160,18 +172,43 @@ void setup() {
   throttleThread.setInterval(22);
 
   int countdownMS = Watchdog.enable(4000);
+  uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   refreshDeviceData();
+}
+
+// function to echo to both Serial and WebUSB
+void echo_all(char chr) { // from adafruit example
+  Serial.write(chr);
+  if ( chr == '\r' ) Serial.write('\n');
+
+  usb_web.write(chr);
+}
+
+// main loop - everything runs in threads
+void loop() {
+  Watchdog.reset();
+  // from WebUSB to both Serial & webUSB
+  if (usb_web.available()) parse_usb_serial();
+  // From Serial to both Serial & webUSB
+  if (Serial.available())  echo_all(Serial.read());
+  threads.run();
+}
+
+void line_state_callback(bool connected) {
+  digitalWrite(LED_2, connected);
+
+  if ( connected ) send_usb_serial();
 }
 
 void refreshDeviceData() {
   uint8_t tempBuf[sizeof(STR_DEVICE_DATA)];
   if (0 != eep.read(0, tempBuf, sizeof(STR_DEVICE_DATA))) {
-    SerialUSB.println(F("error reading EEPROM"));
+    //Serial.println(F("error reading EEPROM"));
   }
   memcpy((uint8_t*)&deviceData, tempBuf, sizeof(STR_DEVICE_DATA));
   uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
   if (crc != deviceData.crc) {
-    SerialUSB.print(F("Memory CRC mismatch. Resetting"));
+    //Serial.print(F("Memory CRC mismatch. Resetting"));
 
     deviceData = STR_DEVICE_DATA();
     deviceData.version_major = VERSION_MAJOR;
@@ -184,15 +221,9 @@ void refreshDeviceData() {
 void writeDeviceData() {
   deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
 
-  if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))){
-    SerialUSB.println(F("error writing EEPROM"));
+  if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))) {
+    Serial.println(F("error writing EEPROM"));
   }
-}
-
-// main loop - everything runs in threads
-void loop() {
-  Watchdog.reset();
-  threads.run();
 }
 
 void checkButtons() {
@@ -241,7 +272,7 @@ void initButtons() {
 void initDisplay() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.clearDisplay();
-  display.setRotation(2);  // for right hand throttle
+  display.setRotation(deviceData.screen_rotation);
   display.setTextSize(3);
   display.setTextColor(WHITE);
   display.setCursor(0, 0);
@@ -273,8 +304,8 @@ void sendToHub(int throttle_val) {
   controlData.crc = crc16((uint8_t*)&controlData, sizeof(STR_CTRL2HUB_MSG) - 2);
 
   digitalWrite(RX_TX_TOGGLE, HIGH);
-  Serial.write((uint8_t*)&controlData, 8);  // send to hub
-  Serial.flush();
+  Serial5.write((uint8_t*)&controlData, 8);  // send to hub
+  Serial5.flush();
   digitalWrite(RX_TX_TOGGLE, LOW);
 }
 
@@ -282,30 +313,30 @@ void handleHubResonse() {
   int readSize = sizeof(STR_HUB2CTRL_MSG);
   uint8_t serialData[readSize];
 
-  while (Serial.available() > 0) {
+  while (Serial5.available() > 0) {
     memset(serialData, 0, sizeof(serialData));
-    int size = Serial.readBytes(serialData, readSize);
+    int size = Serial5.readBytes(serialData, HUB2CTRL_SIZE);
     receiveHubData(serialData, size);
   }
-  Serial.flush();
+  Serial5.flush();
 }
 
 void receiveHubData(uint8_t *buf, uint32_t size) {
   if (size != sizeof(STR_HUB2CTRL_MSG)) {
-    SerialUSB.print("wrong size ");
-    SerialUSB.print(size);
-    SerialUSB.print(" should be ");
-    SerialUSB.println(sizeof(STR_HUB2CTRL_MSG));
+    Serial.print("wrong size ");
+    Serial.print(size);
+    Serial.print(" should be ");
+    Serial.println(sizeof(STR_HUB2CTRL_MSG));
     return;
   }
 
   memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
   uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
   if (crc != hubData.crc) {
-    SerialUSB.print(F("hub crc mismatch"));
+    Serial.print(F("hub crc mismatch"));
     return;
   }
-  if (hubData.totalCurrent > MAMP_OFFSET) { hubData.totalCurrent -= MAMP_OFFSET;}
+  if (hubData.totalCurrent > MAMP_OFFSET) {hubData.totalCurrent -= MAMP_OFFSET;}
 }
 
 void armSystem() {
@@ -417,9 +448,9 @@ void displayTime(int val) {
   int minutes = val / 60;  // numberOfMinutes(val);
   int seconds = numberOfSeconds(val);
 
-  printDigits(minutes);
+  display.print(convertToDigits(minutes));
   display.print(F(":"));
-  printDigits(seconds);
+  display.print(convertToDigits(seconds));
 }
 
 void displayAlt() {
@@ -485,4 +516,30 @@ void displayVersions() {
   display.setTextSize(2);
   displayTime(deviceData.armed_time);
   display.print(F(" h:m"));
+}
+
+void parse_usb_serial() {
+  deserializeJson(doc, usb_web);
+  int major_v = doc["major_v"];  // 4
+  int minor_v = doc["minor_v"];  // 1
+  const char* screen_rotation = doc["screen_rot"];  // "l/r"
+
+  deviceData.screen_rotation = (String)screen_rotation == "l" ? 2 : 0;
+  initDisplay();
+  writeDeviceData();
+  send_usb_serial();
+}
+
+void send_usb_serial() {
+  const size_t capacity = JSON_OBJECT_SIZE(4);
+  DynamicJsonDocument doc(capacity);
+
+  doc["major_v"] = VERSION_MAJOR;
+  doc["minor_v"] = VERSION_MINOR;
+  doc["screen_rot"] = deviceData.screen_rotation == 2 ? "l" : "r";
+  doc["armed_time"] = deviceData.armed_time;
+
+  char output[128];
+  serializeJson(doc, output);
+  usb_web.println(output);
 }
