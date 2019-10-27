@@ -194,38 +194,6 @@ void loop() {
   threads.run();
 }
 
-void line_state_callback(bool connected) {
-  digitalWrite(LED_2, connected);
-
-  if ( connected ) send_usb_serial();
-}
-
-void refreshDeviceData() {
-  uint8_t tempBuf[sizeof(STR_DEVICE_DATA)];
-  if (0 != eep.read(0, tempBuf, sizeof(STR_DEVICE_DATA))) {
-    //Serial.println(F("error reading EEPROM"));
-  }
-  memcpy((uint8_t*)&deviceData, tempBuf, sizeof(STR_DEVICE_DATA));
-  uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
-  if (crc != deviceData.crc) {
-    //Serial.print(F("Memory CRC mismatch. Resetting"));
-
-    deviceData = STR_DEVICE_DATA();
-    deviceData.version_major = VERSION_MAJOR;
-    deviceData.version_minor = VERSION_MINOR;
-    writeDeviceData();
-    return;
-  }
-}
-
-void writeDeviceData() {
-  deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
-
-  if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))) {
-    Serial.println(F("error writing EEPROM"));
-  }
-}
-
 void checkButtons() {
   button_side.check();
   button_top.check();
@@ -315,7 +283,7 @@ void handleHubResonse() {
 
   while (Serial5.available() > 0) {
     memset(serialData, 0, sizeof(serialData));
-    int size = Serial5.readBytes(serialData, HUB2CTRL_SIZE);
+    int size = Serial5.readBytes(serialData, sizeof(STR_HUB2CTRL_MSG));
     receiveHubData(serialData, size);
   }
   Serial5.flush();
@@ -516,32 +484,4 @@ void displayVersions() {
   display.setTextSize(2);
   displayTime(deviceData.armed_time);
   display.print(F(" h:m"));
-}
-
-void parse_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(4);
-  DynamicJsonDocument doc(capacity);
-  deserializeJson(doc, usb_web);
-  int major_v = doc["major_v"];  // 4
-  int minor_v = doc["minor_v"];  // 1
-  const char* screen_rotation = doc["screen_rot"];  // "l/r"
-
-  deviceData.screen_rotation = (String)screen_rotation == "l" ? 2 : 0;
-  initDisplay();
-  writeDeviceData();
-  send_usb_serial();
-}
-
-void send_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(4);
-  DynamicJsonDocument doc(capacity);
-
-  doc["major_v"] = VERSION_MAJOR;
-  doc["minor_v"] = VERSION_MINOR;
-  doc["screen_rot"] = deviceData.screen_rotation == 2 ? "l" : "r";
-  doc["armed_time"] = deviceData.armed_time;
-
-  char output[128];
-  serializeJson(doc, output);
-  usb_web.println(output);
 }
