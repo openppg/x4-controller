@@ -384,7 +384,7 @@ void displayTime(int val) {
 
 void displayAlt() {
   // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
-  float seaLevel = 1013.25;  // hardcode for now
+  float seaLevel = deviceData.sea_pressure / 100.0F;
 
   float atmospheric = hubData.baroPressure / 100.0F;
   float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));

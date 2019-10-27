@@ -28,12 +28,23 @@ typedef struct {
   uint8_t version_major;
   uint8_t version_minor;
   uint16_t armed_time;
-  uint8_t screen_rotation;
   uint16_t crc;
-}STR_DEVICE_DATA;
+}STR_DEVICE_DATA_V1;
+
+typedef struct {
+  uint8_t version_major;
+  uint8_t version_minor;
+  uint16_t armed_time;
+  uint8_t screen_rotation;
+  uint16_t sea_pressure;
+  bool metric_temp;
+  bool metric_alt;
+  uint16_t crc;
+}STR_DEVICE_DATA_V2;
 #pragma pack(pop)
 // TODO: Handle multiple versions of device data and migrate
 
 static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;
-static STR_DEVICE_DATA deviceData;
+static STR_DEVICE_DATA_V1 deviceDataV1;
+static STR_DEVICE_DATA_V2 deviceData;
