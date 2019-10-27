@@ -2,11 +2,14 @@
 
 Arduino based logic for OpenPPG Throttle Controller
 
-#### This master branch is only for the latest OpenPPG hardware (Batch 4)
+#### This master branch is only for testing the latest OpenPPG hardware (Batch 5) (beta)
+It may not be stable and is not recommended for flying
 
-> For batch 2 (Arduino nano based) controllers please see the [batch-2 branch](https://github.com/openppg/eppg-controller/tree/batch-2).
+> For batch 4 controllers please see the [batch-4 branch](https://github.com/openppg/eppg-controller/tree/batch-4).
 
 > For batch 3 (non-telemetry) controllers please see the [batch-3 branch](https://github.com/openppg/eppg-controller/tree/batch-3).
+
+> For batch 2 (Arduino nano based) controllers please see the [batch-2 branch](https://github.com/openppg/eppg-controller/tree/batch-2).
 
 ## MacOS
 
