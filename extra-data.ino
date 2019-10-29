@@ -79,7 +79,7 @@ void line_state_callback(bool connected) {
 }
 
 void parse_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(7) + 90;
+  const size_t capacity = JSON_OBJECT_SIZE(8) + 90;
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
   int major_v = doc["major_v"];  // 4
@@ -105,9 +105,9 @@ void send_usb_serial() {
   doc["armed_time"] = deviceData.armed_time;
   doc["metric_temp"] = deviceData.metric_temp;
   doc["metric_alt"] = deviceData.metric_alt;
-  doc["device_id"] = "KD167A013982"; // TODO read from MCU
+  doc["device_id"] = chipId();
 
-  char output[128];
+  char output[256];
   serializeJson(doc, output);
   usb_web.println(output);
 }
