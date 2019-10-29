@@ -74,7 +74,7 @@ void printDeviceData() {
   Serial.println(deviceData.crc);
 }
 
-void printChipId() {
+String chipId() {
   volatile uint32_t val1, val2, val3, val4;
   volatile uint32_t *ptr1 = (volatile uint32_t *)0x0080A00C;
   val1 = *ptr1;
@@ -85,8 +85,8 @@ void printChipId() {
   ptr++;
   val4 = *ptr;
 
-  Serial.print("chip id: 0x");
-  char buf[33];
-  sprintf(buf, "%8x%8x%8x%8x", val1, val2, val3, val4);
-  Serial.println(buf);
+  Serial.print("chip id: ");
+  char id_buf[33];
+  sprintf(id_buf, "%8x%8x%8x%8x", val1, val2, val3, val4);
+  return String(id_buf);
 }
