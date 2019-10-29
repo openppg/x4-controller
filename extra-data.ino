@@ -79,7 +79,7 @@ void line_state_callback(bool connected) {
 }
 
 void parse_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(4);
+  const size_t capacity = JSON_OBJECT_SIZE(7) + 90;
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
   int major_v = doc["major_v"];  // 4
@@ -87,13 +87,16 @@ void parse_usb_serial() {
   const char* screen_rotation = doc["screen_rot"];  // "l/r"
 
   deviceData.screen_rotation = (String)screen_rotation == "l" ? 2 : 0;
+  deviceData.sea_pressure = doc["sea_pressure"];  // 10325
+  deviceData.metric_temp = doc["metric_temp"];  // true
+  deviceData.metric_alt = doc["metric_alt"];  // true
   initDisplay();
   writeDeviceData();
   send_usb_serial();
 }
 
 void send_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(4);
+  const size_t capacity = JSON_OBJECT_SIZE(8) + 90;
   DynamicJsonDocument doc(capacity);
 
   doc["major_v"] = VERSION_MAJOR;
@@ -102,6 +105,7 @@ void send_usb_serial() {
   doc["armed_time"] = deviceData.armed_time;
   doc["metric_temp"] = deviceData.metric_temp;
   doc["metric_alt"] = deviceData.metric_alt;
+  doc["device_id"] = "KD167A013982"; // TODO read from MCU
 
   char output[128];
   serializeJson(doc, output);
