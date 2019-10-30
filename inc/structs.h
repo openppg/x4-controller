@@ -36,7 +36,7 @@ typedef struct {
   uint8_t version_minor;
   uint16_t armed_time;
   uint8_t screen_rotation;
-  uint16_t sea_pressure;
+  float sea_pressure;
   bool metric_temp;
   bool metric_alt;
   uint16_t unused;

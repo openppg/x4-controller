@@ -361,7 +361,10 @@ void updateDisplay() {
   case 2:  // shows volts and kw
     displayPage2();
     break;
-  case 3:  // shows version and hour meter
+  case 3:  // shows altitude and temp
+    displayPage3();
+    break;
+  case 4:  // shows version and hour meter
     displayVersions();
     break;
   default:
@@ -384,8 +387,8 @@ void displayTime(int val) {
 
 void displayAlt() {
   // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
-  float seaLevel = deviceData.sea_pressure / 100.0F;
 
+  float seaLevel = deviceData.sea_pressure;
   float atmospheric = hubData.baroPressure / 100.0F;
   float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
 
@@ -417,7 +420,6 @@ void displayPage1() {
   display.println(F("ah"));
   addVSpace();
   display.setTextSize(3);
-  // displayAlt();
   displayTime(armedSecs);
 }
 
@@ -435,6 +437,15 @@ void displayPage2() {
   display.println(F("kw"));
 }
 
+void displayPage3() {
+  display.print(69, 1);
+  display.setTextSize(2);
+  display.println(F("of"));
+  addVSpace();
+  display.setTextSize(3);
+  displayAlt();
+}
+
 void displayVersions() {
   display.setTextSize(2);
   display.print(F("v"));
@@ -445,4 +456,6 @@ void displayVersions() {
   display.setTextSize(2);
   displayTime(deviceData.armed_time);
   display.print(F(" h:m"));
+  // addVSpace();
+  // display.print(chipId()); // TODO: trim down
 }

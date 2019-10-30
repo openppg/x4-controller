@@ -1,7 +1,7 @@
 // Copyright 2019 <Zach Whitehead>
 // OpenPPG
 
-#define LAST_PAGE 2  // starts at 0
+#define LAST_PAGE 3  // starts at 0
 
 // Map float values
 double mapf(double x, double in_min, double in_max, double out_min, double out_max) {

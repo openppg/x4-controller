@@ -1,6 +1,9 @@
 // Copyright 2019 <Zach Whitehead>
 // OpenPPG
 
+
+#define DEFAULT_SEA_PRESSURE 1013.25
+
 // ** Logic for EEPROM **
 
 void refreshDeviceData() {
@@ -40,7 +43,7 @@ bool upgradeDeviceData(){
   deviceData.version_major = VERSION_MAJOR;
   deviceData.version_minor = VERSION_MINOR;
   deviceData.screen_rotation = 2;
-  deviceData.sea_pressure = 101325; // 1013.25 mbar
+  deviceData.sea_pressure = DEFAULT_SEA_PRESSURE;  // 1013.25 mbar
   deviceData.metric_temp = true;
   deviceData.metric_alt = true;
 
@@ -55,7 +58,7 @@ void resetDeviceData(){
     deviceData.version_major = VERSION_MAJOR;
     deviceData.version_minor = VERSION_MINOR;
     deviceData.screen_rotation = 2;
-    deviceData.sea_pressure = 101325; // 1013.25 mbar
+    deviceData.sea_pressure = DEFAULT_SEA_PRESSURE;  // 1013.25 mbar
     deviceData.metric_temp = true;
     deviceData.metric_alt = true;
     writeDeviceData();
@@ -87,11 +90,11 @@ void parse_usb_serial() {
   const char* screen_rotation = doc["screen_rot"];  // "l/r"
 
   deviceData.screen_rotation = (String)screen_rotation == "l" ? 2 : 0;
-  deviceData.sea_pressure = doc["sea_pressure"];  // 10325
-  deviceData.metric_temp = doc["metric_temp"];  // true
-  deviceData.metric_alt = doc["metric_alt"];  // true
+  //deviceData.sea_pressure = doc["sea_pressure"];  // 10325
+  //deviceData.metric_temp = doc["metric_temp"];  // true
+  //deviceData.metric_alt = doc["metric_alt"];  // true
   initDisplay();
-  writeDeviceData();
+  //writeDeviceData();
   send_usb_serial();
 }
 
