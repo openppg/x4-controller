@@ -392,12 +392,18 @@ void displayAlt() {
   float atmospheric = hubData.baroPressure / 100.0F;
   float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
 
-  int ft = round(altitudeM * 3.28084);
-  // int tempF = hubData.baroTemp * 9/5 + 32
-  display.print(ft, 1);
-  // display.print(atmospheric, 1);
+  int alt = deviceData.metric_alt ? (int)altitudeM : (round(altitudeM * 3.28084));
+  display.print(alt, 1);
   display.setTextSize(2);
-  display.println(F("ft"));
+  display.println(deviceData.metric_alt ? F("m") : F("ft"));
+}
+
+void displayTemp() {
+  int tempC = hubData.baroTemp / 100.0F;
+  int tempF = tempC * 9/5 + 32;
+
+  display.print(deviceData.metric_temp ? tempC : tempF, 1);
+  display.println(deviceData.metric_temp ? F("c") : F("f"));
 }
 
 void displayPage0() {
@@ -438,9 +444,8 @@ void displayPage2() {
 }
 
 void displayPage3() {
-  display.print(69, 1);
   display.setTextSize(2);
-  display.println(F("of"));
+  displayTemp();
   addVSpace();
   display.setTextSize(3);
   displayAlt();
