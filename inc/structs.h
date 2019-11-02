@@ -48,3 +48,5 @@ static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG hubData;
 static STR_DEVICE_DATA_V1 deviceDataV1;
 static STR_DEVICE_DATA_V2 deviceData;
+
+#define DEFAULT_SEA_PRESSURE 1013.25

@@ -1,9 +1,6 @@
 // Copyright 2019 <Zach Whitehead>
 // OpenPPG
 
-
-#define DEFAULT_SEA_PRESSURE 1013.25
-
 // ** Logic for EEPROM **
 
 void refreshDeviceData() {

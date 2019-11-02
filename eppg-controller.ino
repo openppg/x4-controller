@@ -76,6 +76,7 @@ StaticThreadController<4> threads(&ledBlinkThread, &displayThread,
 
 bool armed = false;
 int page = 0;
+int armAltM = 0;
 uint32_t armedAtMilis = 0;
 uint32_t cruisedAtMilis = 0;
 unsigned int armedSecs = 0;
@@ -268,7 +269,7 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
   if (hubData.totalCurrent > MAMP_OFFSET) {hubData.totalCurrent -= MAMP_OFFSET;}
 }
 
-void armSystem() {
+bool armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 70, 33, 0 };
   unsigned int arm_fail_vibes[] = { 14, 3, 0 };
@@ -282,14 +283,16 @@ void armSystem() {
     runVibe(arm_fail_vibes, 3);
     handleArmFail();
     armed = false;
-    return;
+    return false;
   }
   ledBlinkThread.enabled = false;
   armedAtMilis = millis();
+  armAltM = getAltitudeM();
 
   runVibe(arm_vibes, 3);
   setLEDs(HIGH);
   playMelody(arm_melody, 3);
+  return true;
 }
 
 // The event handler for the the buttons
@@ -386,16 +389,27 @@ void displayTime(int val) {
 }
 
 void displayAlt() {
-  // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
+  int altiudeM = 0;
+  if(armAltM > 0 && deviceData.sea_pressure != DEFAULT_SEA_PRESSURE) {  // MSL
+    altiudeM = getAltitudeM();
+  } else {  // AGL
+    altiudeM = getAltitudeM() - armAltM;
+  }
 
-  float seaLevel = deviceData.sea_pressure;
-  float atmospheric = hubData.baroPressure / 100.0F;
-  float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
-
-  int alt = deviceData.metric_alt ? (int)altitudeM : (round(altitudeM * 3.28084));
+  // convert to ft if not using metric
+  int alt = deviceData.metric_alt ? (int)altiudeM : (round(altiudeM * 3.28084));
   display.print(alt, 1);
   display.setTextSize(2);
   display.println(deviceData.metric_alt ? F("m") : F("ft"));
+}
+
+float getAltitudeM(){
+  // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
+  float seaLevel = deviceData.sea_pressure;
+  float atmospheric = hubData.baroPressure / 100.0F;
+  // convert to fahrenheit if not using metric
+  float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
+  return altitudeM;
 }
 
 void displayTemp() {
