@@ -2,6 +2,7 @@
 // OpenPPG
 
 #include "libraries/crc.c"      // packet error checking
+#include "inc/config.h"         // device config
 #include "inc/structs.h"        // data structs
 #include <AceButton.h>
 #include <Adafruit_DRV2605.h>   // haptic controller
@@ -19,37 +20,6 @@
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
 using namespace ace_button;
-
-// Arduino Pins
-#define BATT_IN       A1  // Battery voltage in (3.3v max)
-#define BUTTON_TOP    6   // arm/disarm button_top
-#define BUTTON_SIDE   7   // secondary button_top
-#define BUZZER_PIN    5   // output for buzzer speaker
-#define LED_SW        9   // output for LED on button_top switch
-#define LED_2         0   // output for LED 2
-#define LED_3         38  // output for LED 3
-#define THROTTLE_PIN  A0  // throttle pot input
-#define RX_TX_TOGGLE  11  // rs485
-
-#define CTRL_VER 0x00
-#define CTRL2HUB_ID 0x10
-#define HUB2CTRL_ID 0x20
-
-#define ARM_VERIFY false
-#define CURRENT_DIVIDE 100.0
-#define VOLTAGE_DIVIDE 1000.0
-
-#define BATT_MIN_V 49    // 42v for 6S
-#define BATT_MAX_V 58.8  // 50v for 6S
-
-// Calibration
-#define MAMP_OFFSET 200
-
-#define VERSION_MAJOR 4
-#define VERSION_MINOR 1
-
-#define CRUISE_GRACE 2  // 2 sec period to get off throttle
-#define CRUISE_MAX 300  // 5 min max cruising
 
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
 Adafruit_DRV2605 vibe;
@@ -83,12 +53,6 @@ unsigned int armedSecs = 0;
 unsigned int last_throttle = 0;
 
 #pragma message "Warning: OpenPPG software is in beta"
-
-// TODO(zach): Move these to header type files
-#define INTERFACE_HUB
-#define CTRL_VER 0x00
-#define CTRL2HUB_ID 0x10
-#define HUB2CTRL_ID 0x20
 
 // the setup function runs once when you press reset or power the board
 void setup() {
