@@ -28,3 +28,5 @@
 
 #define CRUISE_GRACE 2  // 2 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
+
+#define DEFAULT_SEA_PRESSURE 1013.25

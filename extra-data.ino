@@ -82,11 +82,8 @@ void parse_usb_serial() {
   const size_t capacity = JSON_OBJECT_SIZE(8) + 90;
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
-  int major_v = doc["major_v"];  // 4
-  int minor_v = doc["minor_v"];  // 1
-  const char* screen_rotation = doc["screen_rot"];  // "l/r"
+  deviceData.screen_rotation = doc["screen_rot"];  // "2/0"
 
-  deviceData.screen_rotation = (String)screen_rotation == "l" ? 2 : 0;
   //deviceData.sea_pressure = doc["sea_pressure"];  // 10325
   //deviceData.metric_temp = doc["metric_temp"];  // true
   //deviceData.metric_alt = doc["metric_alt"];  // true
@@ -101,7 +98,7 @@ void send_usb_serial() {
 
   doc["major_v"] = VERSION_MAJOR;
   doc["minor_v"] = VERSION_MINOR;
-  doc["screen_rot"] = deviceData.screen_rotation == 2 ? "l" : "r";
+  doc["screen_rot"] = deviceData.screen_rotation;
   doc["armed_time"] = deviceData.armed_time;
   doc["metric_temp"] = deviceData.metric_temp;
   doc["metric_alt"] = deviceData.metric_alt;
