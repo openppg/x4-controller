@@ -19,8 +19,8 @@ typedef struct {
   uint16_t avgRpm;
   uint8_t avgCapTemp;
   uint8_t avgFetTemp;
-  int16_t baroTemp;
-  uint32_t baroPressure;
+  int16_t baroTemp;  // degrees c
+  uint32_t baroPressure; // hpa
   uint16_t crc;
 }STR_HUB2CTRL_MSG;
 
