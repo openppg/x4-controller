@@ -16,6 +16,7 @@ String convertToDigits(byte digits) {
   return digits_string;
 }
 
+// advance to next screen
 int nextPage() {
   if (page >= LAST_PAGE) {
     return page = 0;
@@ -34,6 +35,7 @@ void setLEDs(byte state) {
   digitalWrite(LED_SW, state);
 }
 
+// toggle LEDs
 void blinkLED() {
   byte ledState = !digitalRead(LED_SW);
   setLEDs(ledState);
@@ -74,6 +76,7 @@ void printDeviceData() {
   Serial.println(deviceData.crc);
 }
 
+// get chip serial number (for SAMD21)
 String chipId() {
   volatile uint32_t val1, val2, val3, val4;
   volatile uint32_t *ptr1 = (volatile uint32_t *)0x0080A00C;

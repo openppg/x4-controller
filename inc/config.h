@@ -30,3 +30,6 @@
 #define CRUISE_MAX 300  // 5 min max cruising
 
 #define DEFAULT_SEA_PRESSURE 1013.25
+
+// Library config
+#define NO_ADAFRUIT_SSD1306_COLOR_COMPATIBILITY

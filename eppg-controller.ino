@@ -168,7 +168,7 @@ void initDisplay() {
   display.clearDisplay();
   display.setRotation(deviceData.screen_rotation);
   display.setTextSize(3);
-  display.setTextColor(WHITE);
+  display.setTextColor(SSD1306_BLACK);
   display.setCursor(0, 0);
   display.println(F("OpenPPG"));
   display.print(F("V"));
@@ -299,21 +299,36 @@ bool throttleSafe() {
   return false;
 }
 
+float getAltitudeM(){
+  // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
+  float seaLevel = deviceData.sea_pressure;
+  float atmospheric = hubData.baroPressure / 100.0F;
+  // convert to fahrenheit if not using metric
+  float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
+  return altitudeM;
+}
+
+/********
+ *
+ * Display logic
+ *
+ *******/
+
 void updateDisplay() {
   byte percentage;
   String status;
 
   if (armed) {
     status = F("Armed");
-    display.fillCircle(122, 5, 5, WHITE);
+    display.fillCircle(122, 5, 5, SSD1306_WHITE);
     armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
   } else {
     status = F("Disarmed");
-    display.drawCircle(122, 5, 5, WHITE);
+    display.drawCircle(122, 5, 5, SSD1306_WHITE);
   }
 
   display.setTextSize(1);
-  display.setTextColor(WHITE);
+  display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
   display.println(status);
   display.setTextSize(3);
@@ -365,15 +380,6 @@ void displayAlt() {
   display.print(alt, 1);
   display.setTextSize(2);
   display.println(deviceData.metric_alt ? F("m") : F("ft"));
-}
-
-float getAltitudeM(){
-  // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
-  float seaLevel = deviceData.sea_pressure;
-  float atmospheric = hubData.baroPressure / 100.0F;
-  // convert to fahrenheit if not using metric
-  float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
-  return altitudeM;
 }
 
 void displayTemp() {
