@@ -45,6 +45,7 @@ StaticThreadController<4> threads(&ledBlinkThread, &displayThread,
                                   &throttleThread, &butttonThread);
 
 bool armed = false;
+bool use_hub_v2 = true;
 int page = 0;
 int armAltM = 0;
 uint32_t armedAtMilis = 0;
@@ -135,7 +136,7 @@ byte getBatteryPercent() {
 }
 
 void disarmSystem() {
-  unsigned int disarm_melody[] = { 2093, 1976, 880};
+  unsigned int disarm_melody[] = { 2093, 1976, 880 };
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
   armed = false;
@@ -216,7 +217,16 @@ void handleHubResonse() {
 }
 
 void receiveHubData(uint8_t *buf, uint32_t size) {
-  if (size != sizeof(STR_HUB2CTRL_MSG_V2)) {
+  uint16_t crc;
+  if (size == sizeof(STR_HUB2CTRL_MSG_V2)) {
+    memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V2));
+    crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V2) - 2);
+    use_hub_v2 = true;
+  } else if (size == sizeof(STR_HUB2CTRL_MSG_V1)){
+    memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V1));
+    crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V1) - 2);
+    use_hub_v2 = false;
+  } else {
     Serial.print("wrong size ");
     Serial.print(size);
     Serial.print(" should be ");
@@ -224,8 +234,6 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
     return;
   }
 
-  memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V2));
-  uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V2) - 2);
   if (crc != hubData.crc) {
     Serial.print(F("hub crc mismatch"));
     return;
@@ -429,6 +437,9 @@ void displayPage2() {
 
 void displayPage3() {
   display.setTextSize(2);
+  if (!use_hub_v2) {
+    display.println(F("update"));
+  }
   displayTemp();
   addVSpace();
   display.setTextSize(3);
