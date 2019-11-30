@@ -204,28 +204,28 @@ void sendToHub(int throttle_val) {
 }
 
 void handleHubResonse() {
-  int readSize = sizeof(STR_HUB2CTRL_MSG);
+  int readSize = sizeof(STR_HUB2CTRL_MSG_V2);
   uint8_t serialData[readSize];
 
   while (Serial5.available() > 0) {
     memset(serialData, 0, sizeof(serialData));
-    int size = Serial5.readBytes(serialData, sizeof(STR_HUB2CTRL_MSG));
+    int size = Serial5.readBytes(serialData, sizeof(STR_HUB2CTRL_MSG_V2));
     receiveHubData(serialData, size);
   }
   Serial5.flush();
 }
 
 void receiveHubData(uint8_t *buf, uint32_t size) {
-  if (size != sizeof(STR_HUB2CTRL_MSG)) {
+  if (size != sizeof(STR_HUB2CTRL_MSG_V2)) {
     Serial.print("wrong size ");
     Serial.print(size);
     Serial.print(" should be ");
-    Serial.println(sizeof(STR_HUB2CTRL_MSG));
+    Serial.println(sizeof(STR_HUB2CTRL_MSG_V2));
     return;
   }
 
-  memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
-  uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
+  memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V2));
+  uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V2) - 2);
   if (crc != hubData.crc) {
     Serial.print(F("hub crc mismatch"));
     return;
