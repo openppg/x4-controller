@@ -84,9 +84,9 @@ void parse_usb_serial() {
   deserializeJson(doc, usb_web);
   deviceData.screen_rotation = doc["screen_rot"];  // "2/0"
 
-  deviceData.sea_pressure = doc["sea_pressure"];  // 1013.25
-  //deviceData.metric_temp = doc["metric_temp"];  // true
-  //deviceData.metric_alt = doc["metric_alt"];  // true
+  deviceData.sea_pressure = doc["sea_pressure"];  // 1013.25 mbar
+  deviceData.metric_temp = doc["metric_temp"];  // true/false
+  deviceData.metric_alt = doc["metric_alt"];  // true/false
   initDisplay();
   writeDeviceData();
   send_usb_serial();
