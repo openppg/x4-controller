@@ -8,7 +8,12 @@ double mapf(double x, double in_min, double in_max, double out_min, double out_m
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// For digital time display - prints leading 0
+/**
+ * For digital time display - prints leading 0
+ *
+ * @param digits number to be converted to a string.
+ * @return string `12`, or 07 if `digits` is less than 10.
+ */
 String convertToDigits(byte digits) {
   String digits_string = "";
   if (digits < 10) digits_string.concat("0");
@@ -16,7 +21,11 @@ String convertToDigits(byte digits) {
   return digits_string;
 }
 
-// advance to next screen
+/**
+ * advance to next screen page
+ *
+ * @return the number of next page
+ */
 int nextPage() {
   if (page >= LAST_PAGE) {
     return page = 0;

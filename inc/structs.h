@@ -1,3 +1,5 @@
+// Copyright 2019 <Zach Whitehead>
+
 #pragma pack(push, 1)
 typedef struct {
   uint8_t version;  // packet struct version

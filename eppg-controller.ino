@@ -1,13 +1,13 @@
 // Copyright 2019 <Zach Whitehead>
 // OpenPPG
 
-#include "libraries/crc.c"      // packet error checking
-#include "inc/config.h"         // device config
-#include "inc/structs.h"        // data structs
-#include <AceButton.h>
-#include <Adafruit_DRV2605.h>   // haptic controller
-#include <Adafruit_SSD1306.h>   // screen
-#include <Adafruit_SleepyDog.h> // watchdog
+#include "libraries/crc.c"       // packet error checking
+#include "inc/config.h"          // device config
+#include "inc/structs.h"         // data structs
+#include <AceButton.h>           // button clicks
+#include <Adafruit_DRV2605.h>    // haptic controller
+#include <Adafruit_SSD1306.h>    // screen
+#include <Adafruit_SleepyDog.h>  // watchdog
 #include "Adafruit_TinyUSB.h"
 #include <AdjustableButtonConfig.h>
 #include <ArduinoJson.h>
@@ -101,7 +101,7 @@ void setup() {
 }
 
 // function to echo to both Serial and WebUSB
-void echo_all(char chr) { // from adafruit example
+void echo_all(char chr) {  // from adafruit example
   Serial.write(chr);
   if ( chr == '\r' ) Serial.write('\n');
 
@@ -225,7 +225,7 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
     memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V2));
     crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V2) - 2);
     use_hub_v2 = true;
-  } else if (size == sizeof(STR_HUB2CTRL_MSG_V1)){
+  } else if (size == sizeof(STR_HUB2CTRL_MSG_V1)) {
     memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V1));
     crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V1) - 2);
     use_hub_v2 = false;
@@ -312,7 +312,7 @@ bool throttleSafe() {
 }
 
 // convert barometer data to altitude in meters
-float getAltitudeM(){
+float getAltitudeM() {
   // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
   float seaLevel = deviceData.sea_pressure;
   float atmospheric = hubData.baroPressure / 100.0F;
@@ -384,7 +384,7 @@ void displayTime(int val) {
 // display altitude data on screen
 void displayAlt() {
   int altiudeM = 0;
-  if(armAltM > 0 && deviceData.sea_pressure != DEFAULT_SEA_PRESSURE) {  // MSL
+  if (armAltM > 0 && deviceData.sea_pressure != DEFAULT_SEA_PRESSURE) {  // MSL
     altiudeM = getAltitudeM();
   } else {  // AGL
     altiudeM = getAltitudeM() - armAltM;
