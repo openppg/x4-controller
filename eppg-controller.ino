@@ -29,7 +29,6 @@ Adafruit_USBD_WebUSB usb_web;
 WEBUSB_URL_DEF(landingPage, 1 /*https*/, "openppg.github.io/openppg-config");
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
-ResponsiveAnalogRead analogBatt(BATT_IN, false);
 AceButton button_top(BUTTON_TOP);
 AceButton button_side(BUTTON_SIDE);
 AdjustableButtonConfig buttonConfig;
@@ -77,8 +76,6 @@ void setup() {
 
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
-  analogBatt.setAnalogResolution(4096);
-  analogBatt.setSnapMultiplier(0.01);   // more smoothing
   unsigned int startup_vibes[] = { 27, 27, 0 };
   runVibe(startup_vibes, 3);
   digitalWrite(RX_TX_TOGGLE, LOW);

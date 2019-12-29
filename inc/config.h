@@ -1,5 +1,4 @@
 // Arduino Pins
-#define BATT_IN       A1  // Battery voltage in (3.3v max)
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    5   // output for buzzer speaker
