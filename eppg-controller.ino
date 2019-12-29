@@ -152,6 +152,7 @@ void disarmSystem() {
   delay(1500);  // dont allow immediate rearming
 }
 
+// inital button setup and config
 void initButtons() {
   pinMode(BUTTON_TOP, INPUT_PULLUP);
   pinMode(BUTTON_SIDE, INPUT_PULLUP);
@@ -164,6 +165,7 @@ void initButtons() {
   buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
 }
 
+// inital screen setup and config
 void initDisplay() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.clearDisplay();
@@ -180,6 +182,7 @@ void initDisplay() {
   display.clearDisplay();
 }
 
+// read throttle and send to hub
 void handleThrottle() {
   handleHubResonse();
   pot.update();
@@ -188,6 +191,7 @@ void handleThrottle() {
   sendToHub(val);
 }
 
+// format and transmit data to hub
 void sendToHub(int throttle_val) {
   memset((uint8_t*)&controlData, 0, sizeof(STR_CTRL2HUB_MSG));
 
@@ -204,6 +208,7 @@ void sendToHub(int throttle_val) {
   digitalWrite(RX_TX_TOGGLE, LOW);
 }
 
+// read hub data if available and have it converted
 void handleHubResonse() {
   int readSize = sizeof(STR_HUB2CTRL_MSG_V2);
   uint8_t serialData[readSize];
@@ -216,6 +221,7 @@ void handleHubResonse() {
   Serial5.flush();
 }
 
+// convert hub data packets into readable structs
 void receiveHubData(uint8_t *buf, uint32_t size) {
   uint16_t crc;
   if (size == sizeof(STR_HUB2CTRL_MSG_V2)) {
@@ -241,6 +247,7 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
   if (hubData.totalCurrent > MAMP_OFFSET) {hubData.totalCurrent -= MAMP_OFFSET;}
 }
 
+// get the PPG ready to fly
 bool armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 70, 33, 0 };
@@ -307,6 +314,7 @@ bool throttleSafe() {
   return false;
 }
 
+// convert barometer data to altitude in meters
 float getAltitudeM(){
   // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
   float seaLevel = deviceData.sea_pressure;
@@ -322,6 +330,7 @@ float getAltitudeM(){
  *
  *******/
 
+// show data on screen and handle different pages
 void updateDisplay() {
   byte percentage;
   String status;
@@ -375,6 +384,7 @@ void displayTime(int val) {
   display.print(convertToDigits(seconds));
 }
 
+// display altitude data on screen
 void displayAlt() {
   int altiudeM = 0;
   if(armAltM > 0 && deviceData.sea_pressure != DEFAULT_SEA_PRESSURE) {  // MSL
@@ -390,6 +400,7 @@ void displayAlt() {
   display.println(deviceData.metric_alt ? F("m") : F("ft"));
 }
 
+// display temperature data on screen
 void displayTemp() {
   int tempC = hubData.baroTemp / 100.0F;
   int tempF = tempC * 9/5 + 32;
@@ -398,6 +409,7 @@ void displayTemp() {
   display.println(deviceData.metric_temp ? F("c") : F("f"));
 }
 
+// display first page (voltage and current)
 void displayPage0() {
   float voltage = hubData.voltage / VOLTAGE_DIVIDE;
   float current = hubData.totalCurrent / CURRENT_DIVIDE;
@@ -411,6 +423,7 @@ void displayPage0() {
   display.println(F("A"));
 }
 
+// display second page (mAh and armed time)
 void displayPage1() {
   float amph = hubData.totalMah / 10;
   display.print(amph, 1);
@@ -421,6 +434,7 @@ void displayPage1() {
   displayTime(armedSecs);
 }
 
+// display third page (battery percent and kw)
 void displayPage2() {
   float voltage = hubData.voltage / VOLTAGE_DIVIDE;
   float current = hubData.totalCurrent / CURRENT_DIVIDE;
@@ -435,6 +449,7 @@ void displayPage2() {
   display.println(F("kw"));
 }
 
+// display fourth page (if compatible) (temperature and altitude)
 void displayPage3() {
   display.setTextSize(2);
   if (!use_hub_v2) {
@@ -446,6 +461,7 @@ void displayPage3() {
   displayAlt();
 }
 
+// display hidden page (firmware version and total armed time)
 void displayVersions() {
   display.setTextSize(2);
   display.print(F("v"));

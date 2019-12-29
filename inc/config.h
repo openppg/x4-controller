@@ -7,7 +7,7 @@
 #define LED_2         0   // output for LED 2
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
-#define RX_TX_TOGGLE  11  // rs485
+#define RX_TX_TOGGLE  11  // RS485
 
 #define CTRL_VER 0x00
 #define CTRL2HUB_ID 0x10
@@ -17,8 +17,8 @@
 #define CURRENT_DIVIDE 100.0
 #define VOLTAGE_DIVIDE 1000.0
 
-#define BATT_MIN_V 49    // 42v for 6S
-#define BATT_MAX_V 58.8  // 50v for 6S
+#define BATT_MIN_V 49    // 7S min (use 42v for 6S)
+#define BATT_MAX_V 58.8  // 7S max (use 50v for 6S)
 
 // Calibration
 #define MAMP_OFFSET 200
