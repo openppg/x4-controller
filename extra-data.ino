@@ -79,11 +79,16 @@ void line_state_callback(bool connected) {
 }
 
 void parse_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(8) + 90;
+  const size_t capacity = JSON_OBJECT_SIZE(9) + 90;
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
-  deviceData.screen_rotation = doc["screen_rot"];  // "2/0"
 
+  if (doc["command"] && doc["command"] == "rbl"){
+    rebootBootloader();
+    return; // run only the command
+  }
+
+  deviceData.screen_rotation = doc["screen_rot"];  // "2/0"
   deviceData.sea_pressure = doc["sea_pressure"];  // 1013.25 mbar
   deviceData.metric_temp = doc["metric_temp"];  // true/false
   deviceData.metric_alt = doc["metric_alt"];  // true/false

@@ -296,7 +296,7 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
     int top_state = digitalRead(BUTTON_TOP);
 
     if (top_state == LOW && side_state == LOW) {
-      page = 3;
+      page = 4;
     }
     break;
   }
