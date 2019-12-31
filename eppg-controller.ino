@@ -448,10 +448,12 @@ void displayPage2() {
 
 // display fourth page (if compatible) (temperature and altitude)
 void displayPage3() {
-  display.setTextSize(2);
   if (!use_hub_v2) {
+    display.setTextSize(3);
     display.println(F("update"));
+    return;
   }
+  display.setTextSize(2);
   displayTemp();
   addVSpace();
   display.setTextSize(3);
