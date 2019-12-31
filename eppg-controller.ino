@@ -126,7 +126,7 @@ void checkButtons() {
 byte getBatteryPercent() {
   float voltage = hubData.voltage / VOLTAGE_DIVIDE;
   // TODO(zach): LiPo curve
-  float percent = mapf(voltage, BATT_MIN_V, BATT_MAX_V, 0, 100);
+  float percent = mapf(voltage, deviceData.min_batt_v, deviceData.max_batt_v, 0, 100);
   percent = constrain(percent, 0, 100);
 
   return round(percent);
@@ -316,6 +316,7 @@ float getAltitudeM() {
   // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
   float seaLevel = deviceData.sea_pressure;
   float atmospheric = hubData.baroPressure / 100.0F;
+  if (hubData.baroPressure < 1) { return 0.0; }
   // convert to fahrenheit if not using metric
   float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
   return altitudeM;

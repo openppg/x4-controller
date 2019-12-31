@@ -53,6 +53,8 @@ typedef struct {
   uint16_t armed_time;    // minutes (think Hobbs)
   uint8_t screen_rotation;  // 1,2,3,4 (90 deg)
   float sea_pressure;  // 1013.25 mbar
+  float min_batt_v;  // 47.2v
+  float max_batt_v;  // 59.2v
   bool metric_temp;    // true
   bool metric_alt;     // false
   uint16_t unused;     // for future use

@@ -58,6 +58,8 @@ void resetDeviceData(){
     deviceData.sea_pressure = DEFAULT_SEA_PRESSURE;  // 1013.25 mbar
     deviceData.metric_temp = true;
     deviceData.metric_alt = true;
+    deviceData.min_batt_v = BATT_MIN_V;
+    deviceData.max_batt_v = BATT_MAX_V;
     writeDeviceData();
 }
 
@@ -79,7 +81,7 @@ void line_state_callback(bool connected) {
 }
 
 void parse_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(9) + 90;
+  const size_t capacity = JSON_OBJECT_SIZE(11) + 90;
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
 
@@ -92,13 +94,15 @@ void parse_usb_serial() {
   deviceData.sea_pressure = doc["sea_pressure"];  // 1013.25 mbar
   deviceData.metric_temp = doc["metric_temp"];  // true/false
   deviceData.metric_alt = doc["metric_alt"];  // true/false
+  deviceData.min_batt_v = doc["min_batt_v"];  // 47.2v
+  deviceData.max_batt_v = doc["max_batt_v"];  // 59.2v
   initDisplay();
   writeDeviceData();
   send_usb_serial();
 }
 
 void send_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(9) + 90;
+  const size_t capacity = JSON_OBJECT_SIZE(11) + 90;
   DynamicJsonDocument doc(capacity);
 
   doc["major_v"] = VERSION_MAJOR;
@@ -107,6 +111,8 @@ void send_usb_serial() {
   doc["armed_time"] = deviceData.armed_time;
   doc["metric_temp"] = deviceData.metric_temp;
   doc["metric_alt"] = deviceData.metric_alt;
+  doc["min_batt_v"] = deviceData.min_batt_v;
+  doc["max_batt_v"] = deviceData.max_batt_v;
   doc["sea_pressure"] = deviceData.sea_pressure;
   doc["device_id"] = chipId();
 
