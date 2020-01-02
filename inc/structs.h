@@ -1,4 +1,4 @@
-// Copyright 2019 <Zach Whitehead>
+// Copyright 2020 <Zach Whitehead>
 
 #pragma pack(push, 1)
 typedef struct {

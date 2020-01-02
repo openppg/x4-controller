@@ -1,4 +1,4 @@
-// Copyright 2019 <Zach Whitehead>
+// Copyright 2020 <Zach Whitehead>
 // OpenPPG
 
 #include "libraries/crc.c"       // packet error checking

@@ -17,7 +17,7 @@
 #define VOLTAGE_DIVIDE 1000.0
 
 // Batt setting now configurable by user. Read from device data
-#define BATT_MIN_V 49    // 7S min (use 42v for 6S)
+#define BATT_MIN_V 49.0  // 7S min (use 42v for 6S)
 #define BATT_MAX_V 58.8  // 7S max (use 50v for 6S)
 
 // Calibration
