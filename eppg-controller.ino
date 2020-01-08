@@ -1,11 +1,13 @@
-// Copyright 2019 <Zach Whitehead>
+// Copyright 2020 <Zach Whitehead>
 // OpenPPG
 
-#include "libraries/crc.c"      // packet error checking
-#include <AceButton.h>
-#include <Adafruit_DRV2605.h>   // haptic controller
-#include <Adafruit_SSD1306.h>   // screen
-#include <Adafruit_SleepyDog.h> // watchdog
+#include "libraries/crc.c"       // packet error checking
+#include "inc/config.h"          // device config
+#include "inc/structs.h"         // data structs
+#include <AceButton.h>           // button clicks
+#include <Adafruit_DRV2605.h>    // haptic controller
+#include <Adafruit_SSD1306.h>    // screen
+#include <Adafruit_SleepyDog.h>  // watchdog
 #include "Adafruit_TinyUSB.h"
 #include <AdjustableButtonConfig.h>
 #include <ArduinoJson.h>
@@ -19,37 +21,6 @@
 
 using namespace ace_button;
 
-// Arduino Pins
-#define BATT_IN       A1  // Battery voltage in (3.3v max)
-#define BUTTON_TOP    6   // arm/disarm button_top
-#define BUTTON_SIDE   7   // secondary button_top
-#define BUZZER_PIN    5   // output for buzzer speaker
-#define LED_SW        9   // output for LED on button_top switch
-#define LED_2         0   // output for LED 2
-#define LED_3         38  // output for LED 3
-#define THROTTLE_PIN  A0  // throttle pot input
-#define RX_TX_TOGGLE  11  // rs485
-
-#define CTRL_VER 0x00
-#define CTRL2HUB_ID 0x10
-#define HUB2CTRL_ID 0x20
-
-#define ARM_VERIFY false
-#define CURRENT_DIVIDE 100.0
-#define VOLTAGE_DIVIDE 1000.0
-
-#define BATT_MIN_V 49    // 42v for 6S
-#define BATT_MAX_V 58.8  // 50v for 6S
-
-// Calibration
-#define MAMP_OFFSET 200
-
-#define VERSION_MAJOR 4
-#define VERSION_MINOR 1
-
-#define CRUISE_GRACE 2  // 2 sec period to get off throttle
-#define CRUISE_MAX 300  // 5 min max cruising
-
 Adafruit_SSD1306 display(128, 64, &Wire, 4);
 Adafruit_DRV2605 vibe;
 
@@ -58,7 +29,6 @@ Adafruit_USBD_WebUSB usb_web;
 WEBUSB_URL_DEF(landingPage, 1 /*https*/, "openppg.github.io/openppg-config");
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
-ResponsiveAnalogRead analogBatt(BATT_IN, false);
 AceButton button_top(BUTTON_TOP);
 AceButton button_side(BUTTON_SIDE);
 AdjustableButtonConfig buttonConfig;
@@ -74,58 +44,15 @@ StaticThreadController<4> threads(&ledBlinkThread, &displayThread,
                                   &throttleThread, &butttonThread);
 
 bool armed = false;
+bool use_hub_v2 = true;
 int page = 0;
+int armAltM = 0;
 uint32_t armedAtMilis = 0;
 uint32_t cruisedAtMilis = 0;
 unsigned int armedSecs = 0;
 unsigned int last_throttle = 0;
 
 #pragma message "Warning: OpenPPG software is in beta"
-
-// TODO(zach): Move these to header type files
-#define INTERFACE_HUB
-#define CTRL_VER 0x00
-#define CTRL2HUB_ID 0x10
-#define HUB2CTRL_ID 0x20
-#define HUB2CTRL_SIZE 22
-
-#pragma pack(push, 1)
-typedef struct {
-  uint8_t version;
-  uint8_t id;
-  uint8_t length;
-  uint8_t armed;
-  uint16_t throttlePercent;  // 0 to 1000
-  uint16_t crc;
-}STR_CTRL2HUB_MSG;
-
-typedef struct {
-  uint8_t version;
-  uint8_t id;
-  uint8_t length;
-  uint8_t armed;
-  uint32_t voltage;
-  uint32_t totalMah;
-  uint32_t totalCurrent;
-  uint16_t avgRpm;
-  uint8_t avgCapTemp;
-  uint8_t avgFetTemp;
-  uint16_t crc;
-}STR_HUB2CTRL_MSG;
-
-typedef struct {
-  uint8_t version_major;
-  uint8_t version_minor;
-  uint16_t armed_time;
-  uint8_t screen_rotation;
-  uint16_t crc;
-}STR_DEVICE_DATA;
-#pragma pack(pop)
-// TODO: Handle multiple versions of device data and migrate
-
-static STR_CTRL2HUB_MSG controlData;
-static STR_HUB2CTRL_MSG hubData;
-static STR_DEVICE_DATA deviceData;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -149,8 +76,6 @@ void setup() {
 
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
-  analogBatt.setAnalogResolution(4096);
-  analogBatt.setSnapMultiplier(0.01);   // more smoothing
   unsigned int startup_vibes[] = { 27, 27, 0 };
   runVibe(startup_vibes, 3);
   digitalWrite(RX_TX_TOGGLE, LOW);
@@ -176,7 +101,7 @@ void setup() {
 }
 
 // function to echo to both Serial and WebUSB
-void echo_all(char chr) { // from adafruit example
+void echo_all(char chr) {  // from adafruit example
   Serial.write(chr);
   if ( chr == '\r' ) Serial.write('\n');
 
@@ -193,38 +118,6 @@ void loop() {
   threads.run();
 }
 
-void line_state_callback(bool connected) {
-  digitalWrite(LED_2, connected);
-
-  if ( connected ) send_usb_serial();
-}
-
-void refreshDeviceData() {
-  uint8_t tempBuf[sizeof(STR_DEVICE_DATA)];
-  if (0 != eep.read(0, tempBuf, sizeof(STR_DEVICE_DATA))) {
-    //Serial.println(F("error reading EEPROM"));
-  }
-  memcpy((uint8_t*)&deviceData, tempBuf, sizeof(STR_DEVICE_DATA));
-  uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
-  if (crc != deviceData.crc) {
-    //Serial.print(F("Memory CRC mismatch. Resetting"));
-
-    deviceData = STR_DEVICE_DATA();
-    deviceData.version_major = VERSION_MAJOR;
-    deviceData.version_minor = VERSION_MINOR;
-    writeDeviceData();
-    return;
-  }
-}
-
-void writeDeviceData() {
-  deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA) - 2);
-
-  if (0 != eep.write(0, (uint8_t*)&deviceData, sizeof(STR_DEVICE_DATA))) {
-    Serial.println(F("error writing EEPROM"));
-  }
-}
-
 void checkButtons() {
   button_side.check();
   button_top.check();
@@ -233,14 +126,14 @@ void checkButtons() {
 byte getBatteryPercent() {
   float voltage = hubData.voltage / VOLTAGE_DIVIDE;
   // TODO(zach): LiPo curve
-  float percent = mapf(voltage, BATT_MIN_V, BATT_MAX_V, 0, 100);
+  float percent = mapf(voltage, deviceData.min_batt_v, deviceData.max_batt_v, 0, 100);
   percent = constrain(percent, 0, 100);
 
   return round(percent);
 }
 
 void disarmSystem() {
-  unsigned int disarm_melody[] = { 2093, 1976, 880};
+  unsigned int disarm_melody[] = { 2093, 1976, 880 };
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
   armed = false;
@@ -256,6 +149,7 @@ void disarmSystem() {
   delay(1500);  // dont allow immediate rearming
 }
 
+// inital button setup and config
 void initButtons() {
   pinMode(BUTTON_TOP, INPUT_PULLUP);
   pinMode(BUTTON_SIDE, INPUT_PULLUP);
@@ -268,12 +162,13 @@ void initButtons() {
   buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
 }
 
+// inital screen setup and config
 void initDisplay() {
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
   display.clearDisplay();
   display.setRotation(deviceData.screen_rotation);
   display.setTextSize(3);
-  display.setTextColor(WHITE);
+  display.setTextColor(SSD1306_BLACK);
   display.setCursor(0, 0);
   display.println(F("OpenPPG"));
   display.print(F("V"));
@@ -284,6 +179,7 @@ void initDisplay() {
   display.clearDisplay();
 }
 
+// read throttle and send to hub
 void handleThrottle() {
   handleHubResonse();
   pot.update();
@@ -292,6 +188,7 @@ void handleThrottle() {
   sendToHub(val);
 }
 
+// format and transmit data to hub
 void sendToHub(int throttle_val) {
   memset((uint8_t*)&controlData, 0, sizeof(STR_CTRL2HUB_MSG));
 
@@ -308,28 +205,38 @@ void sendToHub(int throttle_val) {
   digitalWrite(RX_TX_TOGGLE, LOW);
 }
 
+// read hub data if available and have it converted
 void handleHubResonse() {
-  uint8_t serialData[HUB2CTRL_SIZE];
+  int readSize = sizeof(STR_HUB2CTRL_MSG_V2);
+  uint8_t serialData[readSize];
 
   while (Serial5.available() > 0) {
     memset(serialData, 0, sizeof(serialData));
-    int size = Serial5.readBytes(serialData, HUB2CTRL_SIZE);
+    int size = Serial5.readBytes(serialData, sizeof(STR_HUB2CTRL_MSG_V2));
     receiveHubData(serialData, size);
   }
   Serial5.flush();
 }
 
+// convert hub data packets into readable structs
 void receiveHubData(uint8_t *buf, uint32_t size) {
-  if (size != sizeof(STR_HUB2CTRL_MSG)) {
+  uint16_t crc;
+  if (size == sizeof(STR_HUB2CTRL_MSG_V2)) {
+    memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V2));
+    crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V2) - 2);
+    use_hub_v2 = true;
+  } else if (size == sizeof(STR_HUB2CTRL_MSG_V1)) {
+    memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V1));
+    crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V1) - 2);
+    use_hub_v2 = false;
+  } else {
     Serial.print("wrong size ");
     Serial.print(size);
     Serial.print(" should be ");
-    Serial.println(sizeof(STR_HUB2CTRL_MSG));
+    Serial.println(sizeof(STR_HUB2CTRL_MSG_V2));
     return;
   }
 
-  memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG));
-  uint16_t crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG) - 2);
   if (crc != hubData.crc) {
     Serial.print(F("hub crc mismatch"));
     return;
@@ -337,7 +244,8 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
   if (hubData.totalCurrent > MAMP_OFFSET) {hubData.totalCurrent -= MAMP_OFFSET;}
 }
 
-void armSystem() {
+// get the PPG ready to fly
+bool armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 70, 33, 0 };
   unsigned int arm_fail_vibes[] = { 14, 3, 0 };
@@ -351,14 +259,16 @@ void armSystem() {
     runVibe(arm_fail_vibes, 3);
     handleArmFail();
     armed = false;
-    return;
+    return false;
   }
   ledBlinkThread.enabled = false;
   armedAtMilis = millis();
+  armAltM = getAltitudeM();
 
   runVibe(arm_vibes, 3);
   setLEDs(HIGH);
   playMelody(arm_melody, 3);
+  return true;
 }
 
 // The event handler for the the buttons
@@ -386,7 +296,7 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
     int top_state = digitalRead(BUTTON_TOP);
 
     if (top_state == LOW && side_state == LOW) {
-      page = 3;
+      page = 4;
     }
     break;
   }
@@ -401,21 +311,39 @@ bool throttleSafe() {
   return false;
 }
 
+// convert barometer data to altitude in meters
+float getAltitudeM() {
+  // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
+  float seaLevel = deviceData.sea_pressure;
+  float atmospheric = hubData.baroPressure / 100.0F;
+  if (hubData.baroPressure < 1) { return 0.0; }
+  // convert to fahrenheit if not using metric
+  float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
+  return altitudeM;
+}
+
+/********
+ *
+ * Display logic
+ *
+ *******/
+
+// show data on screen and handle different pages
 void updateDisplay() {
   byte percentage;
   String status;
 
   if (armed) {
     status = F("Armed");
-    display.fillCircle(122, 5, 5, WHITE);
+    display.fillCircle(122, 5, 5, SSD1306_WHITE);
     armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
   } else {
     status = F("Disarmed");
-    display.drawCircle(122, 5, 5, WHITE);
+    display.drawCircle(122, 5, 5, SSD1306_WHITE);
   }
 
   display.setTextSize(1);
-  display.setTextColor(WHITE);
+  display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
   display.println(status);
   display.setTextSize(3);
@@ -430,7 +358,10 @@ void updateDisplay() {
   case 2:  // shows volts and kw
     displayPage2();
     break;
-  case 3:  // shows version and hour meter
+  case 3:  // shows altitude and temp
+    displayPage3();
+    break;
+  case 4:  // shows version and hour meter
     displayVersions();
     break;
   default:
@@ -451,6 +382,32 @@ void displayTime(int val) {
   display.print(convertToDigits(seconds));
 }
 
+// display altitude data on screen
+void displayAlt() {
+  int altiudeM = 0;
+  if (armAltM > 0 && deviceData.sea_pressure != DEFAULT_SEA_PRESSURE) {  // MSL
+    altiudeM = getAltitudeM();
+  } else {  // AGL
+    altiudeM = getAltitudeM() - armAltM;
+  }
+
+  // convert to ft if not using metric
+  int alt = deviceData.metric_alt ? (int)altiudeM : (round(altiudeM * 3.28084));
+  display.print(alt, 1);
+  display.setTextSize(2);
+  display.println(deviceData.metric_alt ? F("m") : F("ft"));
+}
+
+// display temperature data on screen
+void displayTemp() {
+  int tempC = hubData.baroTemp / 100.0F;
+  int tempF = tempC * 9/5 + 32;
+
+  display.print(deviceData.metric_temp ? tempC : tempF, 1);
+  display.println(deviceData.metric_temp ? F("c") : F("f"));
+}
+
+// display first page (voltage and current)
 void displayPage0() {
   float voltage = hubData.voltage / VOLTAGE_DIVIDE;
   float current = hubData.totalCurrent / CURRENT_DIVIDE;
@@ -464,6 +421,7 @@ void displayPage0() {
   display.println(F("A"));
 }
 
+// display second page (mAh and armed time)
 void displayPage1() {
   float amph = hubData.totalMah / 10;
   display.print(amph, 1);
@@ -474,6 +432,7 @@ void displayPage1() {
   displayTime(armedSecs);
 }
 
+// display third page (battery percent and kw)
 void displayPage2() {
   float voltage = hubData.voltage / VOLTAGE_DIVIDE;
   float current = hubData.totalCurrent / CURRENT_DIVIDE;
@@ -488,6 +447,21 @@ void displayPage2() {
   display.println(F("kw"));
 }
 
+// display fourth page (if compatible) (temperature and altitude)
+void displayPage3() {
+  if (!use_hub_v2) {
+    display.setTextSize(3);
+    display.println(F("update"));
+    return;
+  }
+  display.setTextSize(2);
+  displayTemp();
+  addVSpace();
+  display.setTextSize(3);
+  displayAlt();
+}
+
+// display hidden page (firmware version and total armed time)
 void displayVersions() {
   display.setTextSize(2);
   display.print(F("v"));
@@ -498,32 +472,6 @@ void displayVersions() {
   display.setTextSize(2);
   displayTime(deviceData.armed_time);
   display.print(F(" h:m"));
-}
-
-void parse_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(4);
-  DynamicJsonDocument doc(capacity);
-  deserializeJson(doc, usb_web);
-  int major_v = doc["major_v"];  // 4
-  int minor_v = doc["minor_v"];  // 1
-  const char* screen_rotation = doc["screen_rot"];  // "l/r"
-
-  deviceData.screen_rotation = (String)screen_rotation == "l" ? 2 : 0;
-  initDisplay();
-  writeDeviceData();
-  send_usb_serial();
-}
-
-void send_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(4);
-  DynamicJsonDocument doc(capacity);
-
-  doc["major_v"] = VERSION_MAJOR;
-  doc["minor_v"] = VERSION_MINOR;
-  doc["screen_rot"] = deviceData.screen_rotation == 2 ? "l" : "r";
-  doc["armed_time"] = deviceData.armed_time;
-
-  char output[128];
-  serializeJson(doc, output);
-  usb_web.println(output);
+  // addVSpace();
+  // display.print(chipId()); // TODO: trim down
 }

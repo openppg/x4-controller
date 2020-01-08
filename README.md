@@ -38,6 +38,7 @@ The Batch 3+ OpenPPG controller is powered by Atmel’s SAMD21G18A MCU, featurin
 - `Adafruit SleepyDog`
 - `Adafruit_TinyUSB`
 - `ArduinoThread`
+- `extEEPROM`
 - `ResponsiveAnalogRead`
 - `Time`(search "Timekeeping")
 
