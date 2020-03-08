@@ -5,7 +5,7 @@ Arduino based logic for OpenPPG Throttle Controller
 #### This master branch is only for testing the latest OpenPPG hardware (Batch 5) (beta)
 It may not be stable and is not recommended for flying
 
-> For batch 4 controllers please see the [batch-4 branch](https://github.com/openppg/eppg-controller/tree/batch-4).
+> For batch 4-6 controllers please see the [batch-4 branch](https://github.com/openppg/eppg-controller/tree/batch-4).
 
 > For batch 3 (non-telemetry) controllers please see the [batch-3 branch](https://github.com/openppg/eppg-controller/tree/batch-3).
 
@@ -13,7 +13,7 @@ It may not be stable and is not recommended for flying
 
 ## MacOS
 
-Tested on MacOS Mojave (10.14)
+Tested on macOS Catalina (10.15)
 
 ### Install Arduino IDE
 
@@ -22,7 +22,7 @@ Tested on MacOS Mojave (10.14)
 
 ### Install the driver
 
-The Batch 3+ OpenPPG controller is powered by Atmel’s SAMD21G18A MCU, featuring a 32-bit ARM Cortex® M0 core. In order to communicate with it follow the instructions here to set up your computer <https://learn.adafruit.com/adafruit-feather-m0-basic-proto/setup> and set up the Arduio IDE <https://learn.adafruit.com/adafruit-feather-m0-basic-proto/using-with-arduino-ide>
+The Batch 3+ OpenPPG controller is powered by Atmel’s SAMD21G18A MCU, featuring a 32-bit ARM Cortex® M0+ core. In order to communicate with it follow the instructions here to set up your computer <https://learn.adafruit.com/adafruit-feather-m0-basic-proto/setup> and set up the Arduio IDE <https://learn.adafruit.com/adafruit-feather-m0-basic-proto/using-with-arduino-ide>
 
 ### Download and Prepare OpenPPG Code
 
@@ -52,3 +52,8 @@ The Batch 3+ OpenPPG controller is powered by Atmel’s SAMD21G18A MCU, featurin
 7. Wait for the code to flash and the Arduino IDE to say "Done" at the bottom. Success!
 
 ## Windows Instructions Coming Soon
+
+## Boootloader
+
+The latest batches of OpenPPG X4 controllers use the UF2 bootloader (compatible with Arduino).
+Learn more here https://github.com/openppg/uf2-samdx1
