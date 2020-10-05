@@ -4,8 +4,8 @@ on:
   - pull_request
 
 jobs:
-  main:
-    name: Main
+  pio-build:
+    name: PlatformIO Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
