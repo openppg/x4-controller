@@ -67,7 +67,8 @@ Suitable for Mac, Windows, and Linux
 
 1. Click the "PlatformIO Build" button inside of VSCode or enter `platformio run --target upload` in the command line. PlatformIO will automatically download libraries the first time it runs
 
-## Boootloader
+## Bootloader
 
 The latest batches of OpenPPG X4 controllers use the UF2 bootloader (compatible with Arduino).
+It makes firmware updates as simple as drag and drop.
 Learn more here https://github.com/openppg/uf2-samdx1
