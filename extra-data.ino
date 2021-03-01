@@ -86,6 +86,7 @@ void parse_usb_serial() {
   deserializeJson(doc, usb_web);
 
   if (doc["command"] && doc["command"] == "rbl"){
+    displayMessage("BL - UF2");
     rebootBootloader();
     return; // run only the command
   }

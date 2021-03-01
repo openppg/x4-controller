@@ -100,21 +100,11 @@ void setup() {
   refreshDeviceData();
 }
 
-// function to echo to both Serial and WebUSB
-void echo_all(char chr) {  // from adafruit example
-  Serial.write(chr);
-  if ( chr == '\r' ) Serial.write('\n');
-
-  usb_web.write(chr);
-}
-
 // main loop - everything runs in threads
 void loop() {
   Watchdog.reset();
   // from WebUSB to both Serial & webUSB
   if (usb_web.available()) parse_usb_serial();
-  // From Serial to both Serial & webUSB
-  if (Serial.available())  echo_all(Serial.read());
   threads.run();
 }
 
@@ -474,4 +464,13 @@ void displayVersions() {
   display.print(F(" h:m"));
   // addVSpace();
   // display.print(chipId()); // TODO: trim down
+}
+
+// display hidden page (firmware version and total armed time)
+void displayMessage(char *message) {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.setTextSize(2);
+  display.println(message);
+  display.display();
 }
