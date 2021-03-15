@@ -6,7 +6,7 @@
 #include "inc/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
 #include <Adafruit_DRV2605.h>    // haptic controller
-#include <Adafruit_SSD1306.h>    // screen
+#include <Adafruit_ST7735.h>    // screen
 #include <Adafruit_SleepyDog.h>  // watchdog
 #include "Adafruit_TinyUSB.h"
 #include <AdjustableButtonConfig.h>
@@ -19,9 +19,15 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
+#include <Adafruit_BMP3XX.h>
+#include <Servo.h> // to control ESCs
+
+#include "inc/sp140-globals.h" // device config
+
 using namespace ace_button;
 
-Adafruit_SSD1306 display(128, 64, &Wire, 4);
+Adafruit_ST7735 display = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
+
 Adafruit_DRV2605 vibe;
 
 // USB WebUSB object
@@ -39,9 +45,9 @@ const int bgInterval = 100;  // background updates (milliseconds)
 Thread ledBlinkThread = Thread();
 Thread displayThread = Thread();
 Thread throttleThread = Thread();
-Thread butttonThread = Thread();
+Thread buttonThread = Thread();
 StaticThreadController<4> threads(&ledBlinkThread, &displayThread,
-                                  &throttleThread, &butttonThread);
+                                  &throttleThread, &buttonThread);
 
 bool armed = false;
 bool use_hub_v2 = true;
@@ -89,8 +95,8 @@ void setup() {
   displayThread.onRun(updateDisplay);
   displayThread.setInterval(100);
 
-  butttonThread.onRun(checkButtons);
-  butttonThread.setInterval(25);
+  buttonThread.onRun(handleArming);
+  buttonThread.setInterval(100);
 
   throttleThread.onRun(handleThrottle);
   throttleThread.setInterval(22);
@@ -98,6 +104,86 @@ void setup() {
   int countdownMS = Watchdog.enable(4000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   refreshDeviceData();
+}
+
+void setup140() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, LOW);
+
+  pinMode(BTN_PIN, INPUT);
+  analogReadResolution(12);     // M0 chip provides 12bit resolution
+  esc.attach(ESC_PIN);
+  esc.writeMicroseconds(0); // make sure motors off
+
+ Serial5.begin(ESC_BAUD_RATE);
+  Serial5.setTimeout(ESC_TIMEOUT);
+  buzzInit(ENABLE_BUZ);
+  tftInit();
+  bmpInit();
+  vibe.begin();
+  vibe.selectLibrary(1);
+  vibe.setMode(DRV2605_MODE_INTTRIG);
+
+  vibrateNotify();
+
+  //eepInit();
+
+  if(!digitalRead(BTN_PIN)){
+    // Switch modes
+    bool mode = eep.read(6);
+    eep.write(6, !mode); // 0=BEGINNER 1=EXPERT
+  }
+
+  beginner = false; // TODO read from eep
+
+  //setFlightHours(0);    // uncomment to set flight log hours (0.0 to 9999.9)... MUST re-comment and re-upload!
+  delay(10);
+
+  if(!digitalRead(BTN_PIN) && beginner){
+    display.setCursor(10, 20);
+    display.setTextSize(2);
+    display.setTextColor(BLUE);
+    display.print("BEGINNER");
+    display.setCursor(10, 36);
+    display.print("MODE");
+    display.setCursor(10, 52);
+    display.print("ACTIVATED");
+    display.setTextColor(BLACK);
+  }
+  if(!digitalRead(BTN_PIN) && !beginner){
+    display.setCursor(10, 20);
+    display.setTextSize(2);
+    display.setTextColor(RED);
+    display.print("EXPERT");
+    display.setCursor(10, 36);
+    display.print("MODE");
+    display.setCursor(10, 52);
+    display.print("ACTIVATED");
+    display.setTextColor(BLACK);
+  }
+  while(!digitalRead(BTN_PIN));
+  if(beginner){  // Erase Text
+    display.setCursor(10, 20);
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.print("BEGINNER");
+    display.setCursor(10, 36);
+    display.print("MODE");
+    display.setCursor(10, 52);
+    display.print("ACTIVATED");
+    display.setTextColor(BLACK);
+  }
+  if(!beginner){  // Erase Text
+    display.setCursor(10, 20);
+    display.setTextSize(2);
+    display.setTextColor(WHITE);
+    display.print("EXPERT");
+    display.setCursor(10, 36);
+    display.print("MODE");
+    display.setCursor(10, 52);
+    display.print("ACTIVATED");
+    display.setTextColor(BLACK);
+  }
 }
 
 // main loop - everything runs in threads
@@ -123,19 +209,24 @@ byte getBatteryPercent() {
 }
 
 void disarmSystem() {
+  esc.writeMicroseconds(0);
+  Serial.println(F("disarmed"));
+
   unsigned int disarm_melody[] = { 2093, 1976, 880 };
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
   armed = false;
   ledBlinkThread.enabled = true;
   updateDisplay();
-  runVibe(disarm_vibes, 3);
-  playMelody(disarm_melody, 3);
+  if(ENABLE_VIB) runVibe(disarm_vibes, 3);
+  if(ENABLE_BUZ){
+    playMelody(disarm_melody, 3);
+  }
   // update armed_time
   refreshDeviceData();
   deviceData.armed_time += round(armedSecs / 60);  // convert to mins
   writeDeviceData();
-
+  // recordFlightHours(); TODO
   delay(1500);  // dont allow immediate rearming
 }
 
@@ -154,28 +245,40 @@ void initButtons() {
 
 // inital screen setup and config
 void initDisplay() {
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  display.clearDisplay();
-  display.setRotation(deviceData.screen_rotation);
-  display.setTextSize(3);
-  display.setTextColor(SSD1306_BLACK);
-  display.setCursor(0, 0);
-  display.println(F("OpenPPG"));
-  display.print(F("V"));
-  display.print(VERSION_MAJOR);
-  display.print(F("."));
-  display.print(VERSION_MINOR);
-  display.display();
-  display.clearDisplay();
+  display.initR(INITR_BLACKTAB);          // Init ST7735S chip, black tab
+  display.fillScreen(WHITE);
+  display.setTextColor(BLACK);
+  display.setCursor(0,0);
+  display.setTextSize(1);
+  display.setTextWrap(true);
+  int rotation = 1;
+  if(LEFT_HAND_THROTTLE) rotation = 3;
+  display.setRotation(rotation); // 1=right hand, 3=left hand
+  pinMode(TFT_LITE, OUTPUT);
+  digitalWrite(TFT_LITE, HIGH);  // Backlight on
 }
 
 // read throttle and send to hub
 void handleThrottle() {
-  handleHubResonse();
+  if(!armed) { return; }
+
+  int maxPWM = 2000;
   pot.update();
-  int rawval = pot.getValue();
-  int val = map(rawval, 0, 4095, 0, 1000);  // mapping val to min and max
-  sendToHub(val);
+  potLvl = pot.getValue();
+  if(beginner){
+    potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
+    maxPWM = 1778;  // 75% interpolated from 1112 to 2000
+  }
+  handleCruise();  // activate or deactivate cruise
+  if(cruising){ throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM); }
+  else{ throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM); } // mapping val to minimum and maximum
+  throttlePercent = mapf(throttlePWM, 1112,2000, 0,100);
+  if(throttlePercent<0){
+    throttlePercent = 0;
+  }
+  esc.writeMicroseconds(throttlePWM); // using val as the signal to esc
+  Serial.print(F("WRITING: "));
+  Serial.println(throttlePWM);
 }
 
 // format and transmit data to hub
@@ -238,26 +341,21 @@ void receiveHubData(uint8_t *buf, uint32_t size) {
 bool armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 70, 33, 0 };
-  unsigned int arm_fail_vibes[] = { 14, 3, 0 };
 
   armed = true;
-  sendToHub(0);
-  delay(2);  // wait for response
-  handleHubResonse();
+  esc.writeMicroseconds(1000); // initialize the signal to 1000
 
-  if (hubData.armed == 0 && ARM_VERIFY) {
-    runVibe(arm_fail_vibes, 3);
-    handleArmFail();
-    armed = false;
-    return false;
-  }
   ledBlinkThread.enabled = false;
   armedAtMilis = millis();
-  armAltM = getAltitudeM();
+  //armAltM = getAltitudeM();
+  setAltiOffset(); // TODO combine altitude measuing
 
-  runVibe(arm_vibes, 3);
+  if(ENABLE_VIB) runVibe(arm_vibes, 3);
   setLEDs(HIGH);
-  playMelody(arm_melody, 3);
+  if(ENABLE_BUZ){
+    playMelody(arm_melody, 3);
+  }
+  Serial.println(F("Sending Arm Signal"));
   return true;
 }
 
@@ -319,47 +417,95 @@ float getAltitudeM() {
  *******/
 
 // show data on screen and handle different pages
-void updateDisplay() {
-  byte percentage;
-  String status;
+void updateDisplay(){
+  dispValue(volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
+  display.print("V");
 
-  if (armed) {
-    status = F("Armed");
-    display.fillCircle(122, 5, 5, SSD1306_WHITE);
-    armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
-  } else {
-    status = F("Disarmed");
-    display.drawCircle(122, 5, 5, SSD1306_WHITE);
+  dispValue(amps, prevAmps, 3, 0, 108, 70, 2, BLACK, WHITE);
+  display.print("A");
+
+  dispValue(kilowatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
+  display.print("kW");
+
+  if(cruising){
+    display.setCursor(10, 80);
+    display.setTextSize(1);
+    display.setTextColor(RED);
+    display.print("CRUISE");
+    display.setTextColor(BLACK);
+  }
+  else{
+    display.setCursor(10, 80);
+    display.setTextSize(1);
+    display.setTextColor(WHITE);
+    display.print("CRUISE");
+    display.setTextColor(BLACK);
   }
 
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0);
-  display.println(status);
-  display.setTextSize(3);
-
-  switch (page) {
-  case 0:  // shows current voltage and amperage
-    displayPage0();
-    break;
-  case 1:  // shows total amp hrs and timer
-    displayPage1();
-    break;
-  case 2:  // shows volts and kw
-    displayPage2();
-    break;
-  case 3:  // shows altitude and temp
-    displayPage3();
-    break;
-  case 4:  // shows version and hour meter
-    displayVersions();
-    break;
-  default:
-    display.println(F("Dsp Err"));  // should never hit this
-    break;
+  if(beginner){
+    display.setCursor(10, 40);
+    display.setTextSize(1);
+    display.setTextColor(BLUE);
+    display.print("BEGINNER");
+    display.setTextColor(BLACK);
   }
-  display.display();
-  display.clearDisplay();
+  else{
+    display.setCursor(10, 40);
+    display.setTextSize(1);
+    display.setTextColor(RED);
+    display.print("EXPERT");
+    display.setTextColor(BLACK);
+  }
+
+  if(batteryPercent>66){
+    display.fillRect(0, 0, map(batteryPercent, 0,100, 0,108), 36, GREEN);
+  }
+  else if(batteryPercent>33){
+    display.fillRect(0, 0, map(batteryPercent, 0,100, 0,108), 36, YELLOW);
+  }
+  else{
+    display.fillRect(0, 0, map(batteryPercent, 0,100, 0,108), 36, RED);
+  }
+  if(volts < MINIMUM_VOLTAGE){
+    if(batteryFlag){
+      batteryFlag = false;
+      display.fillRect(0, 0, 108, 36, WHITE);
+    }
+    display.setCursor(0,3);
+    display.setTextSize(2);
+    display.setTextColor(RED);
+    display.println(" BATTERY");
+    display.print(" DEAD/NC ");
+  }
+  else{
+    batteryFlag = true;
+    display.fillRect(map(batteryPercent, 0,100, 0,108), 0, map(batteryPercent, 0,100, 108,0), 36, WHITE);
+  }
+  dispValue(batteryPercent, prevBatteryPercent, 3, 0, 108, 10, 2, BLACK, WHITE);
+  display.print("%");
+
+  // For Debugging Throttle:
+  //  display.fillRect(0, 0, map(throttlePercent, 0,100, 0,108), 36, BLUE);
+  //  display.fillRect(map(throttlePercent, 0,100, 0,108), 0, map(throttlePercent, 0,100, 108,0), 36, WHITE);
+  //  //dispValue(throttlePWM, prevThrotPWM, 4, 0, 108, 10, 2, BLACK, WHITE);
+  //  dispValue(throttlePercent, prevThrotPercent, 3, 0, 108, 10, 2, BLACK, WHITE);
+  //  display.print("%");
+
+  display.fillRect(0, 36, 160, 1, BLACK);
+  display.fillRect(108, 0, 1, 36, BLACK);
+  display.fillRect(0, 92, 160, 1, BLACK);
+
+  if(ALTITUDE_AGL) dispValue(aglFt, prevAltiFt, 5, 0, 70, 102, 2, BLACK, WHITE);
+  else dispValue(altitudeFt, prevAltiFt, 5, 0, 70, 102, 2, BLACK, WHITE);
+  display.print("ft");
+
+  //dispValue(ambientTempF, prevAmbTempF, 3, 0, 10, 100, 2, BLACK, WHITE);
+  //display.print("F");
+
+  handleFlightTime();
+  displayTime(throttleSecs, 8, 102);
+
+  //dispPowerCycles(104,100,2);
 }
 
 // displays number of minutes and seconds (since armed)
@@ -468,9 +614,9 @@ void displayVersions() {
 
 // display hidden page (firmware version and total armed time)
 void displayMessage(char *message) {
-  display.clearDisplay();
+  //display.clearDisplay();
   display.setCursor(0, 0);
   display.setTextSize(2);
   display.println(message);
-  display.display();
 }
+
