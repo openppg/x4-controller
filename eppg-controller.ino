@@ -45,8 +45,9 @@ Thread ledBlinkThread = Thread();
 Thread displayThread = Thread();
 Thread throttleThread = Thread();
 Thread buttonThread = Thread();
-StaticThreadController<4> threads(&ledBlinkThread, &displayThread,
-                                  &throttleThread, &buttonThread);
+Thread telemetryThread = Thread();
+StaticThreadController<5> threads(&ledBlinkThread, &displayThread, &throttleThread,
+                                  &buttonThread, &telemetryThread);
 
 bool armed = false;
 bool use_hub_v2 = true;
@@ -91,11 +92,14 @@ void setup() {
   displayThread.onRun(updateDisplay);
   displayThread.setInterval(100);
 
-  buttonThread.onRun(handleArming);
-  buttonThread.setInterval(100);
+  buttonThread.onRun(checkButtons);
+  buttonThread.setInterval(25);
 
   throttleThread.onRun(handleThrottle);
   throttleThread.setInterval(22);
+
+  telemetryThread.onRun(handleTelemetry);
+  telemetryThread.setInterval(50);
 
   int countdownMS = Watchdog.enable(4000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
@@ -118,7 +122,7 @@ void setup140() {
 
   //eepInit();
 
-  if(!digitalRead(BTN_PIN)){
+  if(!digitalRead(BUTTON_TOP)){
     // Switch modes
     bool mode = eep.read(6);
     //eep.write(6, !mode); // 0=BEGINNER 1=EXPERT
@@ -129,7 +133,7 @@ void setup140() {
   //setFlightHours(0);    // uncomment to set flight log hours (0.0 to 9999.9)... MUST re-comment and re-upload!
   delay(10);
 
-  if(!digitalRead(BTN_PIN) && beginner){
+  if(!digitalRead(BUTTON_TOP) && beginner){
     display.setCursor(10, 20);
     display.setTextSize(2);
     display.setTextColor(BLUE);
@@ -140,7 +144,7 @@ void setup140() {
     display.print("ACTIVATED");
     display.setTextColor(BLACK);
   }
-  if(!digitalRead(BTN_PIN) && !beginner){
+  if(!digitalRead(BUTTON_TOP) && !beginner){
     display.setCursor(10, 20);
     display.setTextSize(2);
     display.setTextColor(RED);
@@ -151,7 +155,7 @@ void setup140() {
     display.print("ACTIVATED");
     display.setTextColor(BLACK);
   }
-  while(!digitalRead(BTN_PIN));
+  while(!digitalRead(BUTTON_TOP));
   if(beginner){  // Erase Text
     display.setCursor(10, 20);
     display.setTextSize(2);
@@ -247,7 +251,7 @@ void initDisplay() {
 
 // read throttle and send to hub
 void handleThrottle() {
-  if(!armed) { return; }
+  if(!armed) { return; } //safe
 
   int maxPWM = 2000;
   pot.update();

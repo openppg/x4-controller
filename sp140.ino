@@ -118,7 +118,7 @@ void dispValue(float &value, float &prevVal, int maxDigits, int precision, int x
 
 void handleCruise(){
   // Activate Cruise:
-  if(!cruising && digitalRead(BTN_PIN)==LOW && potLvl>=(0.15*4096)){
+  if(!cruising && digitalRead(BUTTON_TOP)==LOW && potLvl>=(0.15*4096)){
     Serial.println("****************************************************************");
     cruiseLvl = potLvl;
     bool cruiseReady = false;
@@ -130,14 +130,14 @@ void handleCruise(){
     display.setTextSize(1);
     display.print(F("Release Throttle"));
     unsigned long prePressMillis = millis();
-    while(digitalRead(BTN_PIN)==LOW && !cruiseReady){
+    while(digitalRead(BUTTON_TOP)==LOW && !cruiseReady){
       delay(100);
       cruisingIn = 2-((millis()-prePressMillis)/1000);
       dispValue(cruisingIn, prevCruisingIn, 2, 0, 20, 40, 7, BLUE, WHITE);
       if(cruisingIn<1){
         cruiseReady = true;
       }
-      if(cruiseReady || digitalRead(BTN_PIN)==HIGH){
+      if(cruiseReady || digitalRead(BUTTON_TOP)==HIGH){
         display.fillScreen(WHITE);
       }
     }
@@ -157,7 +157,7 @@ void handleCruise(){
   }
 
   // Deactivate Cruise
-  else if(cruising && digitalRead(BTN_PIN)==HIGH && potLvl>=(0.15*4096)){
+  else if(cruising && digitalRead(BUTTON_TOP)==HIGH && potLvl>=(0.15*4096)){
     cruising = false;
     if(ENABLE_VIB) {
       vibrateNotify();
@@ -172,7 +172,7 @@ void handleCruise(){
 }
 
 void handleArming(){
-  if(digitalRead(BTN_PIN)==LOW && potLvl<(0.15*4096)){
+  if(digitalRead(BUTTON_TOP)==LOW && potLvl<(0.15*4096)){
     bool armReady = false;
     display.fillScreen(WHITE);
     display.setTextColor(BLACK);
@@ -185,7 +185,7 @@ void handleArming(){
     else display.print(hours,1);
     display.print(F("hr"));
     unsigned long prePressMillis = millis();
-    while(digitalRead(BTN_PIN)==LOW && !armReady){
+    while(digitalRead(BUTTON_TOP)==LOW && !armReady){
       delay(100);
       armingIn = 3-((millis()-prePressMillis)/1000);
       //dispArmingIn(armingIn, 0, 20, 4);
@@ -193,7 +193,7 @@ void handleArming(){
       if(armingIn<1){
         armReady = true;
       }
-      if(armReady || digitalRead(BTN_PIN)==HIGH){
+      if(armReady || digitalRead(BUTTON_TOP)==HIGH){
         display.fillScreen(WHITE);
         //dispAltiPortion(20,70,2);
       }
@@ -346,9 +346,18 @@ void prepareSerialRead(){
   }
 }
 
+void handleTelemetry(){
+  prepareSerialRead();
+  Serial5.readBytes(escData, ESC_DATA_SIZE);
+  // enforceChecksum():
+  enforceFletcher16();
+  // printRawSentence();
+  parseData();
+  readBMP();
+}
 
 void enforceFletcher16(){
-  //Check checksum, revert to previous data if bad:
+  // Check checksum, revert to previous data if bad:
   word checksum = (unsigned short)(word(escData[19], escData[18]));
   unsigned char sum1 = 0;
   unsigned char sum2 = 0;
