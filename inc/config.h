@@ -23,8 +23,8 @@
 // Calibration
 #define MAMP_OFFSET 200
 
-#define VERSION_MAJOR 4
-#define VERSION_MINOR 2
+#define VERSION_MAJOR 5
+#define VERSION_MINOR 0
 
 #define CRUISE_GRACE 2  // 2 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
