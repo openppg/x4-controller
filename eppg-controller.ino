@@ -104,18 +104,14 @@ void setup() {
   int countdownMS = Watchdog.enable(4000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   refreshDeviceData();
+  setup140();
 }
 
 void setup140() {
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, LOW);
-
-  pinMode(BTN_PIN, INPUT);
-  analogReadResolution(12);     // M0 chip provides 12bit resolution
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(0); // make sure motors off
 
- Serial5.begin(ESC_BAUD_RATE);
+  Serial5.begin(ESC_BAUD_RATE);
   Serial5.setTimeout(ESC_TIMEOUT);
   buzzInit(ENABLE_BUZ);
   tftInit();
@@ -131,7 +127,7 @@ void setup140() {
   if(!digitalRead(BTN_PIN)){
     // Switch modes
     bool mode = eep.read(6);
-    eep.write(6, !mode); // 0=BEGINNER 1=EXPERT
+    //eep.write(6, !mode); // 0=BEGINNER 1=EXPERT
   }
 
   beginner = false; // TODO read from eep

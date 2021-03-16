@@ -360,13 +360,13 @@ void enforceFletcher16(){
   sum = (unsigned char)(sum1 - sum2);
   sum = sum << 8;
   sum |= (unsigned char)(sum2 - 2*sum1);
-  Serial.print(F("     SUM: "));
-  Serial.println(sum);
-  Serial.print(sum1,HEX);
-  Serial.print(" ");
-  Serial.println(sum2,HEX);
-  Serial.print(F("CHECKSUM: "));
-  Serial.println(checksum);
+  // Serial.print(F("     SUM: "));
+  // Serial.println(sum);
+  // Serial.print(sum1,HEX);
+  // Serial.print(" ");
+  // Serial.println(sum2,HEX);
+  // Serial.print(F("CHECKSUM: "));
+  // Serial.println(checksum);
   if(sum != checksum){
     Serial.println(F("_________________________________________________CHECKSUM FAILED!"));
     failed++;
@@ -480,17 +480,17 @@ void parseData(){
   // 17 and 16 are reserved bytes
   // 19 and 18 is checksum
   word checksum = word(escData[19], escData[18]);
-  Serial.print(F("CHECKSUM: "));
-  Serial.print(escData[19]);
-  Serial.print(F(" + "));
-  Serial.print(escData[18]);
-  Serial.print(F(" = "));
-  Serial.println(checksum);
+  // Serial.print(F("CHECKSUM: "));
+  // Serial.print(escData[19]);
+  // Serial.print(F(" + "));
+  // Serial.print(escData[18]);
+  // Serial.print(F(" = "));
+  // Serial.println(checksum);
 
-  Serial.print(F("hours: "));
-  Serial.println(hours);
-  Serial.print(F("throttleSecs: "));
-  Serial.println(throttleSecs);
+  // Serial.print(F("hours: "));
+  // Serial.println(hours);
+  // Serial.print(F("throttleSecs: "));
+  // Serial.println(throttleSecs);
 
 }
 

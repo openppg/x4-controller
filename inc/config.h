@@ -2,11 +2,11 @@
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    5   // output for buzzer speaker
-#define LED_SW        9   // output for LED on button_top switch
+#define LED_SW        0   // output for LED on button_top switch
 #define LED_2         0   // output for LED 2
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
-#define RX_TX_TOGGLE  11  // RS485
+#define RX_TX_TOGGLE  0  // RS485
 
 #define CTRL_VER 0x00
 #define CTRL2HUB_ID 0x10
