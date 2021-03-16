@@ -433,7 +433,7 @@ void parseData(){
   Serial.print(F("Volts: "));
   Serial.println(volts);
 
-  batteryPercent = mapf(volts, MINIMUM_VOLTAGE, MAXIMUM_VOLTAGE, 0.0, 100.0);
+  batteryPercent = mapf(volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0);
   if(batteryPercent < 0){
     batteryPercent = 0;
   }
@@ -513,7 +513,7 @@ void readBMP(){
   ambientTempC = bmp.temperature;
   ambientTempF = ambientTempC*(9/5.0)+32;
   pressureHpa = bmp.pressure;
-  altitudeM = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+  altitudeM = bmp.readAltitude(DEFAULT_SEA_PRESSURE);
   altitudeFt = (int)(altitudeM*3.28);
   aglFt = altitudeFt - altiOffsetFt;
 }
@@ -524,7 +524,7 @@ void setAltiOffset(){
   ambientTempC = bmp.temperature;
   ambientTempF = ambientTempC*(9/5.0)+32;
   pressureHpa = bmp.pressure;
-  altitudeM = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+  altitudeM = bmp.readAltitude(DEFAULT_SEA_PRESSURE);
   altiOffsetFt = (int)(altitudeM*3.28);
 }
 

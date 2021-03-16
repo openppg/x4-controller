@@ -44,7 +44,7 @@ void addVSpace() {
 
 void setLEDs(byte state) {
   // digitalWrite(LED_2, state);
-  digitalWrite(LED_3, state);
+  // digitalWrite(LED_3, state);
   digitalWrite(LED_SW, state);
 }
 

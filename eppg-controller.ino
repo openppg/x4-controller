@@ -36,7 +36,6 @@ WEBUSB_URL_DEF(landingPage, 1 /*https*/, "openppg.github.io/openppg-config");
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
-AceButton button_side(BUTTON_SIDE);
 AdjustableButtonConfig buttonConfig;
 extEEPROM eep(kbits_64, 1, 64);
 
@@ -69,22 +68,19 @@ void setup() {
   usb_web.setLineStateCallback(line_state_callback);
 
   Serial.begin(115200);
-  Serial5.begin(115200);
-  Serial5.setTimeout(5);
+  Serial5.begin(ESC_BAUD_RATE);
+  Serial5.setTimeout(ESC_TIMEOUT);
 
   Serial.print(F("Booting up (USB) V"));
   Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
-  pinMode(LED_3, OUTPUT);       // set up the internal LED3 pin
-  pinMode(RX_TX_TOGGLE, OUTPUT);
 
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   unsigned int startup_vibes[] = { 27, 27, 0 };
   runVibe(startup_vibes, 3);
-  digitalWrite(RX_TX_TOGGLE, LOW);
 
   initButtons();
   initDisplay();
@@ -111,8 +107,6 @@ void setup140() {
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(0); // make sure motors off
 
-  Serial5.begin(ESC_BAUD_RATE);
-  Serial5.setTimeout(ESC_TIMEOUT);
   buzzInit(ENABLE_BUZ);
   tftInit();
   bmpInit();
@@ -191,7 +185,6 @@ void loop() {
 }
 
 void checkButtons() {
-  button_side.check();
   button_top.check();
 }
 
@@ -219,9 +212,9 @@ void disarmSystem() {
     playMelody(disarm_melody, 3);
   }
   // update armed_time
-  refreshDeviceData();
-  deviceData.armed_time += round(armedSecs / 60);  // convert to mins
-  writeDeviceData();
+  // refreshDeviceData();
+  // deviceData.armed_time += round(armedSecs / 60);  // convert to mins
+  // writeDeviceData();
   // recordFlightHours(); TODO
   delay(1500);  // dont allow immediate rearming
 }
@@ -229,9 +222,7 @@ void disarmSystem() {
 // inital button setup and config
 void initButtons() {
   pinMode(BUTTON_TOP, INPUT_PULLUP);
-  pinMode(BUTTON_SIDE, INPUT_PULLUP);
 
-  button_side.setButtonConfig(&buttonConfig);
   button_top.setButtonConfig(&buttonConfig);
   buttonConfig.setEventHandler(handleButtonEvent);
   buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
@@ -275,23 +266,6 @@ void handleThrottle() {
   esc.writeMicroseconds(throttlePWM); // using val as the signal to esc
   Serial.print(F("WRITING: "));
   Serial.println(throttlePWM);
-}
-
-// format and transmit data to hub
-void sendToHub(int throttle_val) {
-  memset((uint8_t*)&controlData, 0, sizeof(STR_CTRL2HUB_MSG));
-
-  controlData.version = CTRL_VER;
-  controlData.id = CTRL2HUB_ID;
-  controlData.length = sizeof(STR_CTRL2HUB_MSG);
-  controlData.armed = armed;
-  controlData.throttlePercent = throttle_val;
-  controlData.crc = crc16((uint8_t*)&controlData, sizeof(STR_CTRL2HUB_MSG) - 2);
-
-  digitalWrite(RX_TX_TOGGLE, HIGH);
-  Serial5.write((uint8_t*)&controlData, 8);  // send to hub
-  Serial5.flush();
-  digitalWrite(RX_TX_TOGGLE, LOW);
 }
 
 // read hub data if available and have it converted
@@ -360,12 +334,8 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
   uint8_t pin = button->getPin();
 
   switch (eventType) {
-  case AceButton::kEventReleased:
-    if (pin == BUTTON_SIDE) nextPage();
-    break;
   case AceButton::kEventDoubleClicked:
-    if (pin == BUTTON_SIDE) {}
-    else if (pin == BUTTON_TOP) {
+    if (pin == BUTTON_TOP) {
       if (armed) {
         disarmSystem();
       } else if (throttleSafe()) {
@@ -376,10 +346,9 @@ void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
     }
     break;
   case AceButton::kEventLongPressed:
-    int side_state = digitalRead(BUTTON_SIDE);
     int top_state = digitalRead(BUTTON_TOP);
 
-    if (top_state == LOW && side_state == LOW) {
+    if (top_state == LOW) {
       page = 4;
     }
     break;
@@ -462,7 +431,7 @@ void updateDisplay(){
   else{
     display.fillRect(0, 0, map(batteryPercent, 0,100, 0,108), 36, RED);
   }
-  if(volts < MINIMUM_VOLTAGE){
+  if(volts < BATT_MIN_V){
     if(batteryFlag){
       batteryFlag = false;
       display.fillRect(0, 0, 108, 36, WHITE);
