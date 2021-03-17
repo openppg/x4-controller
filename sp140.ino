@@ -353,7 +353,6 @@ void handleTelemetry(){
   enforceFletcher16();
   // printRawSentence();
   parseData();
-  readBMP();
 }
 
 void enforceFletcher16(){
@@ -439,8 +438,8 @@ void parseData(){
   volts = _volts/100.0;
   //reading 23.00 = 22.7 actual
   //reading 16.00 = 15.17 actual
-  Serial.print(F("Volts: "));
-  Serial.println(volts);
+  // Serial.print(F("Volts: "));
+  // Serial.println(volts);
 
   batteryPercent = mapf(volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0);
   if(batteryPercent < 0){
@@ -453,13 +452,13 @@ void parseData(){
   _temperatureC = word(escData[3], escData[2]);
   temperatureC = _temperatureC/100.0;
   //reading 17.4C = 63.32F in 84F ambient?
-  Serial.print(F("TemperatureC: "));
-  Serial.println(temperatureC);
+  // Serial.print(F("TemperatureC: "));
+  // Serial.println(temperatureC);
 
   _amps = word(escData[5], escData[4]);
   amps = _amps/10.0;
-  Serial.print(F("Amps: "));
-  Serial.println(amps);
+  // Serial.print(F("Amps: "));
+  // Serial.println(amps);
 
   kilowatts = amps*volts/1000.0;
 
@@ -473,18 +472,18 @@ void parseData(){
   _eRPM << 8;
   _eRPM += escData[8];     // b4
   eRPM = _eRPM/6.0/2.0;
-  Serial.print(F("eRPM: "));
-  Serial.println(eRPM);
+  // Serial.print(F("eRPM: "));
+  // Serial.println(eRPM);
 
   _inPWM = word(escData[13], escData[12]);
   inPWM = _inPWM/100.0;
-  Serial.print(F("inPWM: "));
-  Serial.println(inPWM);
+  // Serial.print(F("inPWM: "));
+  // Serial.println(inPWM);
 
   _outPWM = word(escData[15], escData[14]);
   outPWM = _outPWM/100.0;
-  Serial.print(F("outPWM: "));
-  Serial.println(outPWM);
+  // Serial.print(F("outPWM: "));
+  // Serial.println(outPWM);
 
   // 17 and 16 are reserved bytes
   // 19 and 18 is checksum
@@ -515,26 +514,6 @@ void vibrateNotify(){
   vibe.setWaveform(0, effect);
   vibe.setWaveform(1, 0);
   vibe.go();
-}
-
-void readBMP(){
-  bmp.performReading();
-  ambientTempC = bmp.temperature;
-  ambientTempF = ambientTempC*(9/5.0)+32;
-  pressureHpa = bmp.pressure;
-  altitudeM = bmp.readAltitude(DEFAULT_SEA_PRESSURE);
-  altitudeFt = (int)(altitudeM*3.28);
-  aglFt = altitudeFt - altiOffsetFt;
-}
-
-
-void setAltiOffset(){
-  bmp.performReading();
-  ambientTempC = bmp.temperature;
-  ambientTempF = ambientTempC*(9/5.0)+32;
-  pressureHpa = bmp.pressure;
-  altitudeM = bmp.readAltitude(DEFAULT_SEA_PRESSURE);
-  altiOffsetFt = (int)(altitudeM*3.28);
 }
 
 

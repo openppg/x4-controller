@@ -39,7 +39,7 @@ bool upgradeDeviceData(){
   deviceData = STR_DEVICE_DATA_V2();
   deviceData.version_major = VERSION_MAJOR;
   deviceData.version_minor = VERSION_MINOR;
-  deviceData.screen_rotation = 2;
+  deviceData.screen_rotation = 1; //sp140 1 == 2, 3 == 4
   deviceData.sea_pressure = DEFAULT_SEA_PRESSURE;  // 1013.25 mbar
   deviceData.metric_temp = true;
   deviceData.metric_alt = true;

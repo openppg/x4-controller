@@ -52,7 +52,7 @@ StaticThreadController<5> threads(&ledBlinkThread, &displayThread, &throttleThre
 bool armed = false;
 bool use_hub_v2 = true;
 int page = 0;
-int armAltM = 0;
+float armAltM = 0;
 uint32_t armedAtMilis = 0;
 uint32_t cruisedAtMilis = 0;
 unsigned int armedSecs = 0;
@@ -236,22 +236,23 @@ void initButtons() {
 
 // inital screen setup and config
 void initDisplay() {
-  display.initR(INITR_BLACKTAB);          // Init ST7735S chip, black tab
+  display.initR(INITR_BLACKTAB);    // Init ST7735S chip, black tab
   display.fillScreen(WHITE);
   display.setTextColor(BLACK);
-  display.setCursor(0,0);
+  display.setCursor(0, 0);
   display.setTextSize(1);
   display.setTextWrap(true);
+
   int rotation = 1;
-  if(LEFT_HAND_THROTTLE) rotation = 3;
-  display.setRotation(rotation); // 1=right hand, 3=left hand
+  if (LEFT_HAND_THROTTLE) rotation = 3;
+  display.setRotation(rotation);  // 1=right hand, 3=left hand
   pinMode(TFT_LITE, OUTPUT);
   digitalWrite(TFT_LITE, HIGH);  // Backlight on
 }
 
 // read throttle and send to hub
 void handleThrottle() {
-  if(!armed) { return; } //safe
+  if (!armed) return; //safe
 
   int maxPWM = 2000;
   pot.update();
@@ -261,55 +262,17 @@ void handleThrottle() {
     maxPWM = 1778;  // 75% interpolated from 1112 to 2000
   }
   handleCruise();  // activate or deactivate cruise
-  if(cruising){ throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM); }
-  else{ throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM); } // mapping val to minimum and maximum
+  if (cruising) { throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM); }
+  else { throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM); } // mapping val to minimum and maximum
   throttlePercent = mapf(throttlePWM, 1112,2000, 0,100);
-  if(throttlePercent<0){
+  if (throttlePercent<0) {
     throttlePercent = 0;
   }
   esc.writeMicroseconds(throttlePWM); // using val as the signal to esc
-  Serial.print(F("WRITING: "));
-  Serial.println(throttlePWM);
+  //Serial.print(F("WRITING: "));
+  //Serial.println(throttlePWM);
 }
 
-// read hub data if available and have it converted
-void handleHubResonse() {
-  int readSize = sizeof(STR_HUB2CTRL_MSG_V2);
-  uint8_t serialData[readSize];
-
-  while (Serial5.available() > 0) {
-    memset(serialData, 0, sizeof(serialData));
-    int size = Serial5.readBytes(serialData, sizeof(STR_HUB2CTRL_MSG_V2));
-    receiveHubData(serialData, size);
-  }
-  Serial5.flush();
-}
-
-// convert hub data packets into readable structs
-void receiveHubData(uint8_t *buf, uint32_t size) {
-  uint16_t crc;
-  if (size == sizeof(STR_HUB2CTRL_MSG_V2)) {
-    memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V2));
-    crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V2) - 2);
-    use_hub_v2 = true;
-  } else if (size == sizeof(STR_HUB2CTRL_MSG_V1)) {
-    memcpy((uint8_t*)&hubData, buf, sizeof(STR_HUB2CTRL_MSG_V1));
-    crc = crc16((uint8_t*)&hubData, sizeof(STR_HUB2CTRL_MSG_V1) - 2);
-    use_hub_v2 = false;
-  } else {
-    Serial.print("wrong size ");
-    Serial.print(size);
-    Serial.print(" should be ");
-    Serial.println(sizeof(STR_HUB2CTRL_MSG_V2));
-    return;
-  }
-
-  if (crc != hubData.crc) {
-    Serial.print(F("hub crc mismatch"));
-    return;
-  }
-  if (hubData.totalCurrent > MAMP_OFFSET) {hubData.totalCurrent -= MAMP_OFFSET;}
-}
 
 // get the PPG ready to fly
 bool armSystem() {
@@ -317,18 +280,15 @@ bool armSystem() {
   unsigned int arm_vibes[] = { 70, 33, 0 };
 
   armed = true;
-  esc.writeMicroseconds(1000); // initialize the signal to 1000
+  esc.writeMicroseconds(1000);  // initialize the signal to 1000
 
   ledBlinkThread.enabled = false;
   armedAtMilis = millis();
-  //armAltM = getAltitudeM();
-  setAltiOffset(); // TODO combine altitude measuing
+  armAltM = getAltitudeM();
 
-  if(ENABLE_VIB) runVibe(arm_vibes, 3);
   setLEDs(HIGH);
-  if(ENABLE_BUZ){
-    playMelody(arm_melody, 3);
-  }
+  if (ENABLE_VIB) runVibe(arm_vibes, 3);
+  if (ENABLE_BUZ) playMelody(arm_melody, 3);
   Serial.println(F("Sending Arm Signal"));
   return true;
 }
@@ -370,12 +330,13 @@ bool throttleSafe() {
 
 // convert barometer data to altitude in meters
 float getAltitudeM() {
-  // from https://github.com/adafruit/Adafruit_BMP3XX/blob/master/Adafruit_BMP3XX.cpp#L208
-  float seaLevel = deviceData.sea_pressure;
-  float atmospheric = hubData.baroPressure / 100.0F;
-  if (hubData.baroPressure < 1) { return 0.0; }
-  // convert to fahrenheit if not using metric
-  float altitudeM = 44330.0 * (1.0 - pow(atmospheric / seaLevel, 0.1903));
+  bmp.performReading();
+  ambientTempC = bmp.temperature;
+  float altitudeM = bmp.readAltitude(deviceData.sea_pressure);
+  aglM = altitudeM - armAltM;
+
+  Serial.print("alt: ");
+  Serial.println(altitudeM);
   return altitudeM;
 }
 
@@ -386,7 +347,7 @@ float getAltitudeM() {
  *******/
 
 // show data on screen and handle different pages
-void updateDisplay(){
+void updateDisplay() {
   dispValue(volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
   display.print("V");
 
@@ -396,7 +357,7 @@ void updateDisplay(){
   dispValue(kilowatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
   display.print("kW");
 
-  if(cruising){
+  if(cruising) {
     display.setCursor(10, 80);
     display.setTextSize(1);
     display.setTextColor(RED);
@@ -418,7 +379,7 @@ void updateDisplay(){
     display.print("BEGINNER");
     display.setTextColor(BLACK);
   }
-  else{
+  else {
     display.setCursor(10, 40);
     display.setTextSize(1);
     display.setTextColor(RED);
@@ -426,21 +387,20 @@ void updateDisplay(){
     display.setTextColor(BLACK);
   }
 
-  if(batteryPercent>66){
-    display.fillRect(0, 0, map(batteryPercent, 0,100, 0,108), 36, GREEN);
+  if (batteryPercent > 66){
+    display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, GREEN);
   }
-  else if(batteryPercent>33){
-    display.fillRect(0, 0, map(batteryPercent, 0,100, 0,108), 36, YELLOW);
+  else if (batteryPercent > 33) {
+    display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, YELLOW);
+  } else {
+    display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, RED);
   }
-  else{
-    display.fillRect(0, 0, map(batteryPercent, 0,100, 0,108), 36, RED);
-  }
-  if(volts < BATT_MIN_V){
-    if(batteryFlag){
+  if (volts < BATT_MIN_V) {
+    if(batteryFlag) {
       batteryFlag = false;
       display.fillRect(0, 0, 108, 36, WHITE);
     }
-    display.setCursor(0,3);
+    display.setCursor(0, 3);
     display.setTextSize(2);
     display.setTextColor(RED);
     display.println(" BATTERY");
@@ -464,9 +424,7 @@ void updateDisplay(){
   display.fillRect(108, 0, 1, 36, BLACK);
   display.fillRect(0, 92, 160, 1, BLACK);
 
-  if(ALTITUDE_AGL) dispValue(aglFt, prevAltiFt, 5, 0, 70, 102, 2, BLACK, WHITE);
-  else dispValue(altitudeFt, prevAltiFt, 5, 0, 70, 102, 2, BLACK, WHITE);
-  display.print("ft");
+  displayAlt();
 
   //dispValue(ambientTempF, prevAmbTempF, 3, 0, 10, 100, 2, BLACK, WHITE);
   //display.print("F");
@@ -489,7 +447,7 @@ void displayTime(int val) {
 
 // display altitude data on screen
 void displayAlt() {
-  int altiudeM = 0;
+  float altiudeM = 0;
   if (armAltM > 0 && deviceData.sea_pressure != DEFAULT_SEA_PRESSURE) {  // MSL
     altiudeM = getAltitudeM();
   } else {  // AGL
@@ -497,10 +455,12 @@ void displayAlt() {
   }
 
   // convert to ft if not using metric
-  int alt = deviceData.metric_alt ? (int)altiudeM : (round(altiudeM * 3.28084));
-  display.print(alt, 1);
-  display.setTextSize(2);
-  display.println(deviceData.metric_alt ? F("m") : F("ft"));
+  float alt = deviceData.metric_alt ? altiudeM : (round(altiudeM * 3.28084));
+
+  dispValue(alt, lastAltM, 5, 0, 70, 102, 2, BLACK, WHITE);
+
+  display.print(deviceData.metric_alt ? F("m") : F("ft"));
+  lastAltM = alt;
 }
 
 // display temperature data on screen

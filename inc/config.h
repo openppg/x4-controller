@@ -58,5 +58,4 @@
 #define ENABLE_VIB            true    // enable vibration
 #define ENABLE_VIB_LOW_BAT    true    // vibrate if armed and battery voltage sags below min volts. Gets pilot's attention.
 
-#define ALTITUDE_AGL          1       // [1] Zero altitude when armed, [0] Measure MSL altitude
 #define LEFT_HAND_THROTTLE    true    // true for left handed throttle

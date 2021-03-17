@@ -56,15 +56,9 @@ float outPWM = 0;
 
 //ALTIMETER
 float ambientTempC = 0;
-float prevAmbTempC = 0;
-float ambientTempF = 0;
-float prevAmbTempF = 0;
-float pressureHpa = 0;
 float altitudeM = 0;
-float altitudeFt = 0;
-float prevAltiFt = 0;
-float altiOffsetFt = 0;
-float aglFt = 0;
+float aglM = 0;
+float lastAltM = 0;
 
 Adafruit_BMP3XX bmp;
 Servo esc; // Creating a servo class with name of esc
