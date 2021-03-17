@@ -84,7 +84,6 @@ void setup() {
   runVibe(startup_vibes, 3);
 
   initButtons();
-  initDisplay();
 
   ledBlinkThread.onRun(blinkLED);
   ledBlinkThread.setInterval(500);
@@ -105,14 +104,14 @@ void setup() {
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   refreshDeviceData();
   setup140();
+  initDisplay();
 }
 
 void setup140() {
   esc.attach(ESC_PIN);
-  esc.writeMicroseconds(0); // make sure motors off
+  esc.writeMicroseconds(0);  // make sure motors off
 
   buzzInit(ENABLE_BUZ);
-  tftInit();
   bmpInit();
   vibe.begin();
   vibe.selectLibrary(1);
@@ -122,7 +121,7 @@ void setup140() {
 
   //eepInit();
 
-  if(!digitalRead(BUTTON_TOP)){
+  if (!digitalRead(BUTTON_TOP)) {
     // Switch modes
     bool mode = eep.read(6);
     //eep.write(6, !mode); // 0=BEGINNER 1=EXPERT
@@ -156,7 +155,7 @@ void setup140() {
     display.setTextColor(BLACK);
   }
   while(!digitalRead(BUTTON_TOP));
-  if(beginner){  // Erase Text
+  if (beginner) {  // Erase Text
     display.setCursor(10, 20);
     display.setTextSize(2);
     display.setTextColor(WHITE);
@@ -167,7 +166,7 @@ void setup140() {
     display.print("ACTIVATED");
     display.setTextColor(BLACK);
   }
-  if(!beginner){  // Erase Text
+  if (!beginner) {  // Erase Text
     display.setCursor(10, 20);
     display.setTextSize(2);
     display.setTextColor(WHITE);
@@ -211,10 +210,9 @@ void disarmSystem() {
   armed = false;
   ledBlinkThread.enabled = true;
   updateDisplay();
-  if(ENABLE_VIB) runVibe(disarm_vibes, 3);
-  if(ENABLE_BUZ){
-    playMelody(disarm_melody, 3);
-  }
+  if (ENABLE_VIB) runVibe(disarm_vibes, 3);
+  if (ENABLE_BUZ) playMelody(disarm_melody, 3);
+
   // update armed_time
   // refreshDeviceData();
   // deviceData.armed_time += round(armedSecs / 60);  // convert to mins
@@ -243,9 +241,9 @@ void initDisplay() {
   display.setTextSize(1);
   display.setTextWrap(true);
 
-  int rotation = 1;
-  if (LEFT_HAND_THROTTLE) rotation = 3;
-  display.setRotation(rotation);  // 1=right hand, 3=left hand
+  deviceData.screen_rotation = 3;
+  display.setRotation(deviceData.screen_rotation);  // 1=right hand, 3=left hand
+
   pinMode(TFT_LITE, OUTPUT);
   digitalWrite(TFT_LITE, HIGH);  // Backlight on
 }
@@ -363,8 +361,7 @@ void updateDisplay() {
     display.setTextColor(RED);
     display.print("CRUISE");
     display.setTextColor(BLACK);
-  }
-  else{
+  } else {
     display.setCursor(10, 80);
     display.setTextSize(1);
     display.setTextColor(WHITE);
@@ -372,14 +369,13 @@ void updateDisplay() {
     display.setTextColor(BLACK);
   }
 
-  if(beginner){
+  if (beginner) {
     display.setCursor(10, 40);
     display.setTextSize(1);
     display.setTextColor(BLUE);
     display.print("BEGINNER");
     display.setTextColor(BLACK);
-  }
-  else {
+  } else {
     display.setCursor(10, 40);
     display.setTextSize(1);
     display.setTextColor(RED);
@@ -387,16 +383,15 @@ void updateDisplay() {
     display.setTextColor(BLACK);
   }
 
-  if (batteryPercent > 66){
+  if (batteryPercent > 66) {
     display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, GREEN);
-  }
-  else if (batteryPercent > 33) {
+  } else if (batteryPercent > 33) {
     display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, YELLOW);
   } else {
     display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, RED);
   }
   if (volts < BATT_MIN_V) {
-    if(batteryFlag) {
+    if (batteryFlag) {
       batteryFlag = false;
       display.fillRect(0, 0, 108, 36, WHITE);
     }
@@ -405,8 +400,7 @@ void updateDisplay() {
     display.setTextColor(RED);
     display.println(" BATTERY");
     display.print(" DEAD/NC ");
-  }
-  else{
+  } else {
     batteryFlag = true;
     display.fillRect(map(batteryPercent, 0,100, 0,108), 0, map(batteryPercent, 0,100, 108,0), 36, WHITE);
   }

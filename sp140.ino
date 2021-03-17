@@ -324,22 +324,6 @@ void buzzInit(bool enableBuz){
   }
 }
 
-
-void tftInit(){
-  display.initR(INITR_BLACKTAB);          // Init ST7735S chip, black tab
-  display.fillScreen(WHITE);
-  display.setTextColor(BLACK);
-  display.setCursor(0,0);
-  display.setTextSize(1);
-  display.setTextWrap(true);
-  int rotation = 1;
-  if(LEFT_HAND_THROTTLE) rotation = 3;
-  display.setRotation(rotation); // 1=right hand, 3=left hand
-  pinMode(TFT_LITE, OUTPUT);
-  digitalWrite(TFT_LITE, HIGH);  // Backlight on
-}
-
-
 void prepareSerialRead(){
   while(Serial5.available()>0){
     byte t = Serial5.read();
@@ -361,7 +345,7 @@ void enforceFletcher16(){
   unsigned char sum1 = 0;
   unsigned char sum2 = 0;
   unsigned short sum = 0;
-  for(int i=0; i<ESC_DATA_SIZE-2; i++){
+  for (int i=0; i<ESC_DATA_SIZE-2; i++) {
     sum1 = (unsigned char)(sum1 + escData[i]);
     sum2 = (unsigned char)(sum2 + sum1);
   }
@@ -375,28 +359,28 @@ void enforceFletcher16(){
   // Serial.println(sum2,HEX);
   // Serial.print(F("CHECKSUM: "));
   // Serial.println(checksum);
-  if(sum != checksum){
+  if (sum != checksum) {
     Serial.println(F("_________________________________________________CHECKSUM FAILED!"));
     failed++;
-    if(failed>=1000) {  // keep track of how reliable the transmission is
+    if (failed >= 1000) {  // keep track of how reliable the transmission is
       transmitted = 1;
       failed = 0;
     }
-    for(int i=0; i<ESC_DATA_SIZE; i++){  // revert to previous data
+    for (int i = 0; i < ESC_DATA_SIZE; i++) {  // revert to previous data
       escData[i] = prevData[i];
     }
   }
-  for(int i=0; i<ESC_DATA_SIZE; i++){
+  for (int i = 0; i < ESC_DATA_SIZE; i++) {
     prevData[i] = escData[i];
   }
 }
 
 
-void enforceChecksum(){
+void enforceChecksum() {
   //Check checksum, revert to previous data if bad:
   word checksum = word(escData[19], escData[18]);
   int sum = 0;
-  for(int i=0; i<ESC_DATA_SIZE-2; i++){
+  for (int i=0; i<ESC_DATA_SIZE-2; i++) {
     sum += escData[i];
   }
   Serial.print(F("     SUM: "));
@@ -410,19 +394,19 @@ void enforceChecksum(){
       transmitted = 1;
       failed = 0;
     }
-    for(int i=0; i<ESC_DATA_SIZE; i++){  // revert to previous data
+    for(int i=0; i<ESC_DATA_SIZE; i++) {  // revert to previous data
       escData[i] = prevData[i];
     }
   }
-  for(int i=0; i<ESC_DATA_SIZE; i++){
+  for(int i=0; i<ESC_DATA_SIZE; i++) {
     prevData[i] = escData[i];
   }
 }
 
 
-void printRawSentence(){
+void printRawSentence() {
   Serial.print(F("DATA: "));
-  for(int i=0; i<ESC_DATA_SIZE; i++){
+  for (int i=0; i<ESC_DATA_SIZE; i++) {
     Serial.print(escData[i], HEX);
     Serial.print(F(" "));
   }
@@ -430,7 +414,7 @@ void printRawSentence(){
 }
 
 
-void parseData(){
+void parseData() {
   // LSB First
 
   _volts = word(escData[1], escData[0]);
@@ -502,14 +486,14 @@ void parseData(){
 
 }
 
-void vibrateAlert(){
+void vibrateAlert() {
   int effect = 15; //1 through 117 (see example sketch)
   vibe.setWaveform(0, effect);
   vibe.setWaveform(1, 0);
   vibe.go();
 }
 
-void vibrateNotify(){
+void vibrateNotify() {
   int effect = 12; //1 through 117 (see example sketch)
   vibe.setWaveform(0, effect);
   vibe.setWaveform(1, 0);

@@ -57,5 +57,3 @@
 #define ENABLE_BUZ            true    // enable buzzer
 #define ENABLE_VIB            true    // enable vibration
 #define ENABLE_VIB_LOW_BAT    true    // vibrate if armed and battery voltage sags below min volts. Gets pilot's attention.
-
-#define LEFT_HAND_THROTTLE    true    // true for left handed throttle
