@@ -62,3 +62,5 @@ float lastAltM = 0;
 
 Adafruit_BMP3XX bmp;
 Servo esc; // Creating a servo class with name of esc
+
+static STR_DEVICE_DATA_140_V1 deviceData;

@@ -192,15 +192,6 @@ void checkButtons() {
   button_top.check();
 }
 
-byte getBatteryPercent() {
-  float voltage = hubData.voltage / VOLTAGE_DIVIDE;
-  // TODO(zach): LiPo curve
-  float percent = mapf(voltage, deviceData.min_batt_v, deviceData.max_batt_v, 0, 100);
-  percent = constrain(percent, 0, 100);
-
-  return round(percent);
-}
-
 void disarmSystem() {
   esc.writeMicroseconds(0);
   Serial.println(F("disarmed"));
@@ -242,7 +233,6 @@ void initDisplay() {
   display.setTextSize(1);
   display.setTextWrap(true);
 
-  deviceData.screen_rotation = 3;
   display.setRotation(deviceData.screen_rotation);  // 1=right hand, 3=left hand
 
   pinMode(TFT_LITE, OUTPUT);
@@ -471,59 +461,6 @@ void displayTemp() {
   display.println(deviceData.metric_temp ? F("c") : F("f"));
 }
 
-// display first page (voltage and current)
-void displayPage0() {
-  float voltage = hubData.voltage / VOLTAGE_DIVIDE;
-  float current = hubData.totalCurrent / CURRENT_DIVIDE;
-  display.print(voltage, 1);
-  display.setTextSize(2);
-  display.println(F("V"));
-  addVSpace();
-  display.setTextSize(3);
-  display.print(current, 0);
-  display.setTextSize(2);
-  display.println(F("A"));
-}
-
-// display second page (mAh and armed time)
-void displayPage1() {
-  float amph = hubData.totalMah / 10;
-  display.print(amph, 1);
-  display.setTextSize(2);
-  display.println(F("ah"));
-  addVSpace();
-  display.setTextSize(3);
-  displayTime(armedSecs);
-}
-
-// display third page (battery percent and kw)
-void displayPage2() {
-  float voltage = hubData.voltage / VOLTAGE_DIVIDE;
-  float current = hubData.totalCurrent / CURRENT_DIVIDE;
-  float kw = (voltage * current) / 1000;
-  display.print(getBatteryPercent());
-  display.setTextSize(2);
-  display.println(F("%"));
-  addVSpace();
-  display.setTextSize(3);
-  display.print(kw, 2);
-  display.setTextSize(2);
-  display.println(F("kw"));
-}
-
-// display fourth page (if compatible) (temperature and altitude)
-void displayPage3() {
-  if (!use_hub_v2) {
-    display.setTextSize(3);
-    display.println(F("update"));
-    return;
-  }
-  display.setTextSize(2);
-  displayTemp();
-  addVSpace();
-  display.setTextSize(3);
-  displayAlt();
-}
 
 // display hidden page (firmware version and total armed time)
 void displayVersions() {
