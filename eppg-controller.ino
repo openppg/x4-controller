@@ -124,7 +124,7 @@ void setup140() {
   if (!digitalRead(BUTTON_TOP)) {
     // Switch modes
     bool mode = eep.read(6);
-    //eep.write(6, !mode); // 0=BEGINNER 1=EXPERT
+    //eep.write(6, !mode); // 0=CHILL 1=SPORT 2=LUDICROUS?
   }
 
   beginner = false; // TODO read from eep
@@ -132,7 +132,7 @@ void setup140() {
   //setFlightHours(0);    // uncomment to set flight log hours (0.0 to 9999.9)... MUST re-comment and re-upload!
   delay(10);
 
-  if(!digitalRead(BUTTON_TOP) && beginner){
+  if (!digitalRead(BUTTON_TOP) && beginner) {
     display.setCursor(10, 20);
     display.setTextSize(2);
     display.setTextColor(BLUE);
@@ -143,7 +143,8 @@ void setup140() {
     display.print("ACTIVATED");
     display.setTextColor(BLACK);
   }
-  if(!digitalRead(BUTTON_TOP) && !beginner){
+  // TODO change to use Ace hold
+  if (!digitalRead(BUTTON_TOP) && !beginner) {
     display.setCursor(10, 20);
     display.setTextSize(2);
     display.setTextColor(RED);
@@ -255,15 +256,18 @@ void handleThrottle() {
   int maxPWM = 2000;
   pot.update();
   potLvl = pot.getValue();
-  if(beginner){
+  if (beginner) {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
     maxPWM = 1778;  // 75% interpolated from 1112 to 2000
   }
   handleCruise();  // activate or deactivate cruise
-  if (cruising) { throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM); }
-  else { throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM); } // mapping val to minimum and maximum
+  if (cruising) {
+    throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM);
+  } else {
+    throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM); // mapping val to min and max
+  }
   throttlePercent = mapf(throttlePWM, 1112,2000, 0,100);
-  if (throttlePercent<0) {
+  if (throttlePercent < 0) {
     throttlePercent = 0;
   }
   esc.writeMicroseconds(throttlePWM); // using val as the signal to esc
@@ -355,7 +359,8 @@ void updateDisplay() {
   dispValue(kilowatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
   display.print("kW");
 
-  if(cruising) {
+  // TODO dont update every cycle
+  if (cruising) {
     display.setCursor(10, 80);
     display.setTextSize(1);
     display.setTextColor(RED);
@@ -373,13 +378,13 @@ void updateDisplay() {
     display.setCursor(10, 40);
     display.setTextSize(1);
     display.setTextColor(BLUE);
-    display.print("BEGINNER");
+    display.print("CHILL");
     display.setTextColor(BLACK);
   } else {
     display.setCursor(10, 40);
     display.setTextSize(1);
     display.setTextColor(RED);
-    display.print("EXPERT");
+    display.print("SPORT");
     display.setTextColor(BLACK);
   }
 

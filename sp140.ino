@@ -1,18 +1,17 @@
-void handleFlightTime(){
-  if(!armed){
+void handleFlightTime() {
+  if (!armed) {
     throttledFlag = true;
     throttled = false;
   }
-  if(armed){
-    if(throttlePercent>50 && throttledFlag){
+  if (armed) {
+    if (throttlePercent > 50 && throttledFlag) {
       throttledAtMillis = millis();
       throttledFlag = false;
       throttled = true;
     }
-    if(throttled){
+    if (throttled) {
       throttleSecs = (millis()-throttledAtMillis) / 1000.0;
-    }
-    else{
+    } else {
       throttleSecs = 0;
     }
   }
@@ -224,7 +223,7 @@ void dispArmingIn(int _armingIn, int x, int y, int textSize){
 }
 
 
-void eepInit(){
+void eepInit() {
     eep.begin();
   for(int i=0; i<6; i++){
     //eep.write(i,0);         //uncomment to reset log to zero
@@ -243,7 +242,6 @@ void eepInit(){
                       + LogMin[3]*100 + LogMin[4]*10 + LogMin[5]);
   hours = logMinutes / 60.0;
 }
-
 
 void recordFlightHours(){
   return; // TODO remove and fix
@@ -274,7 +272,7 @@ void recordFlightHours(){
 }
 
 
-void setFlightHours(float hr){
+void setFlightHours(float hr) {
   return; // TODO fix write
   int newLogMinutes = hr*60.0; // 599940
   Serial.print(F("newLogMinutes: "));
@@ -303,7 +301,7 @@ void setFlightHours(float hr){
 }
 
 
-void bmpInit(){
+void bmpInit() {
   bmp.begin();
   bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
   bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
