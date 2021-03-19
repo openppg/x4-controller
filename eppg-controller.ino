@@ -32,7 +32,7 @@ Adafruit_DRV2605 vibe;
 
 // USB WebUSB object
 Adafruit_USBD_WebUSB usb_web;
-WEBUSB_URL_DEF(landingPage, 1 /*https*/, "openppg.github.io/openppg-config");
+WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
