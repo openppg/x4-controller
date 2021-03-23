@@ -51,6 +51,16 @@ typedef struct {
 }STR_ESC_TELEMETRY_140;
 
 typedef struct {
+  uint16_t volts;  // packet struct version
+  uint16_t temperatureC;
+  uint16_t amps;
+  float eRPM;
+  float inPWM;
+  float outPWM;
+  uint16_t checksum;
+}STR_ESC_TELEMETRY_140_TEST;
+
+typedef struct {
   uint8_t version_major;  // 4
   uint8_t version_minor;  // 1
   uint16_t armed_time;    // minutes (think Hobbs)
