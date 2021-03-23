@@ -293,13 +293,9 @@ void parseData() {
   // Serial.print(F("Volts: "));
   // Serial.println(volts);
 
-  batteryPercent = mapf(volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0);
-  if (batteryPercent < 0) {
-    batteryPercent = 0;
-  }
-  if (batteryPercent > 100) {
-    batteryPercent = 100;
-  }
+  // batteryPercent = mapf(volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0);
+
+  batteryPercent = getBatteryPercent(volts);
 
   _temperatureC = word(escData[3], escData[2]);
   temperatureC = _temperatureC/100.0;
@@ -388,4 +384,19 @@ int limitedThrottle(int current, int last, int threshold) {
   } else {  // deccelerating / maintaining
     return current;
   }
+}
+
+float getBatteryPercent(float voltage) {
+  int voltage_curved = battery_sigmoidal(voltage, BATT_MIN_V, BATT_MAX_V);
+
+  constrain(voltage_curved, 0, 100);
+
+  return round(voltage_curved); // TODO rounded float
+}
+
+// inspired by https://github.com/rlogiacco/BatterySense/
+// https://www.desmos.com/calculator/7m9lu26vpy
+uint8_t battery_sigmoidal(uint16_t voltage, uint16_t minVoltage, uint16_t maxVoltage) {
+  uint8_t result = 105 - (105 / (1 + pow(1.724 * (voltage - minVoltage)/(maxVoltage - minVoltage), 5.5)));
+  return result >= 100 ? 100 : result;
 }
