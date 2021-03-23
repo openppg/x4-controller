@@ -119,7 +119,6 @@ void setup140() {
 
   vibrateNotify();
 
-  //eepInit();
 
   if (!digitalRead(BUTTON_TOP)) {
     // Switch modes
@@ -129,7 +128,6 @@ void setup140() {
 
   beginner = false; // TODO read from eep
 
-  //setFlightHours(0);    // uncomment to set flight log hours (0.0 to 9999.9)... MUST re-comment and re-upload!
   delay(10);
 
   if (!digitalRead(BUTTON_TOP) && beginner) {
@@ -200,16 +198,17 @@ void disarmSystem() {
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
   armed = false;
+  cruising = false;
+
   ledBlinkThread.enabled = true;
   updateDisplay();
   if (ENABLE_VIB) runVibe(disarm_vibes, 3);
   if (ENABLE_BUZ) playMelody(disarm_melody, 3);
 
   // update armed_time
-  // refreshDeviceData();
-  // deviceData.armed_time += round(armedSecs / 60);  // convert to mins
-  // writeDeviceData();
-  // recordFlightHours(); TODO
+  refreshDeviceData();
+  deviceData.armed_time += round(armedSecs / 60);  // convert to mins
+  writeDeviceData();
   delay(1500);  // dont allow immediate rearming
 }
 
@@ -250,6 +249,7 @@ void handleThrottle() {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
     maxPWM = 1778;  // 75% interpolated from 1112 to 2000
   }
+  armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
   handleCruise();  // activate or deactivate cruise
   if (cruising) {
     throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM);

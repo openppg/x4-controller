@@ -41,6 +41,16 @@ typedef struct {
 }STR_HUB2CTRL_MSG_V2;
 
 typedef struct {
+  float volts;  // packet struct version
+  float temperatureC;
+  float amps;
+  float eRPM;
+  float inPWM;
+  float outPWM;
+  word checksum;
+}STR_ESC_TELEMETRY_140;
+
+typedef struct {
   uint8_t version_major;  // 4
   uint8_t version_minor;  // 1
   uint16_t armed_time;    // minutes (think Hobbs)
@@ -75,6 +85,7 @@ typedef struct {
 }STR_DEVICE_DATA_140_V1;
 #pragma pack(pop)
 
+static STR_ESC_TELEMETRY_140 telemetryData;
 static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG_V2 hubData;
 static STR_DEVICE_DATA_V1 deviceDataV1;

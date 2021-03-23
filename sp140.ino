@@ -170,137 +170,6 @@ void handleCruise(){
   }
 }
 
-void handleArming(){
-  if(digitalRead(BUTTON_TOP)==LOW && potLvl<(0.15*4096)){
-    bool armReady = false;
-    display.fillScreen(WHITE);
-    display.setTextColor(BLACK);
-    display.setCursor(4,10);
-    if(!armed){display.print(F(" ARMING IN: "));}
-    else{display.print(F("DISARMING IN: "));}
-    display.setCursor(10,105);
-    display.print(F("Log: "));
-    if(hours>=1000) display.print(hours,0);
-    else display.print(hours,1);
-    display.print(F("hr"));
-    unsigned long prePressMillis = millis();
-    while(digitalRead(BUTTON_TOP)==LOW && !armReady){
-      delay(100);
-      armingIn = 3-((millis()-prePressMillis)/1000);
-      //dispArmingIn(armingIn, 0, 20, 4);
-      dispValue(armingIn, prevArmingIn, 2, 0, 20, 40, 7, BLUE, WHITE);
-      if(armingIn<1){
-        armReady = true;
-      }
-      if(armReady || digitalRead(BUTTON_TOP)==HIGH){
-        display.fillScreen(WHITE);
-        //dispAltiPortion(20,70,2);
-      }
-    }
-    //display.fillScreen(ST77XX_BLACK);
-    unsigned long postPressMillis = millis();
-    if(postPressMillis-prePressMillis>3000){
-      if(!armed){
-        armSystem();
-      }
-      else if(armed){
-        disarmSystem();
-        cruising = false;
-      }
-    }
-  }
-}
-
-
-void dispArmingIn(int _armingIn, int x, int y, int textSize){
-  int maxDigits = 1;
-  int width = 6*textSize;
-  int height = 8*textSize;
-  display.fillRect(x, y, width*maxDigits, height, ST77XX_RED);
-  display.setCursor(x,y);
-  display.setTextSize(textSize);
-  display.print(_armingIn);
-}
-
-
-void eepInit() {
-    eep.begin();
-  for(int i=0; i<6; i++){
-    //eep.write(i,0);         //uncomment to reset log to zero
-  }
-  //  eep.write(0,5);           // This is to set flight log minutes
-  //  eep.write(1,9);           // Example here: 599,940 minutes
-  //  eep.write(2,9);
-  //  eep.write(3,9);
-  //  eep.write(4,4);
-  //  eep.write(5,0);
-  int LogMin[6];
-  for(int i=0; i<6; i++){
-    LogMin[i] = eep.read(i);
-  }
-  float logMinutes = float(LogMin[0]*100000 + LogMin[1]*10000 + LogMin[2]*1000
-                      + LogMin[3]*100 + LogMin[4]*10 + LogMin[5]);
-  hours = logMinutes / 60.0;
-}
-
-void recordFlightHours(){
-  return; // TODO remove and fix
-  int newLogMinutes = hours*60.0 + throttleSecs/60.0; // 599940
-  Serial.print(F("newLogMinutes: "));
-  Serial.println(newLogMinutes);
-  int LogMin[6];
-  LogMin[0] = newLogMinutes / 100000;                                                                                       // 599940 / 100000 = 5
-  LogMin[1] = (newLogMinutes - LogMin[0]*100000) / 10000;                                                                   // (599940 - 5*100000) / 10000 = 9
-  LogMin[2] = (newLogMinutes - LogMin[0]*100000 - LogMin[1]*10000) / 1000;                                                  // (599940 - 5*100000 - 9*10000) / 1000 = 9
-  LogMin[3] = (newLogMinutes - LogMin[0]*100000 - LogMin[1]*10000 - LogMin[2]*1000) / 100;                                  // (599940 - 5*100000 - 9*10000 - 9*1000) / 100 = 9
-  LogMin[4] = (newLogMinutes - LogMin[0]*100000 - LogMin[1]*10000 - LogMin[2]*1000 - LogMin[3]*100) / 10;                   // (599940 - 5*100000 - 9*10000 - 9*1000 - 9*100) / 10 = 4
-  LogMin[5] = (newLogMinutes - LogMin[0]*100000 - LogMin[1]*10000 - LogMin[2]*1000 - LogMin[3]*100 - LogMin[4]*10);         // (599940 - 5*100000 - 9*10000 - 9*1000 - 9*100 - 4*10) = 0
-
-  for(int i=0; i<6; i++){
-    eep.write(i, LogMin[i]+0);
-    Serial.print(F("LogMin["));
-    Serial.print(i);
-    Serial.print(F("]: "));
-    Serial.println(LogMin[i]+0);
-  }
-  for(int i=0; i<6; i++){
-    LogMin[i] = eep.read(i);
-  }
-  float logMinutes = float(((LogMin[0])*100000) + ((LogMin[1])*10000)
-  + ((LogMin[2])*1000) + ((LogMin[3])*100) + ((LogMin[4])*10) + (LogMin[5]));
-  hours = logMinutes / 60.0;
-}
-
-
-void setFlightHours(float hr) {
-  return; // TODO fix write
-  int newLogMinutes = hr*60.0; // 599940
-  Serial.print(F("newLogMinutes: "));
-  Serial.println(newLogMinutes);
-  int LogMin[6];
-  LogMin[0] = newLogMinutes / 100000;                                                                                       // 599940 / 100000 = 5
-  LogMin[1] = (newLogMinutes - LogMin[0]*100000) / 10000;                                                                   // (599940 - 5*100000) / 10000 = 9
-  LogMin[2] = (newLogMinutes - LogMin[0]*100000 - LogMin[1]*10000) / 1000;                                                  // (599940 - 5*100000 - 9*10000) / 1000 = 9
-  LogMin[3] = (newLogMinutes - LogMin[0]*100000 - LogMin[1]*10000 - LogMin[2]*1000) / 100;                                  // (599940 - 5*100000 - 9*10000 - 9*1000) / 100 = 9
-  LogMin[4] = (newLogMinutes - LogMin[0]*100000 - LogMin[1]*10000 - LogMin[2]*1000 - LogMin[3]*100) / 10;                   // (599940 - 5*100000 - 9*10000 - 9*1000 - 9*100) / 10 = 4
-  LogMin[5] = (newLogMinutes - LogMin[0]*100000 - LogMin[1]*10000 - LogMin[2]*1000 - LogMin[3]*100 - LogMin[4]*10);         // (599940 - 5*100000 - 9*10000 - 9*1000 - 9*100 - 4*10) = 0
-
-  for(int i=0; i<6; i++){
-    eep.write(i, LogMin[i]+0);
-    Serial.print(F("LogMin["));
-    Serial.print(i);
-    Serial.print(F("]: "));
-    Serial.println(LogMin[i]+0);
-  }
-  for(int i=0; i<6; i++){
-    LogMin[i] = eep.read(i);
-  }
-  float logMinutes = float(((LogMin[0])*100000) + ((LogMin[1])*10000)
-  + ((LogMin[2])*1000) + ((LogMin[3])*100) + ((LogMin[4])*10) + (LogMin[5]));
-  hours = logMinutes / 60.0;
-}
-
-
 void bmpInit() {
   bmp.begin();
   bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
@@ -308,10 +177,9 @@ void bmpInit() {
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
 }
 
-
-void buzzInit(bool enableBuz){
+void buzzInit(bool enableBuz) {
   pinMode(BUZ_PIN, OUTPUT);
-  if(enableBuz){
+  if (enableBuz) {
     tone(BUZ_PIN, 500);
     delay(200);
     tone(BUZ_PIN, 700);
@@ -322,13 +190,13 @@ void buzzInit(bool enableBuz){
   }
 }
 
-void prepareSerialRead(){
-  while(Serial5.available()>0){
+void prepareSerialRead() {
+  while(Serial5.available() > 0) {
     byte t = Serial5.read();
   }
 }
 
-void handleTelemetry(){
+void handleTelemetry() {
   prepareSerialRead();
   Serial5.readBytes(escData, ESC_DATA_SIZE);
   // enforceChecksum():
@@ -337,7 +205,7 @@ void handleTelemetry(){
   parseData();
 }
 
-void enforceFletcher16(){
+void enforceFletcher16() {
   // Check checksum, revert to previous data if bad:
   word checksum = (unsigned short)(word(escData[19], escData[18]));
   unsigned char sum1 = 0;
@@ -358,7 +226,7 @@ void enforceFletcher16(){
   // Serial.print(F("CHECKSUM: "));
   // Serial.println(checksum);
   if (sum != checksum) {
-    Serial.println(F("_________________________________________________CHECKSUM FAILED!"));
+    Serial.println(F("_____________________CHECKSUM FAILED!"));
     failed++;
     if (failed >= 1000) {  // keep track of how reliable the transmission is
       transmitted = 1;
@@ -385,18 +253,18 @@ void enforceChecksum() {
   Serial.println(sum);
   Serial.print(F("CHECKSUM: "));
   Serial.println(checksum);
-  if(sum != checksum){
-    Serial.println(F("_________________________________________________CHECKSUM FAILED!"));
+  if (sum != checksum) {
+    Serial.println(F("__________________________CHECKSUM FAILED!"));
     failed++;
-    if(failed>=1000) {  // keep track of how reliable the transmission is
+    if (failed >= 1000) {  // keep track of how reliable the transmission is
       transmitted = 1;
       failed = 0;
     }
-    for(int i=0; i<ESC_DATA_SIZE; i++) {  // revert to previous data
+    for (int i=0; i<ESC_DATA_SIZE; i++) {  // revert to previous data
       escData[i] = prevData[i];
     }
   }
-  for(int i=0; i<ESC_DATA_SIZE; i++) {
+  for (int i=0; i<ESC_DATA_SIZE; i++) {
     prevData[i] = escData[i];
   }
 }
@@ -404,7 +272,7 @@ void enforceChecksum() {
 
 void printRawSentence() {
   Serial.print(F("DATA: "));
-  for (int i=0; i<ESC_DATA_SIZE; i++) {
+  for (int i = 0; i < ESC_DATA_SIZE; i++) {
     Serial.print(escData[i], HEX);
     Serial.print(F(" "));
   }
@@ -424,10 +292,10 @@ void parseData() {
   // Serial.println(volts);
 
   batteryPercent = mapf(volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0);
-  if(batteryPercent < 0){
+  if (batteryPercent < 0) {
     batteryPercent = 0;
   }
-  if(batteryPercent >100){
+  if (batteryPercent > 100) {
     batteryPercent = 100;
   }
 
