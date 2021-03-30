@@ -80,7 +80,7 @@ typedef struct {
   bool metric_temp;    // true
   bool metric_alt;     // false
   uint8_t performance_mode;  // 0,1,2
-  uint8_t batt_size;     // 4000 (4kw) or 2000 (2kw)
+  uint16_t batt_size;     // 4000 (4kw) or 2000 (2kw)
   uint16_t unused;     // for future use
   uint16_t crc;        // error check
 }STR_DEVICE_DATA_140_V1;

@@ -29,6 +29,7 @@ void resetDeviceData(){
     deviceData.metric_temp = true;
     deviceData.metric_alt = true;
     deviceData.performance_mode = 0;
+    deviceData.batt_size = 4000;
     writeDeviceData();
 }
 
@@ -51,7 +52,7 @@ void line_state_callback(bool connected) {
 
 // customized for sp140
 void parse_usb_serial() {
-  const size_t capacity = JSON_OBJECT_SIZE(11) + 90;
+  const size_t capacity = JSON_OBJECT_SIZE(12) + 90;
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
 
@@ -67,7 +68,8 @@ void parse_usb_serial() {
   deviceData.sea_pressure = doc["sea_pressure"];  // 1013.25 mbar
   deviceData.metric_temp = doc["metric_temp"];  // true/false
   deviceData.metric_alt = doc["metric_alt"];  // true/false
-  deviceData.performance_mode = doc["performance_mode"];  // true/false
+  deviceData.performance_mode = doc["performance_mode"];  // 0,1
+  deviceData.batt_size = doc["batt_size"];  // 4000
   initDisplay();
   writeDeviceData();
   send_usb_serial();

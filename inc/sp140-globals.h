@@ -6,7 +6,6 @@ unsigned long transmitted = 0;
 unsigned long failed = 0;
 bool receiving = false;
 bool cruising = false;
-bool beginner = false;
 unsigned long displayMillis = 0;
 int potLvl = 0;
 int prevPotLvl = 0;

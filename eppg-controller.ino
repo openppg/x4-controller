@@ -92,7 +92,7 @@ void setup() {
   displayThread.setInterval(100);
 
   buttonThread.onRun(checkButtons);
-  buttonThread.setInterval(25);
+  buttonThread.setInterval(5);
 
   throttleThread.onRun(handleThrottle);
   throttleThread.setInterval(22);
@@ -119,34 +119,30 @@ void setup140() {
 
   vibrateNotify();
 
-
   if (!digitalRead(BUTTON_TOP)) {
     // Switch modes
-    bool mode = eep.read(6);
-    //eep.write(6, !mode); // 0=CHILL 1=SPORT 2=LUDICROUS?
+    // 0=CHILL 1=SPORT 2=LUDICROUS?
+    if (deviceData.performance_mode == 0) {
+      deviceData.performance_mode = 1;
+    } else {
+      deviceData.performance_mode = 0;
+    }
+    writeDeviceData();
   }
-
-  beginner = false; // TODO read from eep
 
   delay(10);
 
-  if (!digitalRead(BUTTON_TOP) && beginner) {
-    display.setCursor(10, 20);
-    display.setTextSize(2);
-    display.setTextColor(BLUE);
-    display.print("BEGINNER");
-    display.setCursor(10, 36);
-    display.print("MODE");
-    display.setCursor(10, 52);
-    display.print("ACTIVATED");
-    display.setTextColor(BLACK);
-  }
   // TODO change to use Ace hold
-  if (!digitalRead(BUTTON_TOP) && !beginner) {
+  if (!digitalRead(BUTTON_TOP) && (deviceData.performance_mode == 1)) {
     display.setCursor(10, 20);
     display.setTextSize(2);
-    display.setTextColor(RED);
-    display.print("EXPERT");
+    if (deviceData.performance_mode == 0){
+      display.setTextColor(BLUE);
+      display.print("CHILL");
+    } else {
+      display.setTextColor(RED);
+      display.print("SPORT");
+    }
     display.setCursor(10, 36);
     display.print("MODE");
     display.setCursor(10, 52);
@@ -154,28 +150,6 @@ void setup140() {
     display.setTextColor(BLACK);
   }
   while(!digitalRead(BUTTON_TOP));
-  if (beginner) {  // Erase Text
-    display.setCursor(10, 20);
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.print("BEGINNER");
-    display.setCursor(10, 36);
-    display.print("MODE");
-    display.setCursor(10, 52);
-    display.print("ACTIVATED");
-    display.setTextColor(BLACK);
-  }
-  if (!beginner) {  // Erase Text
-    display.setCursor(10, 20);
-    display.setTextSize(2);
-    display.setTextColor(WHITE);
-    display.print("EXPERT");
-    display.setCursor(10, 36);
-    display.print("MODE");
-    display.setCursor(10, 52);
-    display.print("ACTIVATED");
-    display.setTextColor(BLACK);
-  }
 }
 
 // main loop - everything runs in threads
@@ -245,7 +219,7 @@ void handleThrottle() {
   int maxPWM = 2000;
   pot.update();
   potLvl = pot.getValue();
-  if (beginner) {
+  if (deviceData.performance_mode == 0) {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
     maxPWM = 1778;  // 75% interpolated from 1112 to 2000
   }
@@ -326,9 +300,6 @@ float getAltitudeM() {
   ambientTempC = bmp.temperature;
   float altitudeM = bmp.readAltitude(deviceData.sea_pressure);
   aglM = altitudeM - armAltM;
-
-  Serial.print("alt: ");
-  Serial.println(altitudeM);
   return altitudeM;
 }
 
@@ -340,6 +311,9 @@ float getAltitudeM() {
 
 // show data on screen and handle different pages
 void updateDisplay() {
+  Serial.print("v: ");
+  Serial.println(volts);
+
   dispValue(volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
   display.print("V");
 
@@ -349,34 +323,26 @@ void updateDisplay() {
   dispValue(kilowatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
   display.print("kW");
 
+  display.setCursor(10, 80);
+  display.setTextSize(1);
   // TODO dont update every cycle
   if (cruising) {
-    display.setCursor(10, 80);
-    display.setTextSize(1);
     display.setTextColor(RED);
-    display.print("CRUISE");
-    display.setTextColor(BLACK);
   } else {
-    display.setCursor(10, 80);
-    display.setTextSize(1);
     display.setTextColor(WHITE);
-    display.print("CRUISE");
-    display.setTextColor(BLACK);
   }
+  display.print("CRUISE");
 
-  if (beginner) {
-    display.setCursor(10, 40);
-    display.setTextSize(1);
+  display.setCursor(10, 40);
+  display.setTextSize(1);
+  if (deviceData.performance_mode == 0) {
     display.setTextColor(BLUE);
     display.print("CHILL");
-    display.setTextColor(BLACK);
   } else {
-    display.setCursor(10, 40);
-    display.setTextSize(1);
     display.setTextColor(RED);
     display.print("SPORT");
-    display.setTextColor(BLACK);
   }
+  display.setTextColor(BLACK);
 
   if (batteryPercent > 66) {
     display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, GREEN);
