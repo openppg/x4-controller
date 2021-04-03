@@ -235,8 +235,6 @@ void handleThrottle() {
     throttlePercent = 0;
   }
   esc.writeMicroseconds(throttlePWM); // using val as the signal to esc
-  //Serial.print(F("WRITING: "));
-  //Serial.println(throttlePWM);
 }
 
 

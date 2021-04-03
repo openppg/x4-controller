@@ -199,19 +199,20 @@ void prepareSerialRead() {
 void handleTelemetry() {
   prepareSerialRead();
   Serial5.readBytes(escData, ESC_DATA_SIZE);
-  // enforceChecksum():
-  enforceFletcher16();
+  // enforceChecksum();
+  if (enforceFletcher16()) {
+    parseData();
+  }
   // printRawSentence();
-  parseData();
 }
 
-void enforceFletcher16() {
+bool enforceFletcher16() {
   // Check checksum, revert to previous data if bad:
   word checksum = (unsigned short)(word(escData[19], escData[18]));
   unsigned char sum1 = 0;
   unsigned char sum2 = 0;
   unsigned short sum = 0;
-  for (int i=0; i<ESC_DATA_SIZE-2; i++) {
+  for (int i = 0; i < ESC_DATA_SIZE-2; i++) {
     sum1 = (unsigned char)(sum1 + escData[i]);
     sum2 = (unsigned char)(sum2 + sum1);
   }
@@ -232,13 +233,9 @@ void enforceFletcher16() {
       transmitted = 1;
       failed = 0;
     }
-    for (int i = 0; i < ESC_DATA_SIZE; i++) {  // revert to previous data
-      escData[i] = prevData[i];
-    }
+    return false;
   }
-  for (int i = 0; i < ESC_DATA_SIZE; i++) {
-    prevData[i] = escData[i];
-  }
+  return true;
 }
 
 
@@ -387,8 +384,13 @@ int limitedThrottle(int current, int last, int threshold) {
 }
 
 float getBatteryPercent(float voltage) {
-  int voltage_curved = battery_sigmoidal(voltage, BATT_MIN_V, BATT_MAX_V);
-
+  //Serial.print("percent v ");
+  //Serial.println(voltage);
+  if (voltage < 1) {
+    return 0.0;
+  }
+  int voltage_curved = battery_sigmoidal(round(voltage), BATT_MIN_V, BATT_MAX_V);
+  Serial.println(voltage_curved);
   constrain(voltage_curved, 0, 100);
 
   return round(voltage_curved); // TODO rounded float
