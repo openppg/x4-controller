@@ -9,7 +9,6 @@
 #include <Adafruit_ST7735.h>    // screen
 #include <Adafruit_SleepyDog.h>  // watchdog
 #include "Adafruit_TinyUSB.h"
-#include <AdjustableButtonConfig.h>
 #include <ArduinoJson.h>
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
 #include <SPI.h>
@@ -36,7 +35,7 @@ WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
-AdjustableButtonConfig buttonConfig;
+ButtonConfig* buttonConfig = button_top.getButtonConfig();
 extEEPROM eep(kbits_64, 1, 64);
 
 const int bgInterval = 100;  // background updates (milliseconds)
@@ -190,13 +189,12 @@ void disarmSystem() {
 void initButtons() {
   pinMode(BUTTON_TOP, INPUT_PULLUP);
 
-  button_top.setButtonConfig(&buttonConfig);
-  buttonConfig.setEventHandler(handleButtonEvent);
-  buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
-  buttonConfig.setFeature(ButtonConfig::kFeatureLongPress);
-  buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
-  //buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterLongPress);
-  buttonConfig.setLongPressDelay(2500);
+  buttonConfig->setEventHandler(handleButtonEvent);
+  buttonConfig->setFeature(ButtonConfig::kFeatureDoubleClick);
+  buttonConfig->setFeature(ButtonConfig::kFeatureLongPress);
+  buttonConfig->setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
+  buttonConfig->setFeature(ButtonConfig::kFeatureSuppressAfterLongPress);
+  buttonConfig->setLongPressDelay(2500);
 }
 
 // inital screen setup and config
@@ -259,8 +257,7 @@ bool armSystem() {
 }
 
 // The event handler for the the buttons
-void handleButtonEvent(AceButton  /* btn */, uint8_t eventType, uint8_t /* state */) {
-
+void handleButtonEvent(AceButton*  /* btn */, uint8_t eventType, uint8_t /* state */) {
   switch (eventType) {
   case AceButton::kEventDoubleClicked:
     if (armed) {
@@ -279,9 +276,9 @@ void handleButtonEvent(AceButton  /* btn */, uint8_t eventType, uint8_t /* state
       // show stats screen?
     }
     break;
-/*   case AceButton::kEventLongReleased:
+  case AceButton::kEventLongReleased:
     Serial.println("released");
-    break; */
+    break;
   }
 }
 
