@@ -183,7 +183,7 @@ void disarmSystem() {
   refreshDeviceData();
   deviceData.armed_time += round(armedSecs / 60);  // convert to mins
   writeDeviceData();
-  delay(1500);  // dont allow immediate rearming
+  delay(1500); //TODO just disable button thread // dont allow immediate rearming
 }
 
 // inital button setup and config
@@ -195,6 +195,8 @@ void initButtons() {
   buttonConfig.setFeature(ButtonConfig::kFeatureDoubleClick);
   buttonConfig.setFeature(ButtonConfig::kFeatureLongPress);
   buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
+  //buttonConfig.setFeature(ButtonConfig::kFeatureSuppressAfterLongPress);
+  buttonConfig.setLongPressDelay(2500);
 }
 
 // inital screen setup and config
@@ -231,9 +233,8 @@ void handleThrottle() {
     throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM); // mapping val to min and max
   }
   throttlePercent = mapf(throttlePWM, 1112,2000, 0,100);
-  if (throttlePercent < 0) {
-    throttlePercent = 0;
-  }
+  throttlePercent = constrain(throttlePercent, 0, 100);
+
   esc.writeMicroseconds(throttlePWM); // using val as the signal to esc
 }
 
@@ -258,28 +259,29 @@ bool armSystem() {
 }
 
 // The event handler for the the buttons
-void handleButtonEvent(AceButton *button, uint8_t eventType, uint8_t btnState) {
-  uint8_t pin = button->getPin();
+void handleButtonEvent(AceButton  /* btn */, uint8_t eventType, uint8_t /* state */) {
 
   switch (eventType) {
   case AceButton::kEventDoubleClicked:
-    if (pin == BUTTON_TOP) {
-      if (armed) {
-        disarmSystem();
-      } else if (throttleSafe()) {
-        armSystem();
-      } else {
-        handleArmFail();
-      }
+    if (armed) {
+      disarmSystem();
+    } else if (throttleSafe()) {
+      armSystem();
+    } else {
+      handleArmFail();
     }
     break;
   case AceButton::kEventLongPressed:
-    int top_state = digitalRead(BUTTON_TOP);
-
-    if (top_state == LOW) {
-      page = 4;
+    Serial.println("holding");
+    if (armed) {
+      setCruise();
+    } else {
+      // show stats screen?
     }
     break;
+/*   case AceButton::kEventLongReleased:
+    Serial.println("released");
+    break; */
   }
 }
 
@@ -309,8 +311,8 @@ float getAltitudeM() {
 
 // show data on screen and handle different pages
 void updateDisplay() {
-  Serial.print("v: ");
-  Serial.println(volts);
+  //Serial.print("v: ");
+  //Serial.println(volts);
 
   dispValue(volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
   display.print("V");
@@ -449,3 +451,9 @@ void displayMessage(char *message) {
   display.println(message);
 }
 
+void setCruise() {
+  if (!throttleSafe) { // using pot/throttle
+    //save throttle val
+    // start grace timer
+  }
+}
