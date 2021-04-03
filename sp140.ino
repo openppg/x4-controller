@@ -115,39 +115,40 @@ void dispValue(float &value, float &prevVal, int maxDigits, int precision, int x
 }
 
 
-void handleCruise(){
+void handleCruise() {
   // Activate Cruise:
-  if(!cruising && digitalRead(BUTTON_TOP)==LOW && potLvl>=(0.15*4096)){
-    Serial.println("****************************************************************");
+  if (!cruising && digitalRead(BUTTON_TOP) == LOW && potLvl >= (0.15 * 4096)) {
     cruiseLvl = potLvl;
     bool cruiseReady = false;
     display.fillScreen(WHITE);
     display.setTextColor(BLACK);
-    display.setCursor(4,10);
-    if(!cruising) {display.print(F("Cruising In:"));}
-    display.setCursor(10,105);
+    display.setCursor(4, 10);
+    if (!cruising) {
+      display.print(F("Cruising In:"));
+    }
+    display.setCursor(10, 105);
     display.setTextSize(1);
     display.print(F("Release Throttle"));
     unsigned long prePressMillis = millis();
-    while(digitalRead(BUTTON_TOP)==LOW && !cruiseReady){
+    while (digitalRead(BUTTON_TOP) == LOW && !cruiseReady) {
       delay(100);
-      cruisingIn = 2-((millis()-prePressMillis)/1000);
+      cruisingIn = 2 - ((millis() - prePressMillis) / 1000);
       dispValue(cruisingIn, prevCruisingIn, 2, 0, 20, 40, 7, BLUE, WHITE);
-      if(cruisingIn<1){
+      if (cruisingIn < 1) {
         cruiseReady = true;
       }
-      if(cruiseReady || digitalRead(BUTTON_TOP)==HIGH){
+      if (cruiseReady || digitalRead(BUTTON_TOP) == HIGH) {
         display.fillScreen(WHITE);
       }
     }
     unsigned long postPressMillis = millis();
-    if(postPressMillis-prePressMillis>2000){
+    if (postPressMillis - prePressMillis > 2000) {
       cruising = true;
-      if(ENABLE_VIB){
+      if (ENABLE_VIB) {
         vibrateNotify();
         //delay(500);
       }
-      if(ENABLE_BUZ){
+      if (ENABLE_BUZ) {
         tone(BUZ_PIN, 900, 100);
         delay(250);
         tone(BUZ_PIN, 900, 100);
@@ -156,13 +157,13 @@ void handleCruise(){
   }
 
   // Deactivate Cruise
-  else if(cruising && digitalRead(BUTTON_TOP)==HIGH && potLvl>=(0.15*4096)){
+  else if (cruising && digitalRead(BUTTON_TOP) == HIGH && potLvl >= (0.15 * 4096)) {
     cruising = false;
-    if(ENABLE_VIB) {
+    if (ENABLE_VIB) {
       vibrateNotify();
       //delay(500);
     }
-    if(ENABLE_BUZ){
+    if (ENABLE_BUZ) {
       tone(BUZ_PIN, 500, 100);
       delay(250);
       tone(BUZ_PIN, 500, 100);
@@ -191,7 +192,7 @@ void buzzInit(bool enableBuz) {
 }
 
 void prepareSerialRead() {
-  while(Serial5.available() > 0) {
+  while (Serial5.available() > 0) {
     byte t = Serial5.read();
   }
 }
