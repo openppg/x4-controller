@@ -2,12 +2,11 @@
 byte escData[ESC_DATA_SIZE];
 byte prevData[ESC_DATA_SIZE];
 unsigned long readMillis = 0;
+unsigned long cruisedAtMilis = 0;
 unsigned long transmitted = 0;
 unsigned long failed = 0;
 bool receiving = false;
 bool cruising = false;
-unsigned long displayMillis = 0;
-int potLvl = 0;
 int prevPotLvl = 0;
 int cruiseLvl = 0;
 float throttlePWM = 0;

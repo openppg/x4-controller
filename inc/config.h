@@ -26,8 +26,9 @@
 #define VERSION_MAJOR 5
 #define VERSION_MINOR 0
 
-#define CRUISE_GRACE 2  // 2 sec period to get off throttle
+#define CRUISE_GRACE 3  // 3 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
+#define POT_SAFE_LEVEL 0.05 * 4096  // 5% or less
 
 #define DEFAULT_SEA_PRESSURE 1013.25
 

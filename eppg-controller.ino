@@ -53,7 +53,7 @@ bool use_hub_v2 = true;
 int page = 0;
 float armAltM = 0;
 uint32_t armedAtMilis = 0;
-uint32_t cruisedAtMilis = 0;
+uint32_t cruisedAtMilisMilis = 0;
 unsigned int armedSecs = 0;
 unsigned int last_throttle = 0;
 
@@ -218,15 +218,21 @@ void handleThrottle() {
 
   int maxPWM = 2000;
   pot.update();
-  potLvl = pot.getValue();
+  int potLvl = pot.getValue();
   if (deviceData.performance_mode == 0) {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
     maxPWM = 1778;  // 75% interpolated from 1112 to 2000
   }
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
-  handleCruise();  // activate or deactivate cruise
+
+  unsigned long cruisingSecs = (millis() - cruisedAtMilis) / 1000;
+
   if (cruising) {
-    throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM);
+    if (cruisingSecs >= CRUISE_GRACE && potLvl > POT_SAFE_LEVEL){
+      removeCruise();  // deactivate cruise
+    } else {
+      throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM);
+    }
   } else {
     throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM); // mapping val to min and max
   }
@@ -285,7 +291,8 @@ void handleButtonEvent(AceButton*  /* btn */, uint8_t eventType, uint8_t /* stat
 // Returns true if the throttle/pot is below the safe threshold
 bool throttleSafe() {
   pot.update();
-  if (pot.getValue() < 100) {
+  Serial.println(pot.getValue());
+  if (pot.getValue() < POT_SAFE_LEVEL) {
     return true;
   }
   return false;
@@ -449,8 +456,29 @@ void displayMessage(char *message) {
 }
 
 void setCruise() {
-  if (!throttleSafe) { // using pot/throttle
-    //save throttle val
-    // start grace timer
+  if (!throttleSafe()) { // using pot/throttle
+    cruiseLvl = pot.getValue(); // save current throttle val
+    cruising = true;
+    if (ENABLE_VIB) {
+      vibrateNotify();
+    }
+    if (ENABLE_BUZ) {
+      tone(BUZ_PIN, 900, 100);
+      delay(250);
+      tone(BUZ_PIN, 900, 100);
+    }
+    cruisedAtMilis = millis(); //start timer
+  }
+}
+
+void removeCruise() {
+  cruising = false;
+  if (ENABLE_VIB) {
+    vibrateNotify();
+  }
+  if (ENABLE_BUZ) {
+    tone(BUZ_PIN, 500, 100);
+    delay(250);
+    tone(BUZ_PIN, 500, 100);
   }
 }
