@@ -297,14 +297,16 @@ void parseData() {
 }
 
 void vibrateAlert() {
-  int effect = 15; //1 through 117 (see example sketch)
+  if (!ENABLE_VIB) { return; }
+  int effect = 15;  // 1 through 117 (see example sketch)
   vibe.setWaveform(0, effect);
   vibe.setWaveform(1, 0);
   vibe.go();
 }
 
 void vibrateNotify() {
-  int effect = 12; //1 through 117 (see example sketch)
+  if (!ENABLE_VIB) { return; }
+  int effect = 12;  // 1 through 117 (see example sketch)
   vibe.setWaveform(0, effect);
   vibe.setWaveform(1, 0);
   vibe.go();

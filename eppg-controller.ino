@@ -263,7 +263,7 @@ bool armSystem() {
 }
 
 // The event handler for the the buttons
-void handleButtonEvent(AceButton*  /* btn */, uint8_t eventType, uint8_t /* state */) {
+void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */) {
   switch (eventType) {
   case AceButton::kEventDoubleClicked:
     if (armed) {
@@ -326,16 +326,6 @@ void updateDisplay() {
 
   dispValue(kilowatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
   display.print("kW");
-
-  display.setCursor(10, 80);
-  display.setTextSize(1);
-  // TODO dont update every cycle
-  if (cruising) {
-    display.setTextColor(RED);
-  } else {
-    display.setTextColor(WHITE);
-  }
-  display.print("CRUISE");
 
   display.setCursor(10, 40);
   display.setTextSize(1);
@@ -456,26 +446,35 @@ void displayMessage(char *message) {
 }
 
 void setCruise() {
-  if (!throttleSafe()) { // using pot/throttle
-    cruiseLvl = pot.getValue(); // save current throttle val
+  // IDEA fill a "cruise indicator" as long press activate happens
+  if (!throttleSafe()) {  // using pot/throttle
+    cruiseLvl = pot.getValue();  // save current throttle val
     cruising = true;
-    if (ENABLE_VIB) {
-      vibrateNotify();
-    }
+    vibrateNotify();
+
+    display.setCursor(10, 80);
+    display.setTextSize(1);
+    display.setTextColor(RED);
+    display.print("CRUISE");
+
     if (ENABLE_BUZ) {
       tone(BUZ_PIN, 900, 100);
       delay(250);
       tone(BUZ_PIN, 900, 100);
     }
-    cruisedAtMilis = millis(); //start timer
+    cruisedAtMilis = millis();  // start timer
   }
 }
 
 void removeCruise() {
   cruising = false;
-  if (ENABLE_VIB) {
-    vibrateNotify();
-  }
+  vibrateNotify();
+
+  display.setCursor(10, 80);
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.print("CRUISE");
+
   if (ENABLE_BUZ) {
     tone(BUZ_PIN, 500, 100);
     delay(250);
