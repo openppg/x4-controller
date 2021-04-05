@@ -111,6 +111,8 @@ void bmpInit() {
 }
 
 void buzzInit(bool enableBuz) {
+  return;  // TODO deprecated?
+
   pinMode(BUZ_PIN, OUTPUT);
   if (enableBuz) {
     tone(BUZ_PIN, 500);

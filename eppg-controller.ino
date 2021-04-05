@@ -450,11 +450,9 @@ void setCruise() {
     display.setTextColor(RED);
     display.print("CRUISE");
 
-    if (ENABLE_BUZ) {
-      tone(BUZ_PIN, 900, 100);
-      delay(250);
-      tone(BUZ_PIN, 900, 100);
-    }
+    unsigned int notify_melody[] = { 900, 900 };
+    playMelody(notify_melody, 2);
+
     cruisedAtMilis = millis();  // start timer
   }
 }
