@@ -72,8 +72,8 @@ void setup() {
   Serial.print(F("Booting up (USB) V"));
   Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
-  //pinMode(LED_SW, OUTPUT);      // set up the external LED pin
-  pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
+  //pinMode(LED_SW, OUTPUT);   // set up the external LED pin
+  pinMode(LED_2, OUTPUT);   // set up the internal LED2 pin
 
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
@@ -116,7 +116,7 @@ void setup140() {
 
   vibrateNotify();
 
-  if (!digitalRead(BUTTON_TOP)) {
+  if (button_top.isPressedRaw()) {
     // Switch modes
     // 0=CHILL 1=SPORT 2=LUDICROUS?
     if (deviceData.performance_mode == 0) {
@@ -129,8 +129,7 @@ void setup140() {
 
   delay(10);
 
-  // TODO change to use Ace hold
-  if (!digitalRead(BUTTON_TOP) && (deviceData.performance_mode == 1)) {
+  if (button_top.isPressedRaw() && (deviceData.performance_mode == 1)) {
     display.setCursor(10, 20);
     display.setTextSize(2);
     if (deviceData.performance_mode == 0) {
@@ -146,7 +145,7 @@ void setup140() {
     display.print("ACTIVATED");
     display.setTextColor(BLACK);
   }
-  while(!digitalRead(BUTTON_TOP));
+  while(button_top.isPressedRaw());  // TODO skip?
 }
 
 // main loop - everything runs in threads
@@ -180,7 +179,7 @@ void disarmSystem() {
   refreshDeviceData();
   deviceData.armed_time += round(armedSecs / 60);  // convert to mins
   writeDeviceData();
-  delay(1500); // TODO just disable button thread // dont allow immediate rearming
+  delay(1500);  // TODO just disable button thread // dont allow immediate rearming
 }
 
 // inital button setup and config
@@ -313,13 +312,13 @@ void updateDisplay() {
   //Serial.print("v: ");
   //Serial.println(volts);
 
-  dispValue(volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
+  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
   display.print("V");
 
-  dispValue(amps, prevAmps, 3, 0, 108, 70, 2, BLACK, WHITE);
+  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 70, 2, BLACK, WHITE);
   display.print("A");
 
-  dispValue(kilowatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
+  dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
   display.print("kW");
 
   display.setCursor(10, 40);
@@ -340,7 +339,7 @@ void updateDisplay() {
   } else {
     display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, RED);
   }
-  if (volts < BATT_MIN_V) {
+  if (telemetryData.volts < BATT_MIN_V) {
     if (batteryFlag) {
       batteryFlag = false;
       display.fillRect(0, 0, 108, 36, WHITE);
@@ -360,7 +359,6 @@ void updateDisplay() {
   // For Debugging Throttle:
   //  display.fillRect(0, 0, map(throttlePercent, 0,100, 0,108), 36, BLUE);
   //  display.fillRect(map(throttlePercent, 0,100, 0,108), 0, map(throttlePercent, 0,100, 108,0), 36, WHITE);
-  //  //dispValue(throttlePWM, prevThrotPWM, 4, 0, 108, 10, 2, BLACK, WHITE);
   //  dispValue(throttlePercent, prevThrotPercent, 3, 0, 108, 10, 2, BLACK, WHITE);
   //  display.print("%");
 

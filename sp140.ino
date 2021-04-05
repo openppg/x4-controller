@@ -39,17 +39,6 @@ void displayTime(int val, int x, int y) {
 }
 
 
-void dispPowerCycles(int x, int y, int textSize){
-  int maxDigits = 3;
-  int width = 6*textSize;
-  int height = 8*textSize;
-  display.fillRect(x, y, width*maxDigits, height, ST77XX_BLACK);
-  display.setCursor(x,y);
-  display.setTextSize(textSize);
-  display.print(numberPowerCycles);
-}
-
-
 //**************************************************************************************//
 //  Helper function to print values without flashing numbers due to slow screen refresh.
 //  This function only re-draws the digit that needs to be updated.
@@ -226,7 +215,6 @@ void parseData() {
 
   _volts = word(escData[1], escData[0]);
   //_volts = ((unsigned int)escData[1] << 8) + escData[0];
-  volts = _volts/100.0;
   telemetryData.volts = _volts/100.0;
 
   //reading 23.00 = 22.7 actual
@@ -236,23 +224,21 @@ void parseData() {
 
   // batteryPercent = mapf(volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0);
 
-  batteryPercent = getBatteryPercent(volts);
+  batteryPercent = getBatteryPercent(telemetryData.volts);
 
   _temperatureC = word(escData[3], escData[2]);
-  temperatureC = _temperatureC/100.0;
   telemetryData.temperatureC = _temperatureC/100.0;
   //reading 17.4C = 63.32F in 84F ambient?
   // Serial.print(F("TemperatureC: "));
   // Serial.println(temperatureC);
 
   _amps = word(escData[5], escData[4]);
-  amps = _amps;
   telemetryData.amps = _amps;
 
   // Serial.print(F("Amps: "));
   // Serial.println(amps);
 
-  kilowatts = amps*volts/1000.0;
+  kWatts = telemetryData.amps * telemetryData.volts / 1000.0;
 
   // 7 and 6 are reserved bytes
 
@@ -263,21 +249,18 @@ void parseData() {
   _eRPM += escData[9];     // 30
   _eRPM << 8;
   _eRPM += escData[8];     // b4
-  eRPM = _eRPM/6.0/2.0;
   telemetryData.eRPM = _eRPM/6.0/2.0;
 
   // Serial.print(F("eRPM: "));
   // Serial.println(eRPM);
 
   _inPWM = word(escData[13], escData[12]);
-  inPWM = _inPWM/100.0;
   telemetryData.inPWM = _inPWM/100.0;
 
   // Serial.print(F("inPWM: "));
   // Serial.println(inPWM);
 
   _outPWM = word(escData[15], escData[14]);
-  outPWM = _outPWM/100.0;
   telemetryData.outPWM = _outPWM/100.0;
 
   // Serial.print(F("outPWM: "));
@@ -285,7 +268,6 @@ void parseData() {
 
   // 17 and 16 are reserved bytes
   // 19 and 18 is checksum
-  word checksum = word(escData[19], escData[18]);
   telemetryData.checksum = word(escData[19], escData[18]);
 
   // Serial.print(F("CHECKSUM: "));

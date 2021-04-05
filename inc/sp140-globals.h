@@ -10,19 +10,13 @@ bool cruising = false;
 int prevPotLvl = 0;
 int cruiseLvl = 0;
 float throttlePWM = 0;
-float prevThrotPWM = 0;
 float throttlePercent = 0;
 float prevThrotPercent = 0;
 bool buttonState = 1;
 bool prevButtonState = 1;
-byte numberPowerCycles = 0;
 float batteryPercent = 0;
 float prevBatteryPercent = 0;
 bool batteryFlag = true;
-float armingIn = 0;
-float prevArmingIn = 0;
-float cruisingIn = 0;
-float prevCruisingIn = 0;
 bool throttledFlag = true;
 bool throttled = false;
 unsigned long throttledAtMillis = 0;
@@ -41,16 +35,10 @@ uint16_t _inPWM = 0;
 uint16_t _outPWM = 0;
 
 //ESC Telemetry
-float volts = 0;
 float prevVolts = 0;
-float temperatureC = 0;
-float amps = 0;
 float prevAmps = 0;
-float kilowatts = 0;
+float kWatts = 0;
 float prevKilowatts = 0;
-float eRPM = 0;
-float inPWM = 0;
-float outPWM = 0;
 
 //ALTIMETER
 float ambientTempC = 0;
