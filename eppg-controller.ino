@@ -45,8 +45,9 @@ Thread displayThread = Thread();
 Thread throttleThread = Thread();
 Thread buttonThread = Thread();
 Thread telemetryThread = Thread();
-StaticThreadController<5> threads(&ledBlinkThread, &displayThread, &throttleThread,
-                                  &buttonThread, &telemetryThread);
+Thread counterThread = Thread();
+StaticThreadController<6> threads(&ledBlinkThread, &displayThread, &throttleThread,
+                                  &buttonThread, &telemetryThread, &counterThread);
 
 bool armed = false;
 bool use_hub_v2 = true;
@@ -97,7 +98,10 @@ void setup() {
   telemetryThread.onRun(handleTelemetry);
   telemetryThread.setInterval(50);
 
-  int countdownMS = Watchdog.enable(4000);
+  counterThread.onRun(trackPower);
+  counterThread.setInterval(500);
+
+  int countdownMS = Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   refreshDeviceData();
   setup140();
@@ -318,8 +322,10 @@ void updateDisplay() {
   dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 70, 2, BLACK, WHITE);
   display.print("A");
 
+  float kWatts = watts / 1000.0;
   dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
   display.print("kW");
+  prevKilowatts = kWatts;
 
   display.setCursor(10, 40);
   display.setTextSize(1);
@@ -473,4 +479,12 @@ void removeCruise(bool alert) {
       tone(BUZ_PIN, 500, 100);
     }
   }
+}
+
+void trackPower() {
+  // runs 2x/sec so convert to hours
+  if (armed) {
+    wattsHoursUsed += watts/60/60/2;
+  }
+  // TODO display
 }

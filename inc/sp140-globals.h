@@ -26,6 +26,7 @@ float prevMinutes = 0;
 float seconds = 0;
 float prevSeconds = 0;
 float hours = 0;  // logged flight hours
+float wattsHoursUsed = 0;
 
 uint16_t _volts = 0;
 uint16_t _temperatureC = 0;
@@ -37,7 +38,7 @@ uint16_t _outPWM = 0;
 //ESC Telemetry
 float prevVolts = 0;
 float prevAmps = 0;
-float kWatts = 0;
+float watts = 0;
 float prevKilowatts = 0;
 
 //ALTIMETER

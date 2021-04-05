@@ -162,7 +162,7 @@ bool enforceFletcher16() {
   // Serial.print(F("CHECKSUM: "));
   // Serial.println(checksum);
   if (sum != checksum) {
-    Serial.println(F("_____________________CHECKSUM FAILED!"));
+    //Serial.println(F("_____________________CHECKSUM FAILED!"));
     failed++;
     if (failed >= 1000) {  // keep track of how reliable the transmission is
       transmitted = 1;
@@ -240,7 +240,7 @@ void parseData() {
   // Serial.print(F("Amps: "));
   // Serial.println(amps);
 
-  kWatts = telemetryData.amps * telemetryData.volts / 1000.0;
+  watts = telemetryData.amps * telemetryData.volts;
 
   // 7 and 6 are reserved bytes
 
