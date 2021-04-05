@@ -172,8 +172,8 @@ void disarmSystem() {
 
   ledBlinkThread.enabled = true;
   updateDisplay();
-  if (ENABLE_VIB) runVibe(disarm_vibes, 3);
-  if (ENABLE_BUZ) playMelody(disarm_melody, 3);
+  runVibe(disarm_vibes, 3);
+  playMelody(disarm_melody, 3);
 
   // update armed_time
   refreshDeviceData();
@@ -252,8 +252,8 @@ bool armSystem() {
   armAltM = getAltitudeM();
 
   setLEDs(HIGH);
-  if (ENABLE_VIB) runVibe(arm_vibes, 3);
-  if (ENABLE_BUZ) playMelody(arm_melody, 3);
+  runVibe(arm_vibes, 3);
+  playMelody(arm_melody, 3);
   Serial.println(F("Sending Arm Signal"));
   return true;
 }
