@@ -41,7 +41,7 @@ typedef struct {
 }STR_HUB2CTRL_MSG_V2;
 
 typedef struct {
-  float volts;  // packet struct version
+  float volts;
   float temperatureC;
   float amps;
   float eRPM;

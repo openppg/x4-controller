@@ -45,7 +45,7 @@ void displayTime(int val, int x, int y) {
 //    BUG:  If textColor is not constant across multiple uses of this function,
 //          weird things happen.
 //**************************************************************************************//
-void dispValue(float &value, float &prevVal, int maxDigits, int precision, int x, int y, int textSize, int textColor, int background){
+void dispValue(float value, float &prevVal, int maxDigits, int precision, int x, int y, int textSize, int textColor, int background){
   int numDigits = 0;
   char prevDigit[DIGIT_ARRAY_SIZE] = {};
   char digit[DIGIT_ARRAY_SIZE] = {};
@@ -56,7 +56,7 @@ void dispValue(float &value, float &prevVal, int maxDigits, int precision, int x
 
   // COUNT THE NUMBER OF DIGITS THAT NEED TO BE PRINTED:
   for(int i=0; i<maxDigits; i++){
-    if(digit[i]){
+    if (digit[i]) {
       numDigits++;
     }
   }
