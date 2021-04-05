@@ -246,8 +246,8 @@ void parseData() {
   // Serial.println(temperatureC);
 
   _amps = word(escData[5], escData[4]);
-  amps = _amps/10.0;
-  telemetryData.amps = _amps/10.0;
+  amps = _amps;
+  telemetryData.amps = _amps;
 
   // Serial.print(F("Amps: "));
   // Serial.println(amps);
@@ -336,7 +336,6 @@ float getBatteryPercent(float voltage) {
     return 0.0;
   }
   int voltage_curved = battery_sigmoidal(round(voltage), BATT_MIN_V, BATT_MAX_V);
-  Serial.println(voltage_curved);
   constrain(voltage_curved, 0, 100);
 
   return round(voltage_curved); // TODO rounded float

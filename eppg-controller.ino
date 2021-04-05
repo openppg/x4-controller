@@ -61,8 +61,6 @@ unsigned int last_throttle = 0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
-  pinMode(LED_SW, OUTPUT);
-
   usb_web.begin();
   usb_web.setLandingPage(&landingPage);
   usb_web.setLineStateCallback(line_state_callback);
@@ -74,7 +72,7 @@ void setup() {
   Serial.print(F("Booting up (USB) V"));
   Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
-  pinMode(LED_SW, OUTPUT);      // set up the external LED pin
+  //pinMode(LED_SW, OUTPUT);      // set up the external LED pin
   pinMode(LED_2, OUTPUT);       // set up the internal LED2 pin
 
   analogReadResolution(12);     // M0 chip provides 12bit resolution
@@ -135,7 +133,7 @@ void setup140() {
   if (!digitalRead(BUTTON_TOP) && (deviceData.performance_mode == 1)) {
     display.setCursor(10, 20);
     display.setTextSize(2);
-    if (deviceData.performance_mode == 0){
+    if (deviceData.performance_mode == 0) {
       display.setTextColor(BLUE);
       display.print("CHILL");
     } else {
@@ -171,7 +169,7 @@ void disarmSystem() {
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
   armed = false;
-  cruising = false;
+  removeCruise(false);
 
   ledBlinkThread.enabled = true;
   updateDisplay();
@@ -182,7 +180,7 @@ void disarmSystem() {
   refreshDeviceData();
   deviceData.armed_time += round(armedSecs / 60);  // convert to mins
   writeDeviceData();
-  delay(1500); //TODO just disable button thread // dont allow immediate rearming
+  delay(1500); // TODO just disable button thread // dont allow immediate rearming
 }
 
 // inital button setup and config
@@ -199,7 +197,7 @@ void initButtons() {
 
 // inital screen setup and config
 void initDisplay() {
-  display.initR(INITR_BLACKTAB);    // Init ST7735S chip, black tab
+  display.initR(INITR_BLACKTAB);  // Init ST7735S chip, black tab
   display.fillScreen(WHITE);
   display.setTextColor(BLACK);
   display.setCursor(0, 0);
@@ -214,7 +212,7 @@ void initDisplay() {
 
 // read throttle and send to hub
 void handleThrottle() {
-  if (!armed) return; //safe
+  if (!armed) return;  // safe
 
   int maxPWM = 2000;
   pot.update();
@@ -228,8 +226,8 @@ void handleThrottle() {
   unsigned long cruisingSecs = (millis() - cruisedAtMilis) / 1000;
 
   if (cruising) {
-    if (cruisingSecs >= CRUISE_GRACE && potLvl > POT_SAFE_LEVEL){
-      removeCruise();  // deactivate cruise
+    if (cruisingSecs >= CRUISE_GRACE && potLvl > POT_SAFE_LEVEL) {
+      removeCruise(true);  // deactivate cruise
     } else {
       throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM);
     }
@@ -239,16 +237,15 @@ void handleThrottle() {
   throttlePercent = mapf(throttlePWM, 1112,2000, 0,100);
   throttlePercent = constrain(throttlePercent, 0, 100);
 
-  esc.writeMicroseconds(throttlePWM); // using val as the signal to esc
+  esc.writeMicroseconds(throttlePWM);  // using val as the signal to esc
 }
-
 
 // get the PPG ready to fly
 bool armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 70, 33, 0 };
 
-  armed = true;
+  armed = true;  // TODO indicate on screen
   esc.writeMicroseconds(1000);  // initialize the signal to 1000
 
   ledBlinkThread.enabled = false;
@@ -275,7 +272,6 @@ void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */
     }
     break;
   case AceButton::kEventLongPressed:
-    Serial.println("holding");
     if (armed) {
       setCruise();
     } else {
@@ -291,7 +287,6 @@ void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */
 // Returns true if the throttle/pot is below the safe threshold
 bool throttleSafe() {
   pot.update();
-  Serial.println(pot.getValue());
   if (pot.getValue() < POT_SAFE_LEVEL) {
     return true;
   }
@@ -466,18 +461,20 @@ void setCruise() {
   }
 }
 
-void removeCruise() {
+void removeCruise(bool alert) {
   cruising = false;
-  vibrateNotify();
 
   display.setCursor(10, 80);
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.print("CRUISE");
+  if (alert) {
+    vibrateNotify();
 
-  if (ENABLE_BUZ) {
-    tone(BUZ_PIN, 500, 100);
-    delay(250);
-    tone(BUZ_PIN, 500, 100);
+    if (ENABLE_BUZ) {
+      tone(BUZ_PIN, 500, 100);
+      delay(250);
+      tone(BUZ_PIN, 500, 100);
+    }
   }
 }
