@@ -74,7 +74,7 @@ void setup() {
   Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   //pinMode(LED_SW, OUTPUT);   // set up the external LED pin
-  pinMode(LED_2, OUTPUT);   // set up the internal LED2 pin
+  pinMode(LED_SW, OUTPUT);   // set up the internal LED2 pin
 
   analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
@@ -319,15 +319,21 @@ void updateDisplay() {
   dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
   display.print("V");
 
-  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 70, 2, BLACK, WHITE);
+  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, WHITE);
   display.print("A");
 
   float kWatts = watts / 1000.0;
-  dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
+  dispValue(kWatts, prevKilowatts, 4, 1, 10, 42, 2, BLACK, WHITE);
   display.print("kW");
-  prevKilowatts = kWatts;
 
-  display.setCursor(10, 40);
+  float kwh = wattsHoursUsed / 1000;
+  dispValue(kwh, prevKilowatts, 4, 1, 10, 71, 2, BLACK, WHITE);
+  display.print("kWh");
+
+  //dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
+  //display.print("kW");
+
+  display.setCursor(30, 60);
   display.setTextSize(1);
   if (deviceData.performance_mode == 0) {
     display.setTextColor(BLUE);
@@ -348,10 +354,6 @@ void updateDisplay() {
     display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, RED);
   }
 
-  // battery shape end
-  display.fillRect(0, 104, 4, 4, BLACK);
-  display.fillRect(32, 104, 4, 4, BLACK);
-
   if (telemetryData.volts < BATT_MIN_V) {
     if (batteryFlag) {
       batteryFlag = false;
@@ -368,6 +370,11 @@ void updateDisplay() {
   }
   dispValue(batteryPercent, prevBatteryPercent, 3, 0, 108, 10, 2, BLACK, WHITE);
   display.print("%");
+
+
+  // battery shape end
+  //display.fillRect(102, 0, 6, 9, BLACK);
+  //display.fillRect(102, 27, 6, 10, BLACK);
 
   // For Debugging Throttle:
   //  display.fillRect(0, 0, map(throttlePercent, 0,100, 0,108), 36, BLUE);
