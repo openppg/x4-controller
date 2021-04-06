@@ -50,6 +50,7 @@
 #define YELLOW                ST77XX_YELLOW
 #define RED                   ST77XX_RED
 #define BLUE                  ST77XX_BLUE
+#define ORANGE                0xffa500
 
 #define DIGIT_ARRAY_SIZE      7
 #define ESC_BAUD_RATE         115200

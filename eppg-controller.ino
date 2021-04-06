@@ -338,13 +338,20 @@ void updateDisplay() {
   }
   display.setTextColor(BLACK);
 
-  if (batteryPercent > 66) {
+  if (batteryPercent > 60) {
     display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, GREEN);
-  } else if (batteryPercent > 33) {
+  } else if (batteryPercent > 40) {
+    display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, ORANGE);
+  } else if (batteryPercent > 20) {
     display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, YELLOW);
   } else {
     display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, RED);
   }
+
+  // battery shape end
+  display.fillRect(0, 104, 4, 4, BLACK);
+  display.fillRect(32, 104, 4, 4, BLACK);
+
   if (telemetryData.volts < BATT_MIN_V) {
     if (batteryFlag) {
       batteryFlag = false;
