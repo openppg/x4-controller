@@ -179,11 +179,14 @@ void disarmSystem() {
   runVibe(disarm_vibes, 3);
   playMelody(disarm_melody, 3);
 
+  bottom_bg_color = WHITE;
+  display.fillRect(0, 93, 160, 40, bottom_bg_color);
+
   // update armed_time
   refreshDeviceData();
   deviceData.armed_time += round(armedSecs / 60);  // convert to mins
   writeDeviceData();
-  delay(1500);  // TODO just disable button thread // dont allow immediate rearming
+  delay(1000);  // TODO just disable button thread // dont allow immediate rearming
 }
 
 // inital button setup and config
@@ -211,6 +214,9 @@ void initDisplay() {
 
   pinMode(TFT_LITE, OUTPUT);
   digitalWrite(TFT_LITE, HIGH);  // Backlight on
+
+  //display.fillCircle(10, 63, 4, WHITE);
+  //display.drawCircle(10, 63, 4, BLACK);
 }
 
 // read throttle and send to hub
@@ -258,6 +264,10 @@ bool armSystem() {
   setLEDs(HIGH);
   runVibe(arm_vibes, 3);
   playMelody(arm_melody, 3);
+
+  bottom_bg_color = ST77XX_CYAN;
+  display.fillRect(0, 93, 160, 40, bottom_bg_color);
+
   Serial.println(F("Sending Arm Signal"));
   return true;
 }
@@ -265,6 +275,9 @@ bool armSystem() {
 // The event handler for the the buttons
 void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */) {
   switch (eventType) {
+  case AceButton::kEventClicked:
+    nextPage();
+    break;
   case AceButton::kEventDoubleClicked:
     if (armed) {
       disarmSystem();
@@ -316,32 +329,20 @@ void updateDisplay() {
   //Serial.print("v: ");
   //Serial.println(volts);
 
-  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
-  display.print("V");
 
-  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, WHITE);
-  display.print("A");
-
-  float kWatts = watts / 1000.0;
-  dispValue(kWatts, prevKilowatts, 4, 1, 10, 42, 2, BLACK, WHITE);
-  display.print("kW");
-
-  float kwh = wattsHoursUsed / 1000;
-  dispValue(kwh, prevKilowatts, 4, 1, 10, 71, 2, BLACK, WHITE);
-  display.print("kWh");
+  switch (page) {
+  case 0:  // shows current voltage and amperage
+    displayPage0();
+    break;
+  case 1:  // shows total amp hrs and timer
+    displayPage1();
+    break;
+  }
 
   //dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
   //display.print("kW");
 
-  display.setCursor(30, 60);
-  display.setTextSize(1);
-  if (deviceData.performance_mode == 0) {
-    display.setTextColor(BLUE);
-    display.print("CHILL");
-  } else {
-    display.setTextColor(RED);
-    display.print("SPORT");
-  }
+
   display.setTextColor(BLACK);
 
   if (batteryPercent > 60) {
@@ -371,7 +372,6 @@ void updateDisplay() {
   dispValue(batteryPercent, prevBatteryPercent, 3, 0, 108, 10, 2, BLACK, WHITE);
   display.print("%");
 
-
   // battery shape end
   //display.fillRect(102, 0, 6, 9, BLACK);
   //display.fillRect(102, 27, 6, 10, BLACK);
@@ -392,9 +392,49 @@ void updateDisplay() {
   //display.print("F");
 
   handleFlightTime();
-  displayTime(throttleSecs, 8, 102);
+  displayTime(throttleSecs, 8, 102, bottom_bg_color);
 
   //dispPowerCycles(104,100,2);
+}
+
+// display first page (voltage and current)
+void displayPage0() {
+  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
+  display.print("V");
+
+  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, WHITE);
+  display.print("A");
+
+  float kWatts = watts / 1000.0;
+  dispValue(kWatts, prevKilowatts, 4, 1, 10, 42, 2, BLACK, WHITE);
+  display.print("kW");
+
+  float kwh = wattsHoursUsed / 1000;
+  dispValue(kwh, prevKilowatts, 4, 1, 10, 71, 2, BLACK, WHITE);
+  display.print("kWh");
+}
+
+// display second page (mAh and armed time)
+void displayPage1() {
+  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
+  display.print("V");
+
+  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, WHITE);
+  display.print("A");
+
+  float kwh = wattsHoursUsed / 1000;
+  dispValue(kwh, prevKilowatts, 4, 1, 10, 71, 2, BLACK, WHITE);
+  display.print("kWh");
+
+  display.setCursor(30, 60);
+  display.setTextSize(1);
+  if (deviceData.performance_mode == 0) {
+    display.setTextColor(BLUE);
+    display.print("CHILL");
+  } else {
+    display.setTextColor(RED);
+    display.print("SPORT");
+  }
 }
 
 // displays number of minutes and seconds (since armed)
@@ -419,7 +459,7 @@ void displayAlt() {
   // convert to ft if not using metric
   float alt = deviceData.metric_alt ? altiudeM : (round(altiudeM * 3.28084));
 
-  dispValue(alt, lastAltM, 5, 0, 70, 102, 2, BLACK, WHITE);
+  dispValue(alt, lastAltM, 5, 0, 70, 102, 2, BLACK, bottom_bg_color);
 
   display.print(deviceData.metric_alt ? F("m") : F("ft"));
   lastAltM = alt;

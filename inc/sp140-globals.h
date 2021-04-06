@@ -51,3 +51,5 @@ Adafruit_BMP3XX bmp;
 Servo esc; // Creating a servo class with name of esc
 
 static STR_DEVICE_DATA_140_V1 deviceData;
+
+uint16_t bottom_bg_color = WHITE;

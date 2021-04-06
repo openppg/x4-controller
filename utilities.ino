@@ -1,7 +1,7 @@
 // Copyright 2019 <Zach Whitehead>
 // OpenPPG
 
-#define LAST_PAGE 3  // starts at 0
+#define LAST_PAGE 1  // starts at 0
 
 #define DBL_TAP_PTR ((volatile uint32_t *)(HMCRAMC0_ADDR + HMCRAMC0_SIZE - 4))
 #define DBL_TAP_MAGIC 0xf01669ef // Randomly selected, adjusted to have first and last bit set
@@ -31,6 +31,8 @@ String convertToDigits(byte digits) {
  * @return the number of next page
  */
 int nextPage() {
+  display.fillRect(0, 37, 160, 56, WHITE);
+
   if (page >= LAST_PAGE) {
     return page = 0;
   }

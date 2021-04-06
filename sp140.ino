@@ -17,7 +17,7 @@ void handleFlightTime() {
   }
 }
 
-void displayTime(int val, int x, int y) {
+void displayTime(int val, int x, int y, uint16_t bg_color) {
   // displays number of minutes and seconds (since armed and throttled)
   display.setCursor(x,y);
   display.setTextSize(2);
@@ -25,17 +25,17 @@ void displayTime(int val, int x, int y) {
   minutes = val / 60;
   seconds = numberOfSeconds(val);
   if (minutes < 10) {
-    display.setCursor(x,y);
+    display.setCursor(x, y);
     display.print("0");
   }
-  dispValue(minutes, prevMinutes, 2, 0, x, y, 2, BLACK, WHITE);
-  display.setCursor(x+24,y);
+  dispValue(minutes, prevMinutes, 2, 0, x, y, 2, BLACK, bg_color);
+  display.setCursor(x+24, y);
   display.print(":");
-  display.setCursor(x+36,y);
+  display.setCursor(x+36, y);
   if (seconds < 10) {
     display.print("0");
   }
-  dispValue(seconds, prevSeconds, 2, 0, x+36, y, 2, BLACK, WHITE);
+  dispValue(seconds, prevSeconds, 2, 0, x+36, y, 2, BLACK, bg_color);
 }
 
 
