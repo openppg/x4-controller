@@ -17,8 +17,10 @@
 
 // Batt setting now configurable by user. Read from device data
 #define BATT_MIN_V 60.0  // 24 * 2.5V per cell
-#define BATT_MID_V 86.4 // 24 *  3.6V per cell
-#define BATT_MAX_V 100.4 // 24 * 4.2V per cell
+#define BATT_MID_V 86.4  // 24 *  3.6V per cell
+#define BATT_MAX_V 100.4  // 24 * 4.2V per cell
+
+#define REARM_COOLDOWN 2.0
 
 // Calibration
 #define MAMP_OFFSET 200
