@@ -17,9 +17,10 @@ void handleFlightTime() {
   }
 }
 
+// TODO bug rolls over at 99mins
 void displayTime(int val, int x, int y, uint16_t bg_color) {
   // displays number of minutes and seconds (since armed and throttled)
-  display.setCursor(x,y);
+  display.setCursor(x, y);
   display.setTextSize(2);
   display.setTextColor(BLACK);
   minutes = val / 60;

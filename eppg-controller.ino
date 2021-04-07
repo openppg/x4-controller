@@ -361,11 +361,16 @@ void updateDisplay() {
       batteryFlag = false;
       display.fillRect(0, 0, 108, 36, WHITE);
     }
-    display.setCursor(0, 3);
+    display.setCursor(12, 3);
     display.setTextSize(2);
     display.setTextColor(RED);
-    display.println(" BATTERY");
-    display.print(" DEAD/NC ");
+    display.println("BATTERY");
+
+    if ( telemetryData.volts < 10 ) {
+      display.print(" ERROR");
+    } else {
+      display.print(" DEAD");
+    }
   } else {
     batteryFlag = true;
     display.fillRect(map(batteryPercent, 0,100, 0,108), 0, map(batteryPercent, 0,100, 108,0), 36, WHITE);
@@ -407,12 +412,9 @@ void displayPage0() {
   display.print("A");
 
   float kWatts = watts / 1000.0;
-  dispValue(kWatts, prevKilowatts, 4, 1, 10, 42, 2, BLACK, WHITE);
-  display.print("kW");
 
-  float kwh = wattsHoursUsed / 1000;
-  dispValue(kwh, prevKilowatts, 4, 1, 10, 71, 2, BLACK, WHITE);
-  display.print("kWh");
+  dispValue(kWatts, prevKilowatts, 4, 1, 10, 55, 2, BLACK, WHITE);
+  display.print("kW");
 }
 
 // display second page (mAh and armed time)
@@ -444,7 +446,7 @@ void displayTime(int val) {
   int seconds = numberOfSeconds(val);
 
   display.print(convertToDigits(minutes));
-  display.print(F(":"));
+  display.print(":");
   display.print(convertToDigits(seconds));
 }
 

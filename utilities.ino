@@ -31,7 +31,7 @@ String convertToDigits(byte digits) {
  * @return the number of next page
  */
 int nextPage() {
-  display.fillRect(0, 37, 160, 56, WHITE);
+  display.fillRect(0, 37, 160, 54, WHITE);
 
   if (page >= LAST_PAGE) {
     return page = 0;
