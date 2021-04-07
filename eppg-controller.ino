@@ -149,7 +149,7 @@ void setup140() {
     display.print("ACTIVATED");
     display.setTextColor(BLACK);
   }
-  while(button_top.isPressedRaw());  // TODO skip?
+  //while(button_top.isPressedRaw());  // TODO skip?
 }
 
 // main loop - everything runs in threads
@@ -197,7 +197,6 @@ void initButtons() {
   buttonConfig->setFeature(ButtonConfig::kFeatureDoubleClick);
   buttonConfig->setFeature(ButtonConfig::kFeatureLongPress);
   buttonConfig->setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
-  buttonConfig->setFeature(ButtonConfig::kFeatureSuppressClickBeforeDoubleClick);
   buttonConfig->setFeature(ButtonConfig::kFeatureSuppressAfterLongPress);
   buttonConfig->setLongPressDelay(2500);
 }
@@ -276,9 +275,6 @@ bool armSystem() {
 // The event handler for the the buttons
 void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */) {
   switch (eventType) {
-  case AceButton::kEventClicked:
-    nextPage();
-    break;
   case AceButton::kEventDoubleClicked:
     if (armed) {
       disarmSystem();
@@ -330,16 +326,7 @@ void updateDisplay() {
   //Serial.print("v: ");
   //Serial.println(volts);
 
-
-  switch (page) {
-  case 0:  // shows current voltage and amperage
-    displayPage0();
-    break;
-  case 1:  // shows total amp hrs and timer
-    displayPage1();
-    break;
-  }
-
+  displayPage0();
   //dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
   //display.print("kW");
 
@@ -413,8 +400,22 @@ void displayPage0() {
 
   float kWatts = watts / 1000.0;
 
-  dispValue(kWatts, prevKilowatts, 4, 1, 10, 55, 2, BLACK, WHITE);
+  dispValue(kWatts, prevKilowatts, 4, 1, 10, 42, 2, BLACK, WHITE);
   display.print("kW");
+
+  float kwh = wattsHoursUsed / 1000;
+  dispValue(kwh, prevKilowatts, 4, 1, 10, 71, 2, BLACK, WHITE);
+  display.print("kWh");
+
+  display.setCursor(30, 60);
+  display.setTextSize(1);
+  if (deviceData.performance_mode == 0) {
+    display.setTextColor(BLUE);
+    display.print("CHILL");
+  } else {
+    display.setTextColor(RED);
+    display.print("SPORT");
+  }
 }
 
 // display second page (mAh and armed time)
@@ -508,7 +509,7 @@ void setCruise() {
     cruising = true;
     vibrateNotify();
 
-    display.setCursor(10, 80);
+    display.setCursor(70, 60);
     display.setTextSize(1);
     display.setTextColor(RED);
     display.print("CRUISE");
@@ -523,7 +524,7 @@ void setCruise() {
 void removeCruise(bool alert) {
   cruising = false;
 
-  display.setCursor(10, 80);
+  display.setCursor(70, 60);
   display.setTextSize(1);
   display.setTextColor(WHITE);
   display.print("CRUISE");
