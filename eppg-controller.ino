@@ -113,7 +113,7 @@ void setup140() {
   esc.writeMicroseconds(0);  // make sure motors off
 
   buzzInit(ENABLE_BUZ);
-  bmpInit();
+  initBmp();
   vibe.begin();
   vibe.selectLibrary(1);
   vibe.setMode(DRV2605_MODE_INTTRIG);
@@ -404,7 +404,7 @@ void displayPage0() {
   display.print("kW");
 
   float kwh = wattsHoursUsed / 1000;
-  dispValue(kwh, prevKilowatts, 4, 1, 10, 71, 2, BLACK, WHITE);
+  dispValue(kwh, prevKwh, 4, 1, 10, 71, 2, BLACK, WHITE);
   display.print("kWh");
 
   display.setCursor(30, 60);

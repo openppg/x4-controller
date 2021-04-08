@@ -40,6 +40,7 @@ float prevVolts = 0;
 float prevAmps = 0;
 float watts = 0;
 float prevKilowatts = 0;
+float prevKwh = 0;
 
 //ALTIMETER
 float ambientTempC = 0;

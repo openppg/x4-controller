@@ -104,7 +104,7 @@ void dispValue(float value, float &prevVal, int maxDigits, int precision, int x,
   prevVal = value;
 }
 
-void bmpInit() {
+void initBmp() {
   bmp.begin();
   bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
   bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
@@ -112,9 +112,9 @@ void bmpInit() {
 }
 
 void buzzInit(bool enableBuz) {
+  pinMode(BUZ_PIN, OUTPUT);
   return;  // TODO deprecated?
 
-  pinMode(BUZ_PIN, OUTPUT);
   if (enableBuz) {
     tone(BUZ_PIN, 500);
     delay(200);
