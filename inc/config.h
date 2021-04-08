@@ -24,6 +24,7 @@
 
 // Calibration
 #define MAMP_OFFSET 200
+#define VOLT_OFFSET 1.5
 
 #define VERSION_MAJOR 5
 #define VERSION_MINOR 0
@@ -37,7 +38,7 @@
 // Library config
 #define NO_ADAFRUIT_SSD1306_COLOR_COMPATIBILITY
 
-//SP140
+// SP140
 #define BUZ_PIN 5
 #define POT_PIN A0
 #define TFT_RST 9

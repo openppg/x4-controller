@@ -4,7 +4,7 @@ void handleFlightTime() {
     throttled = false;
   }
   if (armed) {
-    if (throttlePercent > 50 && throttledFlag) {
+    if (throttlePercent > 30 && throttledFlag) {
       throttledAtMillis = millis();
       throttledFlag = false;
       throttled = true;
@@ -218,8 +218,11 @@ void parseData() {
 
   _volts = word(escData[1], escData[0]);
   //_volts = ((unsigned int)escData[1] << 8) + escData[0];
-  telemetryData.volts = _volts/100.0;
+  telemetryData.volts = _volts / 100.0;
 
+  if (telemetryData.volts > BATT_MIN_V) {
+    telemetryData.volts += 1.5;
+  }
   //reading 23.00 = 22.7 actual
   //reading 16.00 = 15.17 actual
   // Serial.print(F("Volts: "));
@@ -317,18 +320,18 @@ int limitedThrottle(int current, int last, int threshold) {
 float getBatteryPercent(float voltage) {
   //Serial.print("percent v ");
   //Serial.println(voltage);
-  if (voltage < 1) {
+  if (voltage < BATT_MIN_V) {
     return 0.0;
   }
-  int voltage_curved = battery_sigmoidal(round(voltage), BATT_MIN_V, BATT_MAX_V);
+  int voltage_curved = battery_sigmoidal(voltage, 58.0, BATT_MAX_V);
   constrain(voltage_curved, 0, 100);
 
-  return round(voltage_curved); // TODO rounded float
+  return voltage_curved;
 }
 
 // inspired by https://github.com/rlogiacco/BatterySense/
 // https://www.desmos.com/calculator/7m9lu26vpy
-uint8_t battery_sigmoidal(uint16_t voltage, uint16_t minVoltage, uint16_t maxVoltage) {
+uint8_t battery_sigmoidal(float voltage, uint16_t minVoltage, uint16_t maxVoltage) {
   uint8_t result = 105 - (105 / (1 + pow(1.724 * (voltage - minVoltage)/(maxVoltage - minVoltage), 5.5)));
   return result >= 100 ? 100 : result;
 }

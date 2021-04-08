@@ -333,14 +333,13 @@ void updateDisplay() {
 
   display.setTextColor(BLACK);
 
-  if (batteryPercent > 60) {
-    display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, GREEN);
-  } else if (batteryPercent > 40) {
-    display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, ORANGE);
-  } else if (batteryPercent > 20) {
-    display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, YELLOW);
+  if (batteryPercent >= 30) {
+    display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, GREEN);
+  } else if (batteryPercent >= 15) {
+    display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, YELLOW);
   } else {
-    display.fillRect(0, 0, map(batteryPercent, 0, 100, 0, 108), 36, RED);
+    display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, RED);
+
   }
 
   if (telemetryData.volts < BATT_MIN_V) {
@@ -361,6 +360,10 @@ void updateDisplay() {
   } else {
     batteryFlag = true;
     display.fillRect(map(batteryPercent, 0,100, 0,108), 0, map(batteryPercent, 0,100, 108,0), 36, WHITE);
+  }
+
+  if (batteryPercent <= 5) {
+    display.drawLine(0, 0, 108, 36, RED);
   }
   dispValue(batteryPercent, prevBatteryPercent, 3, 0, 108, 10, 2, BLACK, WHITE);
   display.print("%");

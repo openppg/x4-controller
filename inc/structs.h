@@ -87,6 +87,6 @@ typedef struct {
 #pragma pack(pop)
 
 static STR_ESC_TELEMETRY_140 telemetryData;
-static STR_CTRL2HUB_MSG controlData;
+//static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG_V2 hubData;
-static STR_DEVICE_DATA_V1 deviceDataV1;
+//static STR_DEVICE_DATA_V1 deviceDataV1;
