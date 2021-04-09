@@ -129,27 +129,9 @@ void setup140() {
       deviceData.performance_mode = 0;
     }
     writeDeviceData();
+    unsigned int notify_melody[] = { 900, 1976 };
+    playMelody(notify_melody, 2);
   }
-
-  delay(10);
-
-  if (button_top.isPressedRaw() && (deviceData.performance_mode == 1)) {
-    display.setCursor(10, 20);
-    display.setTextSize(2);
-    if (deviceData.performance_mode == 0) {
-      display.setTextColor(BLUE);
-      display.print("CHILL");
-    } else {
-      display.setTextColor(RED);
-      display.print("SPORT");
-    }
-    display.setCursor(10, 36);
-    display.print("MODE");
-    display.setCursor(10, 52);
-    display.print("ACTIVATED");
-    display.setTextColor(BLACK);
-  }
-  //while(button_top.isPressedRaw());  // TODO skip?
 }
 
 // main loop - everything runs in threads
@@ -254,7 +236,7 @@ bool armSystem() {
   unsigned int arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 70, 33, 0 };
 
-  armed = true;  // TODO indicate on screen
+  armed = true;
   esc.writeMicroseconds(1000);  // initialize the signal to 1000
 
   ledBlinkThread.enabled = false;
@@ -547,5 +529,4 @@ void trackPower() {
   if (armed) {
     wattsHoursUsed += watts/60/60/2;
   }
-  // TODO display
 }

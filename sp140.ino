@@ -226,9 +226,10 @@ void parseData() {
   //reading 23.00 = 22.7 actual
   //reading 16.00 = 15.17 actual
   // Serial.print(F("Volts: "));
-  // Serial.println(volts);
+  // Serial.println(telemetryData.volts);
 
-  // batteryPercent = mapf(volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0);
+
+  // batteryPercent = mapf(telemetryData.volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0);
 
   batteryPercent = getBatteryPercent(telemetryData.volts);
 
@@ -320,13 +321,17 @@ int limitedThrottle(int current, int last, int threshold) {
 float getBatteryPercent(float voltage) {
   //Serial.print("percent v ");
   //Serial.println(voltage);
-  if (voltage < BATT_MIN_V) {
-    return 0.0;
-  }
-  int voltage_curved = battery_sigmoidal(voltage, 58.0, BATT_MAX_V);
-  constrain(voltage_curved, 0, 100);
 
-  return voltage_curved;
+  int batteryPercent = 0;
+  if (voltage < BATT_MIN_V) { return batteryPercent; }  // just stop here if low
+
+  if (telemetryData.volts >= BATT_MID_V) {
+    batteryPercent = mapf(telemetryData.volts, BATT_MID_V, BATT_MAX_V, 50.0, 100.0);
+  } else {
+    batteryPercent = mapf(telemetryData.volts, BATT_MIN_V, BATT_MID_V, 0.0, 50.0);
+  }
+  // batteryPercent = battery_sigmoidal(voltage, 58.0, BATT_MAX_V);
+  return constrain(batteryPercent, 0, 100);
 }
 
 // inspired by https://github.com/rlogiacco/BatterySense/
