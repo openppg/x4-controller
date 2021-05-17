@@ -5,12 +5,15 @@
 #include "inc/config.h"          // device config
 #include "inc/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
+#include <Adafruit_BMP3XX.h>     // barometer
 #include <Adafruit_DRV2605.h>    // haptic controller
-#include <Adafruit_ST7735.h>    // screen
+#include <Adafruit_ST7735.h>     // screen
 #include <Adafruit_SleepyDog.h>  // watchdog
 #include "Adafruit_TinyUSB.h"
 #include <ArduinoJson.h>
+#include <CircularBuffer.h>      // smooth out readings
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
+#include <Servo.h>               // to control ESCs
 #include <SPI.h>
 #include <StaticThreadController.h>
 #include <Thread.h>   // run tasks at different intervals
@@ -18,10 +21,8 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
-#include <Adafruit_BMP3XX.h>
-#include <Servo.h> // to control ESCs
-
 #include "inc/sp140-globals.h" // device config
+
 
 using namespace ace_button;
 
@@ -33,10 +34,11 @@ Adafruit_DRV2605 vibe;
 Adafruit_USBD_WebUSB usb_web;
 WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
 
-ResponsiveAnalogRead pot(THROTTLE_PIN, false);
+ResponsiveAnalogRead pot(THROTTLE_PIN, true, 0.01);
 AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
 extEEPROM eep(kbits_64, 1, 64);
+CircularBuffer<float, 100> voltageBuffer;  // uses 988 bytes
 
 const int bgInterval = 100;  // background updates (milliseconds)
 
@@ -318,6 +320,8 @@ void updateDisplay() {
 
 
   display.setTextColor(BLACK);
+  float avgVoltage = getBatteryVoltSmoothed();
+  batteryPercent = getBatteryPercent(avgVoltage);  // multi-point line
 
   if (batteryPercent >= 30) {
     display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, GREEN);
@@ -327,7 +331,7 @@ void updateDisplay() {
     display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, RED);
   }
 
-  if (telemetryData.volts < BATT_MIN_V) {
+  if (avgVoltage < BATT_MIN_V) {
     if (batteryFlag) {
       batteryFlag = false;
       display.fillRect(0, 0, 108, 36, DEFAULT_BG_COLOR);
@@ -337,7 +341,7 @@ void updateDisplay() {
     display.setTextColor(RED);
     display.println("BATTERY");
 
-    if ( telemetryData.volts < 10 ) {
+    if ( avgVoltage < 10 ) {
       display.print(" ERROR");
     } else {
       display.print(" DEAD");
@@ -380,7 +384,9 @@ void updateDisplay() {
 
 // display first page (voltage and current)
 void displayPage0() {
-  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, DEFAULT_BG_COLOR);
+  float avgVoltage = getBatteryVoltSmoothed();
+
+  dispValue(avgVoltage, prevVolts, 5, 1, 84, 42, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("V");
 
   dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, DEFAULT_BG_COLOR);
