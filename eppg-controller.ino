@@ -112,7 +112,7 @@ void setup() {
 
 void setup140() {
   esc.attach(ESC_PIN);
-  esc.writeMicroseconds(0);  // make sure motors off
+  esc.writeMicroseconds(ESC_DISARMED_PWM);
 
   buzzInit(ENABLE_BUZ);
   initBmp();
@@ -149,7 +149,7 @@ void checkButtons() {
 }
 
 void disarmSystem() {
-  esc.writeMicroseconds(0);
+  esc.writeMicroseconds(ESC_DISARMED_PWM);
   Serial.println(F("disarmed"));
 
   unsigned int disarm_melody[] = { 2093, 1976, 880 };
@@ -225,9 +225,9 @@ void handleThrottle() {
       throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM);
     }
   } else {
-    throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM); // mapping val to min and max
+    throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM);  // mapping val to min and max
   }
-  throttlePercent = mapf(throttlePWM, 1112,2000, 0,100);
+  throttlePercent = mapf(throttlePWM, 1110, 2000, 0, 100);
   throttlePercent = constrain(throttlePercent, 0, 100);
 
   esc.writeMicroseconds(throttlePWM);  // using val as the signal to esc
@@ -239,7 +239,7 @@ bool armSystem() {
   unsigned int arm_vibes[] = { 70, 33, 0 };
 
   armed = true;
-  esc.writeMicroseconds(1000);  // initialize the signal to 1000
+  esc.writeMicroseconds(ESC_DISARMED_PWM);  // initialize the signal to low
 
   ledBlinkThread.enabled = false;
   armedAtMilis = millis();

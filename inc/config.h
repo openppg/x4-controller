@@ -65,6 +65,7 @@
 #define ESC_DATA_SIZE         20
 #define READ_INTERVAL         0
 #define ESC_TIMEOUT           10
+#define ESC_DISARMED_PWM      1010
 #define ENABLE_BUZ            true    // enable buzzer
 #define ENABLE_VIB            true    // enable vibration
 #define ENABLE_VIB_LOW_BAT    false    // vibrate if armed and battery voltage sags below min volts. Gets pilot's attention.

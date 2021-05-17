@@ -212,6 +212,7 @@ void printRawSentence() {
 
 void parseData() {
   // LSB First
+  //TODO is this being called even with no ESC?
 
   _volts = word(escData[1], escData[0]);
   //_volts = ((unsigned int)escData[1] << 8) + escData[0];
