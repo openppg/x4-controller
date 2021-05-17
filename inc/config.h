@@ -54,6 +54,11 @@
 #define RED                   ST77XX_RED
 #define BLUE                  ST77XX_BLUE
 #define ORANGE                ST77XX_ORANGE
+#define PURPLE                0x780F
+
+#define DEFAULT_BG_COLOR      WHITE
+#define ARMED_BG_COLOR        ST77XX_CYAN
+#define CRUISE_BG_COLOR       YELLOW
 
 #define DIGIT_ARRAY_SIZE      7
 #define ESC_BAUD_RATE         115200
@@ -62,4 +67,4 @@
 #define ESC_TIMEOUT           10
 #define ENABLE_BUZ            true    // enable buzzer
 #define ENABLE_VIB            true    // enable vibration
-#define ENABLE_VIB_LOW_BAT    true    // vibrate if armed and battery voltage sags below min volts. Gets pilot's attention.
+#define ENABLE_VIB_LOW_BAT    false    // vibrate if armed and battery voltage sags below min volts. Gets pilot's attention.

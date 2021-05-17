@@ -161,7 +161,7 @@ void disarmSystem() {
   runVibe(disarm_vibes, 3);
   playMelody(disarm_melody, 3);
 
-  bottom_bg_color = WHITE;
+  bottom_bg_color = DEFAULT_BG_COLOR;
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
 
   // update armed_time
@@ -186,7 +186,7 @@ void initButtons() {
 // inital screen setup and config
 void initDisplay() {
   display.initR(INITR_BLACKTAB);  // Init ST7735S chip, black tab
-  display.fillScreen(WHITE);
+  display.fillScreen(DEFAULT_BG_COLOR);
   display.setTextColor(BLACK);
   display.setCursor(0, 0);
   display.setTextSize(1);
@@ -197,7 +197,7 @@ void initDisplay() {
   pinMode(TFT_LITE, OUTPUT);
   digitalWrite(TFT_LITE, HIGH);  // Backlight on
 
-  //display.fillCircle(10, 63, 4, WHITE);
+  //display.fillCircle(10, 63, 4, DEFAULT_BG_COLOR);
   //display.drawCircle(10, 63, 4, BLACK);
 }
 
@@ -247,7 +247,7 @@ bool armSystem() {
   runVibe(arm_vibes, 3);
   playMelody(arm_melody, 3);
 
-  bottom_bg_color = ST77XX_CYAN;
+  bottom_bg_color = ARMED_BG_COLOR;
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
 
   Serial.println(F("Sending Arm Signal"));
@@ -268,7 +268,11 @@ void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */
     break;
   case AceButton::kEventLongPressed:
     if (armed) {
-      setCruise();
+      if (cruising) {
+        removeCruise(true);
+      } else {
+        setCruise();
+      }
     } else {
       // show stats screen?
     }
@@ -309,7 +313,7 @@ void updateDisplay() {
   //Serial.println(volts);
 
   displayPage0();
-  //dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, WHITE);
+  //dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, DEFAULT_BG_COLOR);
   //display.print("kW");
 
 
@@ -321,13 +325,12 @@ void updateDisplay() {
     display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, YELLOW);
   } else {
     display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, RED);
-
   }
 
   if (telemetryData.volts < BATT_MIN_V) {
     if (batteryFlag) {
       batteryFlag = false;
-      display.fillRect(0, 0, 108, 36, WHITE);
+      display.fillRect(0, 0, 108, 36, DEFAULT_BG_COLOR);
     }
     display.setCursor(12, 3);
     display.setTextSize(2);
@@ -341,13 +344,13 @@ void updateDisplay() {
     }
   } else {
     batteryFlag = true;
-    display.fillRect(map(batteryPercent, 0,100, 0,108), 0, map(batteryPercent, 0,100, 108,0), 36, WHITE);
+    display.fillRect(map(batteryPercent, 0,100, 0,108), 0, map(batteryPercent, 0,100, 108,0), 36, DEFAULT_BG_COLOR);
   }
 
   if (batteryPercent <= 5) {
     display.drawLine(0, 0, 108, 36, RED);
   }
-  dispValue(batteryPercent, prevBatteryPercent, 3, 0, 108, 10, 2, BLACK, WHITE);
+  dispValue(batteryPercent, prevBatteryPercent, 3, 0, 108, 10, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("%");
 
   // battery shape end
@@ -356,8 +359,8 @@ void updateDisplay() {
 
   // For Debugging Throttle:
   //  display.fillRect(0, 0, map(throttlePercent, 0,100, 0,108), 36, BLUE);
-  //  display.fillRect(map(throttlePercent, 0,100, 0,108), 0, map(throttlePercent, 0,100, 108,0), 36, WHITE);
-  //  dispValue(throttlePercent, prevThrotPercent, 3, 0, 108, 10, 2, BLACK, WHITE);
+  //  display.fillRect(map(throttlePercent, 0,100, 0,108), 0, map(throttlePercent, 0,100, 108,0), 36, DEFAULT_BG_COLOR);
+  //  dispValue(throttlePercent, prevThrotPercent, 3, 0, 108, 10, 2, BLACK, DEFAULT_BG_COLOR);
   //  display.print("%");
 
   display.fillRect(0, 36, 160, 1, BLACK);
@@ -366,7 +369,7 @@ void updateDisplay() {
 
   displayAlt();
 
-  //dispValue(ambientTempF, prevAmbTempF, 3, 0, 10, 100, 2, BLACK, WHITE);
+  //dispValue(ambientTempF, prevAmbTempF, 3, 0, 10, 100, 2, BLACK, DEFAULT_BG_COLOR);
   //display.print("F");
 
   handleFlightTime();
@@ -377,19 +380,20 @@ void updateDisplay() {
 
 // display first page (voltage and current)
 void displayPage0() {
-  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
+  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("V");
 
-  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, WHITE);
+  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("A");
 
   float kWatts = watts / 1000.0;
+  kWatts = constrain(kWatts, 0, 50);
 
-  dispValue(kWatts, prevKilowatts, 4, 1, 10, 42, 2, BLACK, WHITE);
+  dispValue(kWatts, prevKilowatts, 4, 1, 10, 42, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("kW");
 
   float kwh = wattsHoursUsed / 1000;
-  dispValue(kwh, prevKwh, 4, 1, 10, 71, 2, BLACK, WHITE);
+  dispValue(kwh, prevKwh, 4, 1, 10, 71, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("kWh");
 
   display.setCursor(30, 60);
@@ -405,14 +409,14 @@ void displayPage0() {
 
 // display second page (mAh and armed time)
 void displayPage1() {
-  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, WHITE);
+  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("V");
 
-  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, WHITE);
+  dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("A");
 
   float kwh = wattsHoursUsed / 1000;
-  dispValue(kwh, prevKilowatts, 4, 1, 10, 71, 2, BLACK, WHITE);
+  dispValue(kwh, prevKilowatts, 4, 1, 10, 71, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("kWh");
 
   display.setCursor(30, 60);
@@ -439,6 +443,7 @@ void displayTime(int val) {
 // display altitude data on screen
 void displayAlt() {
   float altiudeM = 0;
+  // TODO make MSL explicit?
   if (armAltM > 0 && deviceData.sea_pressure != DEFAULT_SEA_PRESSURE) {  // MSL
     altiudeM = getAltitudeM();
   } else {  // AGL
@@ -502,6 +507,9 @@ void setCruise() {
     unsigned int notify_melody[] = { 900, 900 };
     playMelody(notify_melody, 2);
 
+    bottom_bg_color = YELLOW;
+    display.fillRect(0, 93, 160, 40, bottom_bg_color);
+
     cruisedAtMilis = millis();  // start timer
   }
 }
@@ -509,9 +517,16 @@ void setCruise() {
 void removeCruise(bool alert) {
   cruising = false;
 
+  if (armed) {
+    bottom_bg_color = ARMED_BG_COLOR;
+  } else {
+    bottom_bg_color = DEFAULT_BG_COLOR;
+  }
+  display.fillRect(0, 93, 160, 40, bottom_bg_color);
+
   display.setCursor(70, 60);
   display.setTextSize(1);
-  display.setTextColor(WHITE);
+  display.setTextColor(DEFAULT_BG_COLOR);
   display.print("CRUISE");
   if (alert) {
     vibrateNotify();

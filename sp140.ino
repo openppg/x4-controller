@@ -17,7 +17,7 @@ void handleFlightTime() {
   }
 }
 
-// TODO bug rolls over at 99mins
+// TODO (bug) rolls over at 99mins
 void displayTime(int val, int x, int y, uint16_t bg_color) {
   // displays number of minutes and seconds (since armed and throttled)
   display.setCursor(x, y);
@@ -62,10 +62,8 @@ void dispValue(float value, float &prevVal, int maxDigits, int precision, int x,
     }
   }
 
-  //display.fillScreen(ST77XX_WHITE);  // before
-
   display.setTextSize(textSize);
-  display.setCursor(x,y);
+  display.setCursor(x, y);
 
   // PRINT LEADING SPACES TO RIGHT-ALIGN:
   display.setTextColor(background);
@@ -75,23 +73,22 @@ void dispValue(float value, float &prevVal, int maxDigits, int precision, int x,
   display.setTextColor(textColor);
 
   // ERASE ONLY THE NESSESARY DIGITS:
-  for(int i=0; i<numDigits; i++){
-    if(digit[i]!=prevDigit[i]){
+  for (int i=0; i<numDigits; i++) {
+    if (digit[i]!=prevDigit[i]) {
       display.setTextColor(background);
       display.print(char(218));
-    }
-    else{
+    } else {
       display.setTextColor(textColor);
       display.print(digit[i]);
     }
   }
 
   // BACK TO THE BEGINNING:
-  display.setCursor(x,y);
+  display.setCursor(x, y);
 
   // ADVANCE THE CURSOR TO THE PROPER LOCATION:
   display.setTextColor(background);
-  for(int i=0; i<(maxDigits-numDigits); i++){
+  for (int i=0; i<(maxDigits-numDigits); i++) {
     display.print(char(218));
   }
   display.setTextColor(textColor);
@@ -295,8 +292,8 @@ void vibrateAlert() {
 
 void vibrateNotify() {
   if (!ENABLE_VIB) { return; }
-  int effect = 12;  // 1 through 117 (see example sketch)
-  vibe.setWaveform(0, effect);
+
+  vibe.setWaveform(0, 15);  // 1 through 117 (see example sketch)
   vibe.setWaveform(1, 0);
   vibe.go();
 }
