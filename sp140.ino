@@ -223,8 +223,6 @@ void parseData() {
   }
 
   voltageBuffer.push(telemetryData.volts);
-  Serial.print("pushed ");
-  Serial.println(telemetryData.volts);
 
   // Serial.print(F("Volts: "));
   // Serial.println(telemetryData.volts);
@@ -319,16 +317,12 @@ int limitedThrottle(int current, int last, int threshold) {
 float getBatteryVoltSmoothed() {
   float avg = 0.0;
 
-  if (voltageBuffer.isEmpty()) {
-    Serial.println("empty");
-    return avg;
-  }
+  if (voltageBuffer.isEmpty()) { return avg; }
 
   using index_t = decltype(voltageBuffer)::index_t;
   for (index_t i = 0; i < voltageBuffer.size(); i++) {
     avg += voltageBuffer[i] / voltageBuffer.size();
   }
-  Serial.println(avg);
   return avg;
 }
 

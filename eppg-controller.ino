@@ -197,9 +197,6 @@ void initDisplay() {
 
   pinMode(TFT_LITE, OUTPUT);
   digitalWrite(TFT_LITE, HIGH);  // Backlight on
-
-  //display.fillCircle(10, 63, 4, DEFAULT_BG_COLOR);
-  //display.drawCircle(10, 63, 4, BLACK);
 }
 
 // read throttle and send to hub
