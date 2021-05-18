@@ -23,11 +23,9 @@
 
 #include "inc/sp140-globals.h" // device config
 
-
 using namespace ace_button;
 
 Adafruit_ST7735 display = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
-
 Adafruit_DRV2605 vibe;
 
 // USB WebUSB object
@@ -39,6 +37,7 @@ AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
 extEEPROM eep(kbits_64, 1, 64);
 CircularBuffer<float, 100> voltageBuffer;  // uses 988 bytes
+CircularBuffer<int, 5> potBuffer;
 
 const int bgInterval = 100;  // background updates (milliseconds)
 
@@ -207,12 +206,22 @@ void initDisplay() {
 void handleThrottle() {
   if (!armed) return;  // safe
 
-  int maxPWM = 2000;
+  static int maxPWM = 2000;
   pot.update();
-  int potLvl = pot.getValue();
+  int potRaw = pot.getValue();
+  potBuffer.push(potRaw);
+
+  int potLvl = 0;
+  for (decltype(potBuffer)::index_t i = 0; i < potBuffer.size(); i++) {
+    potLvl += potBuffer[i] / potBuffer.size();  // avg
+  }
+  // Serial.print(potRaw);
+  // Serial.print(", ");
+  // Serial.println(potLvl);
+
   if (deviceData.performance_mode == 0) {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
-    maxPWM = 1778;  // 75% interpolated from 1112 to 2000
+    maxPWM = 1778;  // 75% interpolated from 1110 to 2000
   }
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
