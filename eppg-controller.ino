@@ -36,10 +36,8 @@ ResponsiveAnalogRead pot(THROTTLE_PIN, true, 0.01);
 AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
 extEEPROM eep(kbits_64, 1, 64);
-CircularBuffer<float, 100> voltageBuffer;  // uses 988 bytes
+CircularBuffer<float, 50> voltageBuffer;  // uses 988 bytes
 CircularBuffer<int, 5> potBuffer;
-
-const int bgInterval = 100;  // background updates (milliseconds)
 
 Thread ledBlinkThread = Thread();
 Thread displayThread = Thread();
@@ -203,7 +201,7 @@ void initDisplay() {
 void handleThrottle() {
   if (!armed) return;  // safe
 
-  static int maxPWM = 2000;
+  static int maxPWM = ESC_MAX_PWM;
   pot.update();
   int potRaw = pot.getValue();
   potBuffer.push(potRaw);
@@ -218,7 +216,7 @@ void handleThrottle() {
 
   if (deviceData.performance_mode == 0) {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
-    maxPWM = 1778;  // 75% interpolated from 1110 to 2000
+    maxPWM = 1750;  // 75% interpolated from 1030 to 1990
   }
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
@@ -228,12 +226,12 @@ void handleThrottle() {
     if (cruisingSecs >= CRUISE_GRACE && potLvl > POT_SAFE_LEVEL) {
       removeCruise(true);  // deactivate cruise
     } else {
-      throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM);
+      throttlePWM = mapf(cruiseLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
     }
   } else {
-    throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM);  // mapping val to min and max
+    throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);  // mapping val to min and max
   }
-  throttlePercent = mapf(throttlePWM, 1110, 2000, 0, 100);
+  throttlePercent = mapf(throttlePWM, ESC_MIN_PWM, ESC_MAX_PWM, 0, 100);
   throttlePercent = constrain(throttlePercent, 0, 100);
 
   esc.writeMicroseconds(throttlePWM);  // using val as the signal to esc
