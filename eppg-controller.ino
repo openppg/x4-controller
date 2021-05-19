@@ -32,11 +32,11 @@ Adafruit_DRV2605 vibe;
 Adafruit_USBD_WebUSB usb_web;
 WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
 
-ResponsiveAnalogRead pot(THROTTLE_PIN, true, 0.01);
+ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
 extEEPROM eep(kbits_64, 1, 64);
-CircularBuffer<float, 50> voltageBuffer;  // uses 988 bytes
+CircularBuffer<float, 50> voltageBuffer;
 CircularBuffer<int, 5> potBuffer;
 
 Thread ledBlinkThread = Thread();
@@ -69,8 +69,8 @@ void setup() {
   Serial5.begin(ESC_BAUD_RATE);
   Serial5.setTimeout(ESC_TIMEOUT);
 
-  Serial.print(F("Booting up (USB) V"));
-  Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
+  //Serial.print(F("Booting up (USB) V"));
+  //Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   //pinMode(LED_SW, OUTPUT);   // set up the external LED pin
   pinMode(LED_SW, OUTPUT);   // set up the internal LED2 pin
@@ -121,7 +121,7 @@ void setup140() {
 
   if (button_top.isPressedRaw()) {
     // Switch modes
-    // 0=CHILL 1=SPORT 2=LUDICROUS?
+    // 0=CHILL 1=SPORT 2=LUDICROUS?!
     if (deviceData.performance_mode == 0) {
       deviceData.performance_mode = 1;
     } else {
@@ -145,9 +145,10 @@ void checkButtons() {
   button_top.check();
 }
 
+// disarm, remove cruise, alert, save updated stats
 void disarmSystem() {
   esc.writeMicroseconds(ESC_DISARMED_PWM);
-  Serial.println(F("disarmed"));
+  //Serial.println(F("disarmed"));
 
   unsigned int disarm_melody[] = { 2093, 1976, 880 };
   unsigned int disarm_vibes[] = { 70, 33, 0 };
@@ -256,7 +257,7 @@ bool armSystem() {
   bottom_bg_color = ARMED_BG_COLOR;
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
 
-  Serial.println(F("Sending Arm Signal"));
+  //Serial.println(F("Sending Arm Signal"));
   return true;
 }
 
@@ -284,7 +285,6 @@ void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */
     }
     break;
   case AceButton::kEventLongReleased:
-    Serial.println("released");
     break;
   }
 }

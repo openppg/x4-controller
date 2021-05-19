@@ -48,8 +48,8 @@
 #define ESC_PIN 12
 
 #define ESC_DISARMED_PWM      1010
-#define ESC_MIN_PWM           1030
-#define ESC_MAX_PWM           1990
+#define ESC_MIN_PWM           1030 // ESC min is 1050
+#define ESC_MAX_PWM           1990 // ESC max 1950
 
 #define BLACK                 ST77XX_BLACK
 #define WHITE                 ST77XX_WHITE

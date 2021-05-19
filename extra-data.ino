@@ -20,7 +20,7 @@ void refreshDeviceData() {
   }
 }
 
-void resetDeviceData(){
+void resetDeviceData() {
     deviceData = STR_DEVICE_DATA_140_V1();
     deviceData.version_major = VERSION_MAJOR;
     deviceData.version_minor = VERSION_MINOR;
@@ -56,11 +56,11 @@ void parse_usb_serial() {
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
 
-  if (doc["command"] && doc["command"] == "rbl"){
+  if (doc["command"] && doc["command"] == "rbl") {
     display.fillScreen(DEFAULT_BG_COLOR);
     displayMessage("BL - UF2");
     rebootBootloader();
-    return; // run only the command
+    return;  // run only the command
   }
 
   if (doc["major_v"] < 5) return;

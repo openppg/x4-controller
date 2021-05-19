@@ -1,3 +1,5 @@
+// Copyright 2020 <Zach Whitehead>
+
 void handleFlightTime() {
   if (!armed) {
     throttledFlag = true;
@@ -171,7 +173,7 @@ bool enforceFletcher16() {
   return true;
 }
 
-
+// Not used
 void enforceChecksum() {
   //Check checksum, revert to previous data if bad:
   word checksum = word(escData[19], escData[18]);
@@ -219,7 +221,7 @@ void parseData() {
   telemetryData.volts = _volts / 100.0;
 
   if (telemetryData.volts > BATT_MIN_V) {
-    telemetryData.volts += 1.5; // calibration
+    telemetryData.volts += 1.5;  // calibration
   }
 
   voltageBuffer.push(telemetryData.volts);
@@ -231,7 +233,7 @@ void parseData() {
 
   _temperatureC = word(escData[3], escData[2]);
   telemetryData.temperatureC = _temperatureC/100.0;
-  //reading 17.4C = 63.32F in 84F ambient?
+  // reading 17.4C = 63.32F in 84F ambient?
   // Serial.print(F("TemperatureC: "));
   // Serial.println(temperatureC);
 
