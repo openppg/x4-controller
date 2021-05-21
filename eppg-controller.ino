@@ -5,12 +5,15 @@
 #include "inc/config.h"          // device config
 #include "inc/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
+#include <Adafruit_BMP3XX.h>     // barometer
 #include <Adafruit_DRV2605.h>    // haptic controller
-#include <Adafruit_ST7735.h>    // screen
+#include <Adafruit_ST7735.h>     // screen
 #include <Adafruit_SleepyDog.h>  // watchdog
 #include "Adafruit_TinyUSB.h"
 #include <ArduinoJson.h>
+#include <CircularBuffer.h>      // smooth out readings
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
+#include <Servo.h>               // to control ESCs
 #include <SPI.h>
 #include <StaticThreadController.h>
 #include <Thread.h>   // run tasks at different intervals
@@ -18,15 +21,11 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
-#include <Adafruit_BMP3XX.h>
-#include <Servo.h> // to control ESCs
-
 #include "inc/sp140-globals.h" // device config
 
 using namespace ace_button;
 
 Adafruit_ST7735 display = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
-
 Adafruit_DRV2605 vibe;
 
 // USB WebUSB object
@@ -37,8 +36,8 @@ ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
 extEEPROM eep(kbits_64, 1, 64);
-
-const int bgInterval = 100;  // background updates (milliseconds)
+CircularBuffer<float, 50> voltageBuffer;
+CircularBuffer<int, 5> potBuffer;
 
 Thread ledBlinkThread = Thread();
 Thread displayThread = Thread();
@@ -70,8 +69,8 @@ void setup() {
   Serial5.begin(ESC_BAUD_RATE);
   Serial5.setTimeout(ESC_TIMEOUT);
 
-  Serial.print(F("Booting up (USB) V"));
-  Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
+  //Serial.print(F("Booting up (USB) V"));
+  //Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   //pinMode(LED_SW, OUTPUT);   // set up the external LED pin
   pinMode(LED_SW, OUTPUT);   // set up the internal LED2 pin
@@ -110,7 +109,7 @@ void setup() {
 
 void setup140() {
   esc.attach(ESC_PIN);
-  esc.writeMicroseconds(0);  // make sure motors off
+  esc.writeMicroseconds(ESC_DISARMED_PWM);
 
   buzzInit(ENABLE_BUZ);
   initBmp();
@@ -122,7 +121,7 @@ void setup140() {
 
   if (button_top.isPressedRaw()) {
     // Switch modes
-    // 0=CHILL 1=SPORT 2=LUDICROUS?
+    // 0=CHILL 1=SPORT 2=LUDICROUS?!
     if (deviceData.performance_mode == 0) {
       deviceData.performance_mode = 1;
     } else {
@@ -146,9 +145,10 @@ void checkButtons() {
   button_top.check();
 }
 
+// disarm, remove cruise, alert, save updated stats
 void disarmSystem() {
-  esc.writeMicroseconds(0);
-  Serial.println(F("disarmed"));
+  esc.writeMicroseconds(ESC_DISARMED_PWM);
+  //Serial.println(F("disarmed"));
 
   unsigned int disarm_melody[] = { 2093, 1976, 880 };
   unsigned int disarm_vibes[] = { 70, 33, 0 };
@@ -196,21 +196,28 @@ void initDisplay() {
 
   pinMode(TFT_LITE, OUTPUT);
   digitalWrite(TFT_LITE, HIGH);  // Backlight on
-
-  //display.fillCircle(10, 63, 4, DEFAULT_BG_COLOR);
-  //display.drawCircle(10, 63, 4, BLACK);
 }
 
 // read throttle and send to hub
 void handleThrottle() {
   if (!armed) return;  // safe
 
-  int maxPWM = 2000;
+  static int maxPWM = ESC_MAX_PWM;
   pot.update();
-  int potLvl = pot.getValue();
+  int potRaw = pot.getValue();
+  potBuffer.push(potRaw);
+
+  int potLvl = 0;
+  for (decltype(potBuffer)::index_t i = 0; i < potBuffer.size(); i++) {
+    potLvl += potBuffer[i] / potBuffer.size();  // avg
+  }
+  // Serial.print(potRaw);
+  // Serial.print(", ");
+  // Serial.println(potLvl);
+
   if (deviceData.performance_mode == 0) {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
-    maxPWM = 1778;  // 75% interpolated from 1112 to 2000
+    maxPWM = 1750;  // 75% interpolated from 1030 to 1990
   }
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
@@ -220,12 +227,12 @@ void handleThrottle() {
     if (cruisingSecs >= CRUISE_GRACE && potLvl > POT_SAFE_LEVEL) {
       removeCruise(true);  // deactivate cruise
     } else {
-      throttlePWM = mapf(cruiseLvl, 0, 4095, 1110, maxPWM);
+      throttlePWM = mapf(cruiseLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
     }
   } else {
-    throttlePWM = mapf(potLvl, 0, 4095, 1110, maxPWM); // mapping val to min and max
+    throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);  // mapping val to min and max
   }
-  throttlePercent = mapf(throttlePWM, 1112,2000, 0,100);
+  throttlePercent = mapf(throttlePWM, ESC_MIN_PWM, ESC_MAX_PWM, 0, 100);
   throttlePercent = constrain(throttlePercent, 0, 100);
 
   esc.writeMicroseconds(throttlePWM);  // using val as the signal to esc
@@ -237,7 +244,7 @@ bool armSystem() {
   unsigned int arm_vibes[] = { 70, 33, 0 };
 
   armed = true;
-  esc.writeMicroseconds(1000);  // initialize the signal to 1000
+  esc.writeMicroseconds(ESC_DISARMED_PWM);  // initialize the signal to low
 
   ledBlinkThread.enabled = false;
   armedAtMilis = millis();
@@ -250,7 +257,7 @@ bool armSystem() {
   bottom_bg_color = ARMED_BG_COLOR;
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
 
-  Serial.println(F("Sending Arm Signal"));
+  //Serial.println(F("Sending Arm Signal"));
   return true;
 }
 
@@ -278,7 +285,6 @@ void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */
     }
     break;
   case AceButton::kEventLongReleased:
-    Serial.println("released");
     break;
   }
 }
@@ -318,6 +324,8 @@ void updateDisplay() {
 
 
   display.setTextColor(BLACK);
+  float avgVoltage = getBatteryVoltSmoothed();
+  batteryPercent = getBatteryPercent(avgVoltage);  // multi-point line
 
   if (batteryPercent >= 30) {
     display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, GREEN);
@@ -327,7 +335,7 @@ void updateDisplay() {
     display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, RED);
   }
 
-  if (telemetryData.volts < BATT_MIN_V) {
+  if (avgVoltage < BATT_MIN_V) {
     if (batteryFlag) {
       batteryFlag = false;
       display.fillRect(0, 0, 108, 36, DEFAULT_BG_COLOR);
@@ -337,7 +345,7 @@ void updateDisplay() {
     display.setTextColor(RED);
     display.println("BATTERY");
 
-    if ( telemetryData.volts < 10 ) {
+    if ( avgVoltage < 10 ) {
       display.print(" ERROR");
     } else {
       display.print(" DEAD");
@@ -380,7 +388,9 @@ void updateDisplay() {
 
 // display first page (voltage and current)
 void displayPage0() {
-  dispValue(telemetryData.volts, prevVolts, 5, 1, 84, 42, 2, BLACK, DEFAULT_BG_COLOR);
+  float avgVoltage = getBatteryVoltSmoothed();
+
+  dispValue(avgVoltage, prevVolts, 5, 1, 84, 42, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("V");
 
   dispValue(telemetryData.amps, prevAmps, 3, 0, 108, 71, 2, BLACK, DEFAULT_BG_COLOR);

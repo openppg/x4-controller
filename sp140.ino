@@ -1,3 +1,5 @@
+// Copyright 2020 <Zach Whitehead>
+
 void handleFlightTime() {
   if (!armed) {
     throttledFlag = true;
@@ -171,7 +173,7 @@ bool enforceFletcher16() {
   return true;
 }
 
-
+// Not used
 void enforceChecksum() {
   //Check checksum, revert to previous data if bad:
   word checksum = word(escData[19], escData[18]);
@@ -212,27 +214,26 @@ void printRawSentence() {
 
 void parseData() {
   // LSB First
+  //TODO is this being called even with no ESC?
 
   _volts = word(escData[1], escData[0]);
   //_volts = ((unsigned int)escData[1] << 8) + escData[0];
   telemetryData.volts = _volts / 100.0;
 
   if (telemetryData.volts > BATT_MIN_V) {
-    telemetryData.volts += 1.5;
+    telemetryData.volts += 1.5;  // calibration
   }
-  //reading 23.00 = 22.7 actual
-  //reading 16.00 = 15.17 actual
+
+  voltageBuffer.push(telemetryData.volts);
+
   // Serial.print(F("Volts: "));
   // Serial.println(telemetryData.volts);
 
-
-  // batteryPercent = mapf(telemetryData.volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0);
-
-  batteryPercent = getBatteryPercent(telemetryData.volts);
+  // batteryPercent = mapf(telemetryData.volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0); // flat line
 
   _temperatureC = word(escData[3], escData[2]);
   telemetryData.temperatureC = _temperatureC/100.0;
-  //reading 17.4C = 63.32F in 84F ambient?
+  // reading 17.4C = 63.32F in 84F ambient?
   // Serial.print(F("TemperatureC: "));
   // Serial.println(temperatureC);
 
@@ -315,20 +316,32 @@ int limitedThrottle(int current, int last, int threshold) {
   }
 }
 
+float getBatteryVoltSmoothed() {
+  float avg = 0.0;
+
+  if (voltageBuffer.isEmpty()) { return avg; }
+
+  using index_t = decltype(voltageBuffer)::index_t;
+  for (index_t i = 0; i < voltageBuffer.size(); i++) {
+    avg += voltageBuffer[i] / voltageBuffer.size();
+  }
+  return avg;
+}
+
 float getBatteryPercent(float voltage) {
   //Serial.print("percent v ");
   //Serial.println(voltage);
 
-  int batteryPercent = 0;
-  if (voltage < BATT_MIN_V) { return batteryPercent; }  // just stop here if low
+  int battPercent = 0;
+  if (voltage < BATT_MIN_V) { return battPercent; }  // just stop here if low
 
   if (telemetryData.volts >= BATT_MID_V) {
-    batteryPercent = mapf(telemetryData.volts, BATT_MID_V, BATT_MAX_V, 50.0, 100.0);
+    battPercent = mapf(voltage, BATT_MID_V, BATT_MAX_V, 50.0, 100.0);
   } else {
-    batteryPercent = mapf(telemetryData.volts, BATT_MIN_V, BATT_MID_V, 0.0, 50.0);
+    battPercent = mapf(voltage, BATT_MIN_V, BATT_MID_V, 0.0, 50.0);
   }
   // batteryPercent = battery_sigmoidal(voltage, 58.0, BATT_MAX_V);
-  return constrain(batteryPercent, 0, 100);
+  return constrain(battPercent, 0, 100);
 }
 
 // inspired by https://github.com/rlogiacco/BatterySense/

@@ -27,7 +27,7 @@
 #define VOLT_OFFSET 1.5
 
 #define VERSION_MAJOR 5
-#define VERSION_MINOR 0
+#define VERSION_MINOR 1
 
 #define CRUISE_GRACE 1.5  // 1.5 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
@@ -46,6 +46,10 @@
 #define TFT_DC 11
 #define TFT_LITE A1
 #define ESC_PIN 12
+
+#define ESC_DISARMED_PWM      1010
+#define ESC_MIN_PWM           1030 // ESC min is 1050
+#define ESC_MAX_PWM           1990 // ESC max 1950
 
 #define BLACK                 ST77XX_BLACK
 #define WHITE                 ST77XX_WHITE
@@ -67,4 +71,4 @@
 #define ESC_TIMEOUT           10
 #define ENABLE_BUZ            true    // enable buzzer
 #define ENABLE_VIB            true    // enable vibration
-#define ENABLE_VIB_LOW_BAT    false    // vibrate if armed and battery voltage sags below min volts. Gets pilot's attention.
+#define ENABLE_VIB_LOW_BAT    false   // vibrate if armed and battery voltage sags below min volts. Gets pilot's attention.

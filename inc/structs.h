@@ -73,7 +73,7 @@ typedef struct {
 
 typedef struct {
   uint8_t version_major;  // 5
-  uint8_t version_minor;  // 0
+  uint8_t version_minor;  // 1
   uint16_t armed_time;    // minutes (think Hobbs)
   uint8_t screen_rotation;  // 1,2,3,4 (90 deg)
   float sea_pressure;  // 1013.25 mbar
