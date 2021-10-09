@@ -209,6 +209,7 @@ void initButtons() {
   buttonConfig->setFeature(ButtonConfig::kFeatureSuppressAfterDoubleClick);
   buttonConfig->setFeature(ButtonConfig::kFeatureSuppressAfterLongPress);
   buttonConfig->setLongPressDelay(2500);
+  buttonConfig->setDoubleClickDelay(600);
 }
 
 // inital screen setup and config
