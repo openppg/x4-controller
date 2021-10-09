@@ -27,7 +27,7 @@
 #define VOLT_OFFSET 1.5
 
 #define VERSION_MAJOR 5
-#define VERSION_MINOR 1
+#define VERSION_MINOR 2
 
 #define CRUISE_GRACE 1.5  // 1.5 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising
