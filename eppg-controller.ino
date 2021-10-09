@@ -5,11 +5,11 @@
 #include "inc/config.h"          // device config
 #include "inc/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
+#include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer
 #include <Adafruit_DRV2605.h>    // haptic controller
 #include <Adafruit_ST7735.h>     // screen
 #include <Adafruit_SleepyDog.h>  // watchdog
-#include "Adafruit_TinyUSB.h"
 #include <ArduinoJson.h>
 #include <CircularBuffer.h>      // smooth out readings
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
@@ -171,6 +171,34 @@ void disarmSystem() {
   delay(1000);  // TODO just disable button thread // dont allow immediate rearming
 }
 
+// The event handler for the the buttons
+void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */) {
+  switch (eventType) {
+  case AceButton::kEventDoubleClicked:
+    if (armed) {
+      disarmSystem();
+    } else if (throttleSafe()) {
+      armSystem();
+    } else {
+      handleArmFail();
+    }
+    break;
+  case AceButton::kEventLongPressed:
+    if (armed) {
+      if (cruising) {
+        removeCruise(true);
+      } else {
+        setCruise();
+      }
+    } else {
+      // show stats screen?
+    }
+    break;
+  case AceButton::kEventLongReleased:
+    break;
+  }
+}
+
 // inital button setup and config
 void initButtons() {
   pinMode(BUTTON_TOP, INPUT_PULLUP);
@@ -261,33 +289,6 @@ bool armSystem() {
   return true;
 }
 
-// The event handler for the the buttons
-void handleButtonEvent(AceButton* /* btn */, uint8_t eventType, uint8_t /* st */) {
-  switch (eventType) {
-  case AceButton::kEventDoubleClicked:
-    if (armed) {
-      disarmSystem();
-    } else if (throttleSafe()) {
-      armSystem();
-    } else {
-      handleArmFail();
-    }
-    break;
-  case AceButton::kEventLongPressed:
-    if (armed) {
-      if (cruising) {
-        removeCruise(true);
-      } else {
-        setCruise();
-      }
-    } else {
-      // show stats screen?
-    }
-    break;
-  case AceButton::kEventLongReleased:
-    break;
-  }
-}
 
 // Returns true if the throttle/pot is below the safe threshold
 bool throttleSafe() {
