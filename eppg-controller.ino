@@ -358,7 +358,9 @@ void updateDisplay() {
   }
 
   if (batteryPercent <= 5) {
+    display.drawLine(0, 1, 106, 36, RED);
     display.drawLine(0, 0, 108, 36, RED);
+    display.drawLine(1, 0, 110, 36, RED);
   }
   dispValue(batteryPercent, prevBatteryPercent, 3, 0, 108, 10, 2, BLACK, DEFAULT_BG_COLOR);
   display.print("%");
