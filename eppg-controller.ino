@@ -86,7 +86,7 @@ void setup() {
   ledBlinkThread.setInterval(500);
 
   displayThread.onRun(updateDisplay);
-  displayThread.setInterval(100);
+  displayThread.setInterval(200);
 
   buttonThread.onRun(checkButtons);
   buttonThread.setInterval(5);
@@ -98,7 +98,7 @@ void setup() {
   telemetryThread.setInterval(50);
 
   counterThread.onRun(trackPower);
-  counterThread.setInterval(500);
+  counterThread.setInterval(250);
 
   int countdownMS = Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
@@ -553,9 +553,20 @@ void removeCruise(bool alert) {
   }
 }
 
+unsigned long prevPwrMillis = 0;    
+
 void trackPower() {
-  // runs 2x/sec so convert to hours
+  unsigned long currentPwrMillis = millis();
+  float sec_diff = (currentPwrMillis - prevPwrMillis)/1000.0;
+  float sec_fraction = 60 * sec_diff;
+  prevPwrMillis = currentPwrMillis;
+
+  Serial.print(millis());
+  Serial.print(",");
+  Serial.print(sec_fraction);
+  Serial.print(",");
+  Serial.println(sec_diff);
   if (armed) {
-    wattsHoursUsed += watts/60/60/2;
+    wattsHoursUsed += round(watts/60/60/sec_fraction);
   }
 }
