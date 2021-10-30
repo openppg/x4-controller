@@ -553,20 +553,14 @@ void removeCruise(bool alert) {
   }
 }
 
-unsigned long prevPwrMillis = 0;    
+unsigned long prevPwrMillis = 0;
 
 void trackPower() {
   unsigned long currentPwrMillis = millis();
-  float sec_diff = (currentPwrMillis - prevPwrMillis)/1000.0;
-  float sec_fraction = 60 * sec_diff;
+  unsigned long msec_diff = (currentPwrMillis - prevPwrMillis); // 0.30 sec
   prevPwrMillis = currentPwrMillis;
 
-  Serial.print(millis());
-  Serial.print(",");
-  Serial.print(sec_fraction);
-  Serial.print(",");
-  Serial.println(sec_diff);
   if (armed) {
-    wattsHoursUsed += round(watts/60/60/sec_fraction);
+    wattsHoursUsed += round(watts/60/60*msec_diff)/1000.0;
   }
 }
