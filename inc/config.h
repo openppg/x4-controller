@@ -17,8 +17,6 @@
 
 // Batt setting now configurable by user. Read from device data
 #define BATT_MIN_V 60.0  // 24 * 2.5V per cell
-#define BATT_MID_V 88.8  // 24 *  3.7V per cell
-#define BATT_MAX_V 100.4  // 24 * 4.2V per cell
 
 #define REARM_COOLDOWN 2.0
 
@@ -27,7 +25,7 @@
 #define VOLT_OFFSET 1.5
 
 #define VERSION_MAJOR 5
-#define VERSION_MINOR 2
+#define VERSION_MINOR 3
 
 #define CRUISE_GRACE 1.5  // 1.5 sec period to get off throttle
 #define CRUISE_MAX 300  // 5 min max cruising

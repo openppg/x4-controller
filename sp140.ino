@@ -327,26 +327,3 @@ float getBatteryVoltSmoothed() {
   }
   return avg;
 }
-
-float getBatteryPercent(float voltage) {
-  //Serial.print("percent v ");
-  //Serial.println(voltage);
-
-  int battPercent = 0;
-  if (voltage < BATT_MIN_V) { return battPercent; }  // just stop here if low
-
-  if (telemetryData.volts >= BATT_MID_V) {
-    battPercent = mapf(voltage, BATT_MID_V, BATT_MAX_V, 50.0, 100.0);
-  } else {
-    battPercent = mapf(voltage, BATT_MIN_V, BATT_MID_V, 0.0, 50.0);
-  }
-  // batteryPercent = battery_sigmoidal(voltage, 58.0, BATT_MAX_V);
-  return constrain(battPercent, 0, 100);
-}
-
-// inspired by https://github.com/rlogiacco/BatterySense/
-// https://www.desmos.com/calculator/7m9lu26vpy
-uint8_t battery_sigmoidal(float voltage, uint16_t minVoltage, uint16_t maxVoltage) {
-  uint8_t result = 105 - (105 / (1 + pow(1.724 * (voltage - minVoltage)/(maxVoltage - minVoltage), 5.5)));
-  return result >= 100 ? 100 : result;
-}
