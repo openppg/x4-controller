@@ -100,7 +100,7 @@ void setup() {
   counterThread.onRun(trackPower);
   counterThread.setInterval(250);
 
-  int countdownMS = Watchdog.enable(5000);
+  Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   refreshDeviceData();
   setup140();
