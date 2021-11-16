@@ -105,8 +105,9 @@ void dispValue(float value, float &prevVal, int maxDigits, int precision, int x,
 
 void initBmp() {
   bmp.begin();
-  bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
-  bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
+  bmp.setOutputDataRate(BMP3_ODR_25_HZ);
+  bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_2X);
+  bmp.setPressureOversampling(BMP3_OVERSAMPLING_8X);
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
 }
 
