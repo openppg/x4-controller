@@ -21,7 +21,7 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
-#include "inc/sp140-globals.h" // device config
+#include "inc/sp140-globals.h"  // device config
 
 using namespace ace_button;
 
@@ -72,7 +72,6 @@ void setup() {
   //Serial.print(F("Booting up (USB) V"));
   //Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
-  //pinMode(LED_SW, OUTPUT);   // set up the external LED pin
   pinMode(LED_SW, OUTPUT);   // set up the internal LED2 pin
 
   analogReadResolution(12);     // M0 chip provides 12bit resolution
@@ -328,7 +327,7 @@ void updateDisplay() {
   display.setTextColor(BLACK);
   float avgVoltage = getBatteryVoltSmoothed();
   batteryPercent = getBatteryPercent(avgVoltage);  // multi-point line
-
+  // change battery color based on charge
   if (batteryPercent >= 30) {
     display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, GREEN);
   } else if (batteryPercent >= 15) {
@@ -356,7 +355,7 @@ void updateDisplay() {
     batteryFlag = true;
     display.fillRect(map(batteryPercent, 0,100, 0,108), 0, map(batteryPercent, 0,100, 108,0), 36, DEFAULT_BG_COLOR);
   }
-
+  // cross out battery box if battery is dead
   if (batteryPercent <= 5) {
     display.drawLine(0, 1, 106, 36, RED);
     display.drawLine(0, 0, 108, 36, RED);
@@ -557,7 +556,7 @@ unsigned long prevPwrMillis = 0;
 
 void trackPower() {
   unsigned long currentPwrMillis = millis();
-  unsigned long msec_diff = (currentPwrMillis - prevPwrMillis); // 0.30 sec
+  unsigned long msec_diff = (currentPwrMillis - prevPwrMillis);  // eg 0.30 sec
   prevPwrMillis = currentPwrMillis;
 
   if (armed) {

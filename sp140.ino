@@ -1,11 +1,13 @@
 // Copyright 2020 <Zach Whitehead>
 
+// track flight timer
 void handleFlightTime() {
   if (!armed) {
     throttledFlag = true;
     throttled = false;
   }
   if (armed) {
+    // start the timer when armed and throttle is above the threshold
     if (throttlePercent > 30 && throttledFlag) {
       throttledAtMillis = millis();
       throttledFlag = false;
@@ -103,8 +105,9 @@ void dispValue(float value, float &prevVal, int maxDigits, int precision, int x,
   prevVal = value;
 }
 
+// Start the bmp388 sensor
 void initBmp() {
-  bmp.begin();
+  bmp.begin_I2C();
   bmp.setOutputDataRate(BMP3_ODR_25_HZ);
   bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_2X);
   bmp.setPressureOversampling(BMP3_OVERSAMPLING_8X);
@@ -142,6 +145,7 @@ void handleTelemetry() {
   // printRawSentence();
 }
 
+// run checksum and return true if valid
 bool enforceFletcher16() {
   // Check checksum, revert to previous data if bad:
   word checksum = (unsigned short)(word(escData[19], escData[18]));
@@ -176,7 +180,7 @@ bool enforceFletcher16() {
 
 // Not used
 void enforceChecksum() {
-  //Check checksum, revert to previous data if bad:
+  // Check checksum, revert to previous data if bad:
   word checksum = word(escData[19], escData[18]);
   int sum = 0;
   for (int i=0; i<ESC_DATA_SIZE-2; i++) {
@@ -202,7 +206,7 @@ void enforceChecksum() {
   }
 }
 
-
+// for debugging
 void printRawSentence() {
   Serial.print(F("DATA: "));
   for (int i = 0; i < ESC_DATA_SIZE; i++) {
@@ -284,14 +288,6 @@ void parseData() {
   // Serial.println(checksum);
 }
 
-void vibrateAlert() {
-  if (!ENABLE_VIB) { return; }
-  int effect = 15;  // 1 through 117 (see example sketch)
-  vibe.setWaveform(0, effect);
-  vibe.setWaveform(1, 0);
-  vibe.go();
-}
-
 void vibrateNotify() {
   if (!ENABLE_VIB) { return; }
 
@@ -300,7 +296,7 @@ void vibrateNotify() {
   vibe.go();
 }
 
-
+// throttle easing function based on performance mode
 int limitedThrottle(int current, int last, int threshold) {
   prevPotLvl = current;
 
@@ -317,6 +313,7 @@ int limitedThrottle(int current, int last, int threshold) {
   }
 }
 
+// ring buffer for voltage readings
 float getBatteryVoltSmoothed() {
   float avg = 0.0;
 

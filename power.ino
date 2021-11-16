@@ -2,9 +2,10 @@
 // OpenPPG
 
 // simple set of data points from load testing
+// maps voltage to battery percentage
 float getBatteryPercent(float voltage) {
   float battPercent = 0;
-  
+
   if (voltage > 92.88) {
     battPercent = mapf(voltage, 92.88, 94.8, 80, 90);
   } else if (voltage > 90.24) {
