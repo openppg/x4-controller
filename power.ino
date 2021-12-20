@@ -6,24 +6,26 @@
 float getBatteryPercent(float voltage) {
   float battPercent = 0;
 
-  if (voltage > 92.88) {
-    battPercent = mapf(voltage, 92.88, 94.8, 80, 90);
-  } else if (voltage > 90.24) {
-    battPercent = mapf(voltage, 90.24, 92.88, 70, 80);
-  } else if (voltage > 85.44) {
-    battPercent = mapf(voltage, 85.44, 90.24, 60, 70);
-  } else if (voltage > 84.72) {
-    battPercent = mapf(voltage, 84.72, 85.44, 50, 60);
+  if (voltage > 94.8) {
+    battPercent = mapf(voltage, 94.8, 99.6, 90, 100);
+  } else if (voltage > 93.36) {
+    battPercent = mapf(voltage, 93.36, 94.8, 80, 90);
+  } else if (voltage > 91.68) {
+    battPercent = mapf(voltage, 91.68, 93.36, 70, 80);
+  } else if (voltage > 89.76) {
+    battPercent = mapf(voltage, 89.76, 91.68, 60, 70);
+  } else if (voltage > 87.6) {
+    battPercent = mapf(voltage, 87.6, 89.76, 50, 60);
+  } else if (voltage > 85.2) {
+    battPercent = mapf(voltage, 85.2, 87.6, 40, 50);
   } else if (voltage > 82.32) {
-    battPercent = mapf(voltage, 82.32, 84.72, 40, 50);
-  } else if (voltage > 78.72) {
-    battPercent = mapf(voltage, 78.72, 82.32, 30, 40);
-  } else if (voltage > 69.84) {
-    battPercent = mapf(voltage, 69.84, 78.72, 20, 30);
-  } else if (voltage > 68.4) {
-    battPercent = mapf(voltage, 68.4, 69.84, 10, 20);
-  } else if (voltage > 60) {
-    battPercent = mapf(voltage, 60, 68.4, 0, 10);
+    battPercent = mapf(voltage, 82.32, 85.2, 30, 40);
+  } else if (voltage > 80.16) {
+    battPercent = mapf(voltage, 80.16, 82.32, 20, 30);
+  } else if (voltage > 78) {
+    battPercent = mapf(voltage, 78, 80.16, 10, 20);
+  } else if (voltage > 60.96) {
+    battPercent = mapf(voltage, 60.96, 78, 0, 10);
   }
   return constrain(battPercent, 0, 100);
 }
