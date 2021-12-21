@@ -1,11 +1,13 @@
 // Copyright 2020 <Zach Whitehead>
 
+// track flight timer
 void handleFlightTime() {
   if (!armed) {
     throttledFlag = true;
     throttled = false;
   }
   if (armed) {
+    // start the timer when armed and throttle is above the threshold
     if (throttlePercent > 30 && throttledFlag) {
       throttledAtMillis = millis();
       throttledFlag = false;
@@ -103,10 +105,12 @@ void dispValue(float value, float &prevVal, int maxDigits, int precision, int x,
   prevVal = value;
 }
 
+// Start the bmp388 sensor
 void initBmp() {
-  bmp.begin();
-  bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
-  bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
+  bmp.begin_I2C();
+  bmp.setOutputDataRate(BMP3_ODR_25_HZ);
+  bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_2X);
+  bmp.setPressureOversampling(BMP3_OVERSAMPLING_8X);
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
 }
 
@@ -141,6 +145,7 @@ void handleTelemetry() {
   // printRawSentence();
 }
 
+// run checksum and return true if valid
 bool enforceFletcher16() {
   // Check checksum, revert to previous data if bad:
   word checksum = (unsigned short)(word(escData[19], escData[18]));
@@ -175,7 +180,7 @@ bool enforceFletcher16() {
 
 // Not used
 void enforceChecksum() {
-  //Check checksum, revert to previous data if bad:
+  // Check checksum, revert to previous data if bad:
   word checksum = word(escData[19], escData[18]);
   int sum = 0;
   for (int i=0; i<ESC_DATA_SIZE-2; i++) {
@@ -201,7 +206,7 @@ void enforceChecksum() {
   }
 }
 
-
+// for debugging
 void printRawSentence() {
   Serial.print(F("DATA: "));
   for (int i = 0; i < ESC_DATA_SIZE; i++) {
@@ -283,14 +288,6 @@ void parseData() {
   // Serial.println(checksum);
 }
 
-void vibrateAlert() {
-  if (!ENABLE_VIB) { return; }
-  int effect = 15;  // 1 through 117 (see example sketch)
-  vibe.setWaveform(0, effect);
-  vibe.setWaveform(1, 0);
-  vibe.go();
-}
-
 void vibrateNotify() {
   if (!ENABLE_VIB) { return; }
 
@@ -299,7 +296,7 @@ void vibrateNotify() {
   vibe.go();
 }
 
-
+// throttle easing function based on performance mode
 int limitedThrottle(int current, int last, int threshold) {
   prevPotLvl = current;
 
@@ -316,6 +313,7 @@ int limitedThrottle(int current, int last, int threshold) {
   }
 }
 
+// ring buffer for voltage readings
 float getBatteryVoltSmoothed() {
   float avg = 0.0;
 
@@ -326,27 +324,4 @@ float getBatteryVoltSmoothed() {
     avg += voltageBuffer[i] / voltageBuffer.size();
   }
   return avg;
-}
-
-float getBatteryPercent(float voltage) {
-  //Serial.print("percent v ");
-  //Serial.println(voltage);
-
-  int battPercent = 0;
-  if (voltage < BATT_MIN_V) { return battPercent; }  // just stop here if low
-
-  if (telemetryData.volts >= BATT_MID_V) {
-    battPercent = mapf(voltage, BATT_MID_V, BATT_MAX_V, 50.0, 100.0);
-  } else {
-    battPercent = mapf(voltage, BATT_MIN_V, BATT_MID_V, 0.0, 50.0);
-  }
-  // batteryPercent = battery_sigmoidal(voltage, 58.0, BATT_MAX_V);
-  return constrain(battPercent, 0, 100);
-}
-
-// inspired by https://github.com/rlogiacco/BatterySense/
-// https://www.desmos.com/calculator/7m9lu26vpy
-uint8_t battery_sigmoidal(float voltage, uint16_t minVoltage, uint16_t maxVoltage) {
-  uint8_t result = 105 - (105 / (1 + pow(1.724 * (voltage - minVoltage)/(maxVoltage - minVoltage), 5.5)));
-  return result >= 100 ? 100 : result;
 }
