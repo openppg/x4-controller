@@ -24,3 +24,12 @@ jobs:
         with:
           name: bin-artifact
           path: .pio/build/**/firmware.bin
+  generate-uf2:
+    name: Generate uf2
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+        with:
+          name: firmware.bin
+      - name: Display structure of downloaded files
+        run: ls -R
