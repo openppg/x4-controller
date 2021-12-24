@@ -33,6 +33,6 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: sp140.bin
-          path: ~/build
-      - name: Display structure of downloaded files
-        run: ls -R ~/
+      - uses: actions/checkout@master
+      - name: Display info for downloaded files
+        run: ls -lh /OpenPPG CM0/
