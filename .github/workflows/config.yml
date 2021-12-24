@@ -45,7 +45,7 @@ jobs:
         run: python3 utils/uf2conv.py OpenPPG\ CM0/firmware.bin --convert --output sp140.uf2
       - name: Display info for downloaded files
         run: ls -R
-        uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v2
         with:
           name: sp140.uf2
           path: sp140.uf2
