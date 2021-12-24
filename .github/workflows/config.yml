@@ -31,10 +31,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          name: microsoft/uf2
+          repository: microsoft/uf2
       - uses: actions/download-artifact@v2
         with:
           name: sp140.bin
       - uses: actions/checkout@master
+      - name: Working dir
+        run: pwd
       - name: Display info for downloaded files
         run: ls -R
