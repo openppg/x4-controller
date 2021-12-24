@@ -8,9 +8,9 @@ jobs:
     name: PlatformIO Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Setup Python
-        uses: actions/setup-python@master
+        uses: actions/setup-python@v2
         with:
           python-version: 3.x
       - name: Install Platform IO
@@ -29,6 +29,8 @@ jobs:
     needs: pio-build
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
       - name: Checkout Microsoft uf2 repo 
         uses: actions/checkout@v2
         with:
@@ -41,3 +43,5 @@ jobs:
         run: pwd
       - name: Display info for downloaded files
         run: ls -R
+      - name: list python version
+        run: python3 --version
