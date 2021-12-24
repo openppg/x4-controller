@@ -29,13 +29,14 @@ jobs:
     needs: pio-build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Microsoft uf2 repo 
+        uses: actions/checkout@v2
         with:
           repository: microsoft/uf2
-      - uses: actions/download-artifact@v2
+      - name: Download built binary
+        uses: actions/download-artifact@v2
         with:
           name: sp140.bin
-      - uses: actions/checkout@master
       - name: Working dir
         run: pwd
       - name: Display info for downloaded files
