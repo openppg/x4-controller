@@ -35,4 +35,4 @@ jobs:
           name: sp140.bin
       - uses: actions/checkout@master
       - name: Display info for downloaded files
-        run: ls -lh /OpenPPG CM0/
+        run: ls -lh /OpenPPG\ CM0/
