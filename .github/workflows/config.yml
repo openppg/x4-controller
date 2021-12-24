@@ -35,4 +35,4 @@ jobs:
           name: sp140.bin
           path: ~/build
       - name: Display structure of downloaded files
-        run: ls -R
+        run: ls -R ~/
