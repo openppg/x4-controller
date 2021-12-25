@@ -39,12 +39,8 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: sp140.bin
-      - name: Working dir
-        run: pwd
       - name: Run uf2 conversion
-        run: python3 utils/uf2conv.py OpenPPG\ CM0/firmware.bin --convert --output sp140.uf2
-      - name: Display info for downloaded files
-        run: ls -R
+        run: python3 utils/uf2conv.py OpenPPG\ CM0/firmware.bin -c -o sp140.uf2
       - uses: actions/upload-artifact@v2
         with:
           name: sp140.uf2
