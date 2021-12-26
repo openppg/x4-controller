@@ -2,8 +2,8 @@
 // OpenPPG
 
 #include "../../libraries/crc.c"       // packet error checking
-#include "../../inc/config.h"          // device config
-#include "../../inc/structs.h"         // data structs
+#include "../../inc/sp140-config.h"          // device config
+#include "../../inc/sp140-structs.h"         // data structs
 #include <AceButton.h>           // button clicks
 #include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer

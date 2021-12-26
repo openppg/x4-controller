@@ -41,16 +41,6 @@ typedef struct {
 }STR_HUB2CTRL_MSG_V2;
 
 typedef struct {
-  float volts;
-  float temperatureC;
-  float amps;
-  float eRPM;
-  float inPWM;
-  float outPWM;
-  word checksum;
-}STR_ESC_TELEMETRY_140;
-
-typedef struct {
   uint8_t version_major;  // 4
   uint8_t version_minor;  // 1
   uint16_t armed_time;    // minutes (think Hobbs)
@@ -70,23 +60,9 @@ typedef struct {
   uint16_t unused;     // for future use
   uint16_t crc;        // error check
 }STR_DEVICE_DATA_V2;
-
-typedef struct {
-  uint8_t version_major;  // 5
-  uint8_t version_minor;  // 1
-  uint16_t armed_time;    // minutes (think Hobbs)
-  uint8_t screen_rotation;  // 1,2,3,4 (90 deg)
-  float sea_pressure;  // 1013.25 mbar
-  bool metric_temp;    // true
-  bool metric_alt;     // false
-  uint8_t performance_mode;  // 0,1,2
-  uint16_t batt_size;     // 4000 (4kw) or 2000 (2kw)
-  uint16_t unused;     // for future use
-  uint16_t crc;        // error check
-}STR_DEVICE_DATA_140_V1;
 #pragma pack(pop)
 
-static STR_ESC_TELEMETRY_140 telemetryData;
-//static STR_CTRL2HUB_MSG controlData;
+static STR_CTRL2HUB_MSG controlData;
 static STR_HUB2CTRL_MSG_V2 hubData;
-//static STR_DEVICE_DATA_V1 deviceDataV1;
+static STR_DEVICE_DATA_V1 deviceDataV1;
+static STR_DEVICE_DATA_V2 deviceData;
