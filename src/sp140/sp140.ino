@@ -1,7 +1,7 @@
 // Copyright 2020 <Zach Whitehead>
 // OpenPPG
 
-#include "../../libraries/crc.c"       // packet error checking
+#include "../../lib/crc.c"       // packet error checking
 #include "../../inc/sp140-config.h"          // device config
 #include "../../inc/sp140-structs.h"         // data structs
 #include <AceButton.h>           // button clicks
