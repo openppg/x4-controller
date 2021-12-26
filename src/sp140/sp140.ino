@@ -1,9 +1,9 @@
 // Copyright 2020 <Zach Whitehead>
 // OpenPPG
 
-#include "libraries/crc.c"       // packet error checking
-#include "inc/config.h"          // device config
-#include "inc/structs.h"         // data structs
+#include "../../libraries/crc.c"       // packet error checking
+#include "../../inc/config.h"          // device config
+#include "../../inc/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
 #include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer
@@ -21,7 +21,7 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
-#include "inc/sp140-globals.h"  // device config
+#include "../../inc/sp140-globals.h"  // device config
 
 using namespace ace_button;
 
