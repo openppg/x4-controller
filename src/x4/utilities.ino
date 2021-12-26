@@ -1,7 +1,7 @@
 // Copyright 2019 <Zach Whitehead>
 // OpenPPG
 
-#define LAST_PAGE 1  // starts at 0
+#define LAST_PAGE 3  // starts at 0
 
 #define DBL_TAP_PTR ((volatile uint32_t *)(HMCRAMC0_ADDR + HMCRAMC0_SIZE - 4))
 #define DBL_TAP_MAGIC 0xf01669ef // Randomly selected, adjusted to have first and last bit set
@@ -31,8 +31,6 @@ String convertToDigits(byte digits) {
  * @return the number of next page
  */
 int nextPage() {
-  display.fillRect(0, 37, 160, 54, DEFAULT_BG_COLOR);
-
   if (page >= LAST_PAGE) {
     return page = 0;
   }
@@ -46,7 +44,7 @@ void addVSpace() {
 
 void setLEDs(byte state) {
   // digitalWrite(LED_2, state);
-  // digitalWrite(LED_3, state);
+  digitalWrite(LED_3, state);
   digitalWrite(LED_SW, state);
 }
 
@@ -56,20 +54,15 @@ void blinkLED() {
   setLEDs(ledState);
 }
 
-bool runVibe(unsigned int sequence[], int siz) {
-  if (!ENABLE_VIB) { return false; }
-
+void runVibe(unsigned int sequence[], int siz) {
   vibe.begin();
   for (int thisNote = 0; thisNote < siz; thisNote++) {
     vibe.setWaveform(thisNote, sequence[thisNote]);
   }
   vibe.go();
-  return true;
 }
 
-bool playMelody(unsigned int melody[], int siz) {
-  if (!ENABLE_BUZ) { return false; }
-
+void playMelody(unsigned int melody[], int siz) {
   for (int thisNote = 0; thisNote < siz; thisNote++) {
     // quarter note = 1000 / 4, eigth note = 1000/8, etc.
     int noteDuration = 125;
@@ -77,7 +70,6 @@ bool playMelody(unsigned int melody[], int siz) {
     delay(noteDuration);  // to distinguish the notes, delay between them
   }
   noTone(BUZZER_PIN);
-  return true;
 }
 
 void handleArmFail() {
@@ -109,6 +101,7 @@ String chipId() {
   ptr++;
   val4 = *ptr;
 
+  Serial.print("chip id: ");
   char id_buf[33];
   sprintf(id_buf, "%8x%8x%8x%8x", val1, val2, val3, val4);
   return String(id_buf);
@@ -123,4 +116,3 @@ void rebootBootloader() {
 
   resetFunc();
 }
-
