@@ -8,9 +8,9 @@ jobs:
     name: PlatformIO Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Setup Python
-        uses: actions/setup-python@master
+        uses: actions/setup-python@v2
         with:
           python-version: 3.x
       - name: Install Platform IO
@@ -22,5 +22,26 @@ jobs:
       - name: Archive bin
         uses: actions/upload-artifact@v2
         with:
-          name: bin-artifact
+          name: sp140.bin
           path: .pio/build/**/firmware.bin
+  generate-uf2:
+    name: Generate uf2
+    needs: pio-build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Checkout Microsoft uf2 repo 
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/uf2
+      - name: Download built binary
+        uses: actions/download-artifact@v2
+        with:
+          name: sp140.bin
+      - name: Run uf2 conversion
+        run: python3 utils/uf2conv.py OpenPPG\ CM0/firmware.bin -c -o sp140.uf2
+      - uses: actions/upload-artifact@v2
+        with:
+          name: sp140.uf2
+          path: sp140.uf2
