@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Setup Python
         uses: actions/setup-python@v2
-      - name: Checkout Microsoft uf2 repo 
+      - name: Checkout Microsoft uf2 repo
         uses: actions/checkout@v2
         with:
           repository: microsoft/uf2
@@ -40,7 +40,7 @@ jobs:
         with:
           name: sp140.bin
       - name: Run uf2 conversion
-        run: python3 utils/uf2conv.py OpenPPG\ CM0/firmware.bin -c -o sp140.uf2
+        run: python3 utils/uf2conv.py OpenPPG-CM0-SP140/firmware.bin -c -o sp140.uf2
       - uses: actions/upload-artifact@v2
         with:
           name: sp140.uf2
