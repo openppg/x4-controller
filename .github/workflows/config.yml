@@ -22,12 +22,16 @@ jobs:
       - name: Archive bin
         uses: actions/upload-artifact@v2
         with:
-          name: sp140.bin
+          name: bins
           path: .pio/build/**/firmware.bin
   generate-uf2:
     name: Generate uf2
     needs: pio-build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        device: [OpenPPG-CM0-SP140, OpenPPG-CM0-X4]
+      fail-fast: false
     steps:
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -38,10 +42,10 @@ jobs:
       - name: Download built binary
         uses: actions/download-artifact@v2
         with:
-          name: sp140.bin
+          name: bins
       - name: Run uf2 conversion
-        run: python3 utils/uf2conv.py OpenPPG-CM0-SP140/firmware.bin -c -o sp140.uf2
+        run: python3 utils/uf2conv.py ${{ matrix.device }}/firmware.bin -c -o ${{ matrix.device }}.uf2
       - uses: actions/upload-artifact@v2
         with:
-          name: sp140.uf2
-          path: sp140.uf2
+          name: ${{ matrix.device }}.uf2
+          path: ${{ matrix.device }}.uf2
