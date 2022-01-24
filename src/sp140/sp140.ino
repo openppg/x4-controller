@@ -489,14 +489,13 @@ void displayVersions() {
 
 // display hidden page (firmware version and total armed time)
 void displayMessage(char *message) {
-  //display.clearDisplay();
   display.setCursor(0, 0);
   display.setTextSize(2);
   display.println(message);
 }
 
 void setCruise() {
-  // IDEA fill a "cruise indicator" as long press activate happens
+  // IDEA: fill a "cruise indicator" as long press activate happens
   if (!throttleSafe()) {  // using pot/throttle
     cruiseLvl = pot.getValue();  // save current throttle val
     cruising = true;
