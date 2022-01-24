@@ -1,3 +1,7 @@
+// Copyright 2021 <Zach Whitehead>
+#ifndef INC_SP140_CONFIG_H_
+#define INC_SP140_CONFIG_H_
+
 // Arduino Pins
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
@@ -35,8 +39,8 @@
 #define ESC_PIN 12
 
 #define ESC_DISARMED_PWM      1010
-#define ESC_MIN_PWM           1030 // ESC min is 1050
-#define ESC_MAX_PWM           1990 // ESC max 1950
+#define ESC_MIN_PWM           1030  // ESC min is 1050
+#define ESC_MAX_PWM           1990  // ESC max 1950
 
 #define BLACK                 ST77XX_BLACK
 #define WHITE                 ST77XX_WHITE
@@ -59,3 +63,5 @@
 #define ENABLE_BUZ            true    // enable buzzer
 #define ENABLE_VIB            true    // enable vibration
 #define ENABLE_VIB_LOW_BAT    false   // vibrate if armed and battery voltage sags below min volts. Gets pilot's attention.
+
+#endif  // INC_SP140_CONFIG_H_

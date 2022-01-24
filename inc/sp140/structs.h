@@ -1,4 +1,6 @@
 // Copyright 2020 <Zach Whitehead>
+#ifndef INC_SP140_STRUCTS_H_
+#define INC_SP140_STRUCTS_H_
 
 #pragma pack(push, 1)
 
@@ -28,3 +30,5 @@ typedef struct {
 #pragma pack(pop)
 
 static STR_ESC_TELEMETRY_140 telemetryData;
+
+#endif  // INC_SP140_STRUCTS_H_

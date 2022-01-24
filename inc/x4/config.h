@@ -1,3 +1,7 @@
+// Copyright 2021 <Zach Whitehead>
+#ifndef INC_X4_CONFIG_H_
+#define INC_X4_CONFIG_H_
+
 // Arduino Pins
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
@@ -32,3 +36,5 @@
 
 // Library config
 #define NO_ADAFRUIT_SSD1306_COLOR_COMPATIBILITY
+
+#endif  // INC_X4_CONFIG_H_
