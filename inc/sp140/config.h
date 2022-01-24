@@ -7,18 +7,8 @@
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
 
-#define CTRL_VER 0x00
-#define CTRL2HUB_ID 0x10
-#define HUB2CTRL_ID 0x20
-
-#define ARM_VERIFY false
-#define CURRENT_DIVIDE 100.0
-#define VOLTAGE_DIVIDE 1000.0
-
 // Batt setting now configurable by user. Read from device data
 #define BATT_MIN_V 60.0  // 24 * 2.5V per cell
-
-#define REARM_COOLDOWN 2.0
 
 // Calibration
 #define MAMP_OFFSET 200
@@ -28,7 +18,6 @@
 #define VERSION_MINOR 3
 
 #define CRUISE_GRACE 1.5  // 1.5 sec period to get off throttle
-#define CRUISE_MAX 300  // 5 min max cruising
 #define POT_SAFE_LEVEL 0.10 * 4096  // 10% or less
 
 #define DEFAULT_SEA_PRESSURE 1013.25

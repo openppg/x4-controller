@@ -2,8 +2,8 @@
 // OpenPPG
 
 #include "../../lib/crc.c"       // packet error checking
-#include "../../inc/sp140-config.h"          // device config
-#include "../../inc/sp140-structs.h"         // data structs
+#include "../../inc/sp140/config.h"          // device config
+#include "../../inc/sp140/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
 #include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer
@@ -21,7 +21,7 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
-#include "../../inc/sp140-globals.h"  // device config
+#include "../../inc/sp140/globals.h"  // device config
 
 using namespace ace_button;
 
@@ -471,16 +471,6 @@ void displayAlt() {
   display.print(deviceData.metric_alt ? F("m") : F("ft"));
   lastAltM = alt;
 }
-
-// display temperature data on screen
-void displayTemp() {
-  int tempC = hubData.baroTemp / 100.0F;
-  int tempF = tempC * 9/5 + 32;
-
-  display.print(deviceData.metric_temp ? tempC : tempF, 1);
-  display.println(deviceData.metric_temp ? F("c") : F("f"));
-}
-
 
 // display hidden page (firmware version and total armed time)
 void displayVersions() {

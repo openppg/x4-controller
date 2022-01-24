@@ -1,19 +1,15 @@
 
 byte escData[ESC_DATA_SIZE];
 byte prevData[ESC_DATA_SIZE];
-unsigned long readMillis = 0;
 unsigned long cruisedAtMilis = 0;
 unsigned long transmitted = 0;
 unsigned long failed = 0;
-bool receiving = false;
 bool cruising = false;
 int prevPotLvl = 0;
 int cruiseLvl = 0;
 float throttlePWM = 0;
 float throttlePercent = 0;
 float prevThrotPercent = 0;
-bool buttonState = 1;
-bool prevButtonState = 1;
 float batteryPercent = 0;
 float prevBatteryPercent = 0;
 bool batteryFlag = true;
