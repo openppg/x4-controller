@@ -21,6 +21,8 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
+#include <Fonts/FreeSansBold12pt7b.h>
+
 #include "../../inc/sp140/globals.h"  // device config
 
 using namespace ace_button;
@@ -224,6 +226,8 @@ void initDisplay() {
 
   pinMode(TFT_LITE, OUTPUT);
   digitalWrite(TFT_LITE, HIGH);  // Backlight on
+  displayMeta();
+  delay(2000);
 }
 
 // read throttle and send to hub
@@ -313,9 +317,14 @@ float getAltitudeM() {
  * Display logic
  *
  *******/
+bool screen_wiped = false;
 
 // show data on screen and handle different pages
 void updateDisplay() {
+  if (!screen_wiped) {
+    display.fillScreen(WHITE);
+    screen_wiped = true;
+  }
   //Serial.print("v: ");
   //Serial.println(volts);
 

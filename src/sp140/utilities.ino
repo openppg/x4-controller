@@ -125,10 +125,14 @@ void rebootBootloader() {
 }
 
 void displayMeta(){
-  display.setTextSize(1);
-  display.setTextColor(WHITE);
-  display.setCursor(30, 30);
+  display.setFont(&FreeSansBold12pt7b);
+  display.setTextColor(BLACK);
+  display.setCursor(25, 30);
   display.println("OpenPPG");
+  display.setFont();
+  display.setTextSize(2);
+  display.setCursor(60, 60);
   display.println("v" + String(VERSION_MAJOR) + "." + String(VERSION_MINOR));
-  display.println(deviceData.armed_time);
+  display.setCursor(54, 90);
+  displayTime(deviceData.armed_time);
 }
