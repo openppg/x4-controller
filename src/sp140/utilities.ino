@@ -124,3 +124,11 @@ void rebootBootloader() {
   resetFunc();
 }
 
+void displayMeta(){
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(30, 30);
+  display.println("OpenPPG");
+  display.println("v" + String(VERSION_MAJOR) + "." + String(VERSION_MINOR));
+  display.println(deviceData.armed_time);
+}
