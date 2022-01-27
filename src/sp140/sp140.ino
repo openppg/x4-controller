@@ -247,9 +247,9 @@ void handleThrottle() {
   // Serial.print(", ");
   // Serial.println(potLvl);
 
-  if (deviceData.performance_mode == 0) {
+  if (deviceData.performance_mode == 0) { // chill mode
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
-    maxPWM = 1750;  // 75% interpolated from 1030 to 1990
+    maxPWM = 1850;  // 85% interpolated from 1030 to 1990
   }
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
