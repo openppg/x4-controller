@@ -2,14 +2,13 @@
 // OpenPPG
 
 #include "../../lib/crc.c"       // packet error checking
-#include "../../inc/sp140/m0-config.h"          // device config
 #include "../../inc/sp140/structs.h"         // data structs
+#include "../../inc/sp140/rp2040-config.h"         // data structs
 #include <AceButton.h>           // button clicks
 #include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer
 #include <Adafruit_DRV2605.h>    // haptic controller
 #include <Adafruit_ST7735.h>     // screen
-#include <Adafruit_SleepyDog.h>  // watchdog
 #include <ArduinoJson.h>
 #include <CircularBuffer.h>      // smooth out readings
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
@@ -21,9 +20,10 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
-#include <Fonts/FreeSansBold12pt7b.h>
-
 #include "../../inc/sp140/globals.h"  // device config
+
+#include "hardware/watchdog.h"
+
 
 using namespace ace_button;
 
@@ -63,20 +63,24 @@ unsigned int last_throttle = 0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
+  // Enable the watchdog, requiring the watchdog to be updated every 1000ms or the chip will reboot
+  // second arg is pause on debug which means the watchdog will pause when stepping through code
+  watchdog_enable(1000, 1);
+
   usb_web.begin();
   usb_web.setLandingPage(&landingPage);
   usb_web.setLineStateCallback(line_state_callback);
 
   Serial.begin(115200);
-  Serial5.begin(ESC_BAUD_RATE);
-  Serial5.setTimeout(ESC_TIMEOUT);
+  Serial2.begin(ESC_BAUD_RATE);
+  Serial2.setTimeout(ESC_TIMEOUT);
 
   //Serial.print(F("Booting up (USB) V"));
   //Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   pinMode(LED_SW, OUTPUT);   // set up the internal LED2 pin
 
-  analogReadResolution(12);     // M0 chip provides 12bit resolution
+  //analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   unsigned int startup_vibes[] = { 27, 27, 0 };
   runVibe(startup_vibes, 3);
@@ -101,7 +105,6 @@ void setup() {
   counterThread.onRun(trackPower);
   counterThread.setInterval(250);
 
-  Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   refreshDeviceData();
   setup140();
@@ -136,7 +139,8 @@ void setup140() {
 
 // main loop - everything runs in threads
 void loop() {
-  Watchdog.reset();
+  watchdog_update();
+
   // from WebUSB to both Serial & webUSB
   if (usb_web.available()) parse_usb_serial();
   threads.run();
@@ -226,8 +230,6 @@ void initDisplay() {
 
   pinMode(TFT_LITE, OUTPUT);
   digitalWrite(TFT_LITE, HIGH);  // Backlight on
-  displayMeta();
-  delay(2000);
 }
 
 // read throttle and send to hub
@@ -247,9 +249,9 @@ void handleThrottle() {
   // Serial.print(", ");
   // Serial.println(potLvl);
 
-  if (deviceData.performance_mode == 0) { // chill mode
+  if (deviceData.performance_mode == 0) {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
-    maxPWM = 1850;  // 85% interpolated from 1030 to 1990
+    maxPWM = 1750;  // 75% interpolated from 1030 to 1990
   }
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
@@ -317,14 +319,9 @@ float getAltitudeM() {
  * Display logic
  *
  *******/
-bool screen_wiped = false;
 
 // show data on screen and handle different pages
 void updateDisplay() {
-  if (!screen_wiped) {
-    display.fillScreen(WHITE);
-    screen_wiped = true;
-  }
   //Serial.print("v: ");
   //Serial.println(volts);
 
@@ -481,6 +478,16 @@ void displayAlt() {
   lastAltM = alt;
 }
 
+// display temperature data on screen
+void displayTemp() {
+  int tempC = hubData.baroTemp / 100.0F;
+  int tempF = tempC * 9/5 + 32;
+
+  display.print(deviceData.metric_temp ? tempC : tempF, 1);
+  display.println(deviceData.metric_temp ? F("c") : F("f"));
+}
+
+
 // display hidden page (firmware version and total armed time)
 void displayVersions() {
   display.setTextSize(2);
@@ -498,13 +505,14 @@ void displayVersions() {
 
 // display hidden page (firmware version and total armed time)
 void displayMessage(char *message) {
+  //display.clearDisplay();
   display.setCursor(0, 0);
   display.setTextSize(2);
   display.println(message);
 }
 
 void setCruise() {
-  // IDEA: fill a "cruise indicator" as long press activate happens
+  // IDEA fill a "cruise indicator" as long press activate happens
   if (!throttleSafe()) {  // using pot/throttle
     cruiseLvl = pot.getValue();  // save current throttle val
     cruising = true;
