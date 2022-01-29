@@ -1,3 +1,7 @@
+// Copyright 2021 <Zach Whitehead>
+#ifndef INC_X4_CONFIG_H_
+#define INC_X4_CONFIG_H_
+
 // Arduino Pins
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
@@ -26,10 +30,11 @@
 #define VERSION_MAJOR 4
 #define VERSION_MINOR 2
 
-#define CRUISE_GRACE 2  // 2 sec period to get off throttle
-#define CRUISE_MAX 300  // 5 min max cruising
+#define CRUISE_GRACE 1.5  // 2 sec period to get off throttle
 
 #define DEFAULT_SEA_PRESSURE 1013.25
 
 // Library config
 #define NO_ADAFRUIT_SSD1306_COLOR_COMPATIBILITY
+
+#endif  // INC_X4_CONFIG_H_

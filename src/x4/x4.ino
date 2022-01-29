@@ -2,8 +2,8 @@
 // OpenPPG
 
 #include "../../lib/crc.c"       // packet error checking
-#include "../../inc/x4-config.h"          // device config
-#include "../../inc/x4-structs.h"         // data structs
+#include "../../inc/x4/config.h"          // device config
+#include "../../inc/x4/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
 #include <Adafruit_DRV2605.h>    // haptic controller
 #include <Adafruit_SSD1306.h>    // screen

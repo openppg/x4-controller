@@ -72,7 +72,7 @@ void dispValue(float value, float &prevVal, int maxDigits, int precision, int x,
   // PRINT LEADING SPACES TO RIGHT-ALIGN:
   display.setTextColor(background);
   for(int i=0; i<(maxDigits-numDigits); i++){
-    display.print(char(218));
+    display.print(static_cast<char>(218));
   }
   display.setTextColor(textColor);
 
@@ -80,7 +80,7 @@ void dispValue(float value, float &prevVal, int maxDigits, int precision, int x,
   for (int i=0; i<numDigits; i++) {
     if (digit[i]!=prevDigit[i]) {
       display.setTextColor(background);
-      display.print(char(218));
+      display.print(static_cast<char>(218));
     } else {
       display.setTextColor(textColor);
       display.print(digit[i]);
@@ -93,7 +93,7 @@ void dispValue(float value, float &prevVal, int maxDigits, int precision, int x,
   // ADVANCE THE CURSOR TO THE PROPER LOCATION:
   display.setTextColor(background);
   for (int i=0; i<(maxDigits-numDigits); i++) {
-    display.print(char(218));
+    display.print(static_cast<char>(218));
   }
   display.setTextColor(textColor);
 
@@ -219,7 +219,7 @@ void printRawSentence() {
 
 void parseData() {
   // LSB First
-  //TODO is this being called even with no ESC?
+  // TODO is this being called even with no ESC?
 
   _volts = word(escData[1], escData[0]);
   //_volts = ((unsigned int)escData[1] << 8) + escData[0];

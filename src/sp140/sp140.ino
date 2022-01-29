@@ -2,8 +2,8 @@
 // OpenPPG
 
 #include "../../lib/crc.c"       // packet error checking
-#include "../../inc/sp140-config.h"          // device config
-#include "../../inc/sp140-structs.h"         // data structs
+#include "../../inc/sp140/config.h"          // device config
+#include "../../inc/sp140/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
 #include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer
@@ -21,7 +21,9 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
-#include "../../inc/sp140-globals.h"  // device config
+#include <Fonts/FreeSansBold12pt7b.h>
+
+#include "../../inc/sp140/globals.h"  // device config
 
 using namespace ace_button;
 
@@ -224,6 +226,8 @@ void initDisplay() {
 
   pinMode(TFT_LITE, OUTPUT);
   digitalWrite(TFT_LITE, HIGH);  // Backlight on
+  displayMeta();
+  delay(2000);
 }
 
 // read throttle and send to hub
@@ -243,9 +247,9 @@ void handleThrottle() {
   // Serial.print(", ");
   // Serial.println(potLvl);
 
-  if (deviceData.performance_mode == 0) {
+  if (deviceData.performance_mode == 0) { // chill mode
     potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
-    maxPWM = 1750;  // 75% interpolated from 1030 to 1990
+    maxPWM = 1850;  // 85% interpolated from 1030 to 1990
   }
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
@@ -313,9 +317,14 @@ float getAltitudeM() {
  * Display logic
  *
  *******/
+bool screen_wiped = false;
 
 // show data on screen and handle different pages
 void updateDisplay() {
+  if (!screen_wiped) {
+    display.fillScreen(WHITE);
+    screen_wiped = true;
+  }
   //Serial.print("v: ");
   //Serial.println(volts);
 
@@ -472,16 +481,6 @@ void displayAlt() {
   lastAltM = alt;
 }
 
-// display temperature data on screen
-void displayTemp() {
-  int tempC = hubData.baroTemp / 100.0F;
-  int tempF = tempC * 9/5 + 32;
-
-  display.print(deviceData.metric_temp ? tempC : tempF, 1);
-  display.println(deviceData.metric_temp ? F("c") : F("f"));
-}
-
-
 // display hidden page (firmware version and total armed time)
 void displayVersions() {
   display.setTextSize(2);
@@ -499,14 +498,13 @@ void displayVersions() {
 
 // display hidden page (firmware version and total armed time)
 void displayMessage(char *message) {
-  //display.clearDisplay();
   display.setCursor(0, 0);
   display.setTextSize(2);
   display.println(message);
 }
 
 void setCruise() {
-  // IDEA fill a "cruise indicator" as long press activate happens
+  // IDEA: fill a "cruise indicator" as long press activate happens
   if (!throttleSafe()) {  // using pot/throttle
     cruiseLvl = pot.getValue();  // save current throttle val
     cruising = true;
