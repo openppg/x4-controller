@@ -248,8 +248,11 @@ void handleThrottle() {
   // Serial.println(potLvl);
 
   if (deviceData.performance_mode == 0) { // chill mode
-    potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
+    potLvl = limitedThrottle(potLvl, prevPotLvl, 200);
     maxPWM = 1850;  // 85% interpolated from 1030 to 1990
+  } else {
+    potLvl = limitedThrottle(potLvl, prevPotLvl, 400);
+    maxPWM = ESC_MAX_PWM;
   }
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
@@ -331,7 +334,6 @@ void updateDisplay() {
   displayPage0();
   //dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, DEFAULT_BG_COLOR);
   //display.print("kW");
-
 
   display.setTextColor(BLACK);
   float avgVoltage = getBatteryVoltSmoothed();
