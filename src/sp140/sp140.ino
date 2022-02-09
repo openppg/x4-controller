@@ -39,7 +39,7 @@ AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
 extEEPROM eep(kbits_64, 1, 64);
 CircularBuffer<float, 50> voltageBuffer;
-CircularBuffer<int, 5> potBuffer;
+CircularBuffer<int, 8> potBuffer;
 
 Thread ledBlinkThread = Thread();
 Thread displayThread = Thread();
@@ -246,14 +246,20 @@ void handleThrottle() {
   // Serial.print(potRaw);
   // Serial.print(", ");
   // Serial.println(potLvl);
-
+  
+  // runs 40x sec
+  // 1000 diff in pwm from 0
+  // 1000/6/40
   if (deviceData.performance_mode == 0) { // chill mode
-    potLvl = limitedThrottle(potLvl, prevPotLvl, 200);
+    potLvl = limitedThrottle(potLvl, prevPotLvl, 40);
     maxPWM = 1850;  // 85% interpolated from 1030 to 1990
   } else {
-    potLvl = limitedThrottle(potLvl, prevPotLvl, 400);
+    potLvl = limitedThrottle(potLvl, prevPotLvl, 120);
     maxPWM = ESC_MAX_PWM;
   }
+  Serial.print(potRaw);
+  Serial.print(" ");
+  Serial.println(potLvl);
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
   unsigned long cruisingSecs = (millis() - cruisedAtMilis) / 1000;
