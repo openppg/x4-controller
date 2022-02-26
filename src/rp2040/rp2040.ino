@@ -64,7 +64,7 @@ unsigned int last_throttle = 0;
 void setup() {
   // Enable the watchdog, requiring the watchdog to be updated every 1000ms or the chip will reboot
   // second arg is pause on debug which means the watchdog will pause when stepping through code
-  watchdog_enable(1000, 1);
+  //watchdog_enable(1000, 1);
 
   usb_web.begin();
   usb_web.setLandingPage(&landingPage);
@@ -138,7 +138,7 @@ void setup140() {
 
 // main loop - everything runs in threads
 void loop() {
-  watchdog_update();
+  //watchdog_update();
 
   // from WebUSB to both Serial & webUSB
   if (usb_web.available()) parse_usb_serial();
