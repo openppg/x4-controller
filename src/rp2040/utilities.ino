@@ -119,23 +119,10 @@ String chipId() {
   return String(id_buf);
 }
 
-#ifndef RP_PIO
 // reboot/reset controller
-void(* resetFunc) (void) = 0;  // declare reset function @ address 0
-
-// sets the magic pointer to trigger a reboot to the bootloader for updating
 void rebootBootloader() {
-  *DBL_TAP_PTR = DBL_TAP_MAGIC;
-
-  resetFunc();
+  TinyUSB_Port_EnterDFU();
 }
-#else
-// TODO - RP2040
-void rebootBootloader() {}
-
-#endif
-
-
 
 void displayMeta(){
   display.setFont(&FreeSansBold12pt7b);
