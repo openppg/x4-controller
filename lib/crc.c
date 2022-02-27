@@ -1,3 +1,4 @@
+// Copyright 2019 <OpenPPG>
 /*
  * crc.c
  *
@@ -7,11 +8,10 @@
 
 #include "crc.h"
 
-uint16_t crc16(uint8_t *buf, uint32_t size)
-{
-	uint16_t crc = 0;
-	for(uint32_t i = 0; i<size; i++)
-		crc = (crc << 8) ^ crc16table[buf[i] ^ crc>>8];
-	return crc;
+uint16_t crc16(uint8_t *buf, uint32_t size) {
+  uint16_t crc = 0;
+  for (uint32_t i = 0; i < size; i++)
+    crc = (crc << 8) ^ crc16table[buf[i] ^ crc>>8];
+  return crc;
 }
 
