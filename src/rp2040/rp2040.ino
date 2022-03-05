@@ -6,7 +6,7 @@
 #include "../../inc/sp140/rp2040-config.h"         // data structs
 #include "hardware/watchdog.h"
 #include <AceButton.h>           // button clicks
-#include "Adafruit_TinyUSB.h"
+//#include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer
 #include <Adafruit_DRV2605.h>    // haptic controller
 #include <Adafruit_ST7735.h>     // screen
@@ -31,8 +31,8 @@ Adafruit_ST7735 display = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 Adafruit_DRV2605 vibe;
 
 // USB WebUSB object
-Adafruit_USBD_WebUSB usb_web;
-WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
+//Adafruit_USBD_WebUSB usb_web;
+//WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
@@ -65,16 +65,15 @@ unsigned int last_throttle = 0;
 void setup() {
   // Enable the watchdog, requiring the watchdog to be updated every 1000ms or the chip will reboot
   // second arg is pause on debug which means the watchdog will pause when stepping through code
-  watchdog_enable(3000, 1);
+  //watchdog_enable(3000, 1);
 
-
-  usb_web.begin();
-  usb_web.setLandingPage(&landingPage);
-  usb_web.setLineStateCallback(line_state_callback);
+  //usb_web.begin();
+  //usb_web.setLandingPage(&landingPage);
+  //usb_web.setLineStateCallback(line_state_callback);
 
   Serial.begin(115200);
-  Serial2.begin(ESC_BAUD_RATE);
-  Serial2.setTimeout(ESC_TIMEOUT);
+  Serial1.begin(ESC_BAUD_RATE);
+  Serial1.setTimeout(ESC_TIMEOUT);
 
   //Serial.print(F("Booting up (USB) V"));
   //Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
@@ -84,32 +83,34 @@ void setup() {
   //analogReadResolution(12);     // M0 chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   unsigned int startup_vibes[] = { 27, 27, 0 };
-  runVibe(startup_vibes, 3);
+  //runVibe(startup_vibes, 3);
 
-  initButtons();
+  //initButtons();
 
   ledBlinkThread.onRun(blinkLED);
   ledBlinkThread.setInterval(500);
 
-  displayThread.onRun(updateDisplay);
-  displayThread.setInterval(200);
+  Serial.print("setup 1");
 
-  buttonThread.onRun(checkButtons);
-  buttonThread.setInterval(5);
+  // displayThread.onRun(updateDisplay);
+  // displayThread.setInterval(200);
 
-  throttleThread.onRun(handleThrottle);
-  throttleThread.setInterval(22);
+  // buttonThread.onRun(checkButtons);
+  // buttonThread.setInterval(5);
 
-  telemetryThread.onRun(handleTelemetry);
-  telemetryThread.setInterval(50);
+  // throttleThread.onRun(handleThrottle);
+  // throttleThread.setInterval(22);
 
-  counterThread.onRun(trackPower);
-  counterThread.setInterval(250);
+  // telemetryThread.onRun(handleTelemetry);
+  // telemetryThread.setInterval(50);
 
-  uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
-  refreshDeviceData();
-  setup140();
-  initDisplay();
+  // counterThread.onRun(trackPower);
+  // counterThread.setInterval(250);
+
+  //uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
+  //refreshDeviceData();
+  //setup140();
+  //initDisplay();
 }
 
 void setup140() {
@@ -140,11 +141,24 @@ void setup140() {
 
 // main loop - everything runs in threads
 void loop() {
-  watchdog_update();
+  //watchdog_update();
+  delay(1000);
+  Serial.printf("C0: test loop core 1.\n");
 
   // from WebUSB to both Serial & webUSB
-  if (usb_web.available()) parse_usb_serial();
-  threads.run();
+  //if (usb_web.available()) parse_usb_serial();
+  //threads.run();
+}
+
+// Running on core1
+void setup1() {
+  delay(3000);
+  Serial.println("C1: PPG core 2 setup");
+}
+
+void loop1() {
+  Serial.println("C1: PPG core 2 standing by...");
+  delay(500);
 }
 
 void checkButtons() {
