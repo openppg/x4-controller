@@ -75,8 +75,8 @@ void setup() {
   Serial1.begin(ESC_BAUD_RATE);
   Serial1.setTimeout(ESC_TIMEOUT);
 
-  //Serial.print(F("Booting up (USB) V"));
-  //Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
+  Serial.print(F("Booting up (USB) V"));
+  Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   pinMode(LED_SW, OUTPUT);   // set up the internal LED2 pin
 
@@ -85,7 +85,7 @@ void setup() {
   unsigned int startup_vibes[] = { 27, 27, 0 };
   //runVibe(startup_vibes, 3);
 
-  //initButtons();
+  initButtons();
 
   ledBlinkThread.onRun(blinkLED);
   ledBlinkThread.setInterval(500);
@@ -98,18 +98,18 @@ void setup() {
   buttonThread.onRun(checkButtons);
   buttonThread.setInterval(5);
 
-  // throttleThread.onRun(handleThrottle);
-  // throttleThread.setInterval(22);
+  throttleThread.onRun(handleThrottle);
+  throttleThread.setInterval(22);
 
-  // telemetryThread.onRun(handleTelemetry);
-  // telemetryThread.setInterval(50);
+  telemetryThread.onRun(handleTelemetry);
+  telemetryThread.setInterval(50);
 
   // counterThread.onRun(trackPower);
   // counterThread.setInterval(250);
 
   //uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   //refreshDeviceData();
-  //setup140();
+  setup140();
   //initDisplay();
 }
 
@@ -123,7 +123,7 @@ void setup140() {
   vibe.selectLibrary(1);
   vibe.setMode(DRV2605_MODE_INTTRIG);
 
-  vibrateNotify();
+  // vibrateNotify();
 
   if (button_top.isPressedRaw()) {
     // Switch modes
@@ -133,7 +133,7 @@ void setup140() {
     } else {
       deviceData.performance_mode = 0;
     }
-    writeDeviceData();
+    // writeDeviceData();
     unsigned int notify_melody[] = { 900, 1976 };
     playMelody(notify_melody, 2);
   }
@@ -147,7 +147,7 @@ void loop() {
 
   // from WebUSB to both Serial & webUSB
   //if (usb_web.available()) parse_usb_serial();
-  //threads.run();
+  threads.run();
 }
 
 // Running on core1
