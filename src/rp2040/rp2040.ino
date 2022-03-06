@@ -65,7 +65,7 @@ unsigned int last_throttle = 0;
 void setup() {
   // Enable the watchdog, requiring the watchdog to be updated every 1000ms or the chip will reboot
   // second arg is pause on debug which means the watchdog will pause when stepping through code
-  //watchdog_enable(3000, 1);
+  watchdog_enable(3000, 1);
 
   //usb_web.begin();
   //usb_web.setLandingPage(&landingPage);
@@ -95,8 +95,8 @@ void setup() {
   // displayThread.onRun(updateDisplay);
   // displayThread.setInterval(200);
 
-  // buttonThread.onRun(checkButtons);
-  // buttonThread.setInterval(5);
+  buttonThread.onRun(checkButtons);
+  buttonThread.setInterval(5);
 
   // throttleThread.onRun(handleThrottle);
   // throttleThread.setInterval(22);
@@ -141,7 +141,7 @@ void setup140() {
 
 // main loop - everything runs in threads
 void loop() {
-  //watchdog_update();
+  watchdog_update();
   delay(1000);
   Serial.printf("C0: test loop core 1.\n");
 
