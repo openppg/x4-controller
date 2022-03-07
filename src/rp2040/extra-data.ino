@@ -54,7 +54,7 @@ void line_state_callback(bool connected) {
 void parse_usb_serial() {
   const size_t capacity = JSON_OBJECT_SIZE(12) + 90;
   DynamicJsonDocument doc(capacity);
-  deserializeJson(doc, usb_web);
+  //deserializeJson(doc, usb_web);
 
   if (doc["command"] && doc["command"] == "rbl") {
     display.fillScreen(DEFAULT_BG_COLOR);
@@ -92,5 +92,5 @@ void send_usb_serial() {
 
   char output[256];
   serializeJson(doc, output);
-  usb_web.println(output);
+  //usb_web.println(output);
 }
