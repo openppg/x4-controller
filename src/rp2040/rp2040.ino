@@ -21,6 +21,8 @@
 #include <Wire.h>
 #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 
+#include "pico/unique_id.h" // may not be needed in final hw
+
 #include <Fonts/FreeSansBold12pt7b.h>
 
 #include "../../inc/sp140/globals.h"  // device config
@@ -90,8 +92,6 @@ void setup() {
   ledBlinkThread.onRun(blinkLED);
   ledBlinkThread.setInterval(500);
 
-  Serial.print("setup 1");
-
   // displayThread.onRun(updateDisplay);
   // displayThread.setInterval(200);
 
@@ -157,8 +157,10 @@ void setup1() {
 }
 
 void loop1() {
-  Serial.println("C1: PPG core 2 standing by...");
-  delay(500);
+  Serial.print("C1: ");
+  Serial.println(chipId());
+
+  delay(1000);
 }
 
 void checkButtons() {

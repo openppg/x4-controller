@@ -4,10 +4,13 @@
 #define LAST_PAGE 1  // starts at 0
 
 #ifndef RP_PIO
+
 #define DBL_TAP_PTR ((volatile uint32_t *)(HMCRAMC0_ADDR + HMCRAMC0_SIZE - 4))
 #define DBL_TAP_MAGIC 0xf01669ef // Randomly selected, adjusted to have first and last bit set
 #define DBL_TAP_MAGIC_QUICK_BOOT 0xf02669ef
+
 #else
+
 #pragma message "Running RP2040 Build"
 
 #endif
@@ -104,18 +107,14 @@ void printDeviceData() {
 
 // get chip serial number (for SAMD21)
 String chipId() {
-  volatile uint32_t val1, val2, val3, val4;
-  volatile uint32_t *ptr1 = (volatile uint32_t *)0x0080A00C;
-  val1 = *ptr1;
-  volatile uint32_t *ptr = (volatile uint32_t *)0x0080A040;
-  val2 = *ptr;
-  ptr++;
-  val3 = *ptr;
-  ptr++;
-  val4 = *ptr;
+  // TODO: this probably wont work on final hardware
+  // RP2040 doesnt have a unique serial number so the below code
+  // gets the SPI flash memory's serial number instead
+  // will probably have to use `bmp.chipID()` instead
+  static int id_length = 2 * PICO_UNIQUE_BOARD_ID_SIZE_BYTES + 1;
+  char id_buf[id_length];
+  pico_get_unique_board_id_string(id_buf, id_length);
 
-  char id_buf[33];
-  sprintf(id_buf, "%8x%8x%8x%8x", val1, val2, val3, val4);
   return String(id_buf);
 }
 
