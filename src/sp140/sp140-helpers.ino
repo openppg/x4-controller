@@ -229,7 +229,9 @@ void parseData() {
     telemetryData.volts += 1.5;  // calibration
   }
 
-  voltageBuffer.push(telemetryData.volts);
+  if (telemetryData.volts > 1) {  // ignore empty data
+    voltageBuffer.push(telemetryData.volts);
+  }
 
   // Serial.print(F("Volts: "));
   // Serial.println(telemetryData.volts);
