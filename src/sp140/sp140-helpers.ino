@@ -296,21 +296,20 @@ void vibrateNotify() {
   vibe.go();
 }
 
-// throttle easing function based on performance mode
+// throttle easing function based on threshold/performance mode
 int limitedThrottle(int current, int last, int threshold) {
-  prevPotLvl = current;
-
-  if (current > last) {  // accelerating
-    if (current - last >= threshold) {  // acccelerating too fast. limit
-      int limitedThrottle = last + threshold;
-      prevPotLvl = limitedThrottle;
-      return limitedThrottle;
-    } else {
-      return current;
-    }
-  } else {  // deccelerating / maintaining
-    return current;
+  if (current - last >= threshold) {  // accelerating too fast. limit
+    int limitedThrottle = last + threshold;
+    // TODO: cleanup global var use
+    prevPotLvl = limitedThrottle;  // save for next time
+    return limitedThrottle;
+  } else if (last - current >= threshold * 2) {  // decelerating too fast. limit
+    int limitedThrottle = last - threshold * 2;  // double the decel vs accel
+    prevPotLvl = limitedThrottle;  // save for next time
+    return limitedThrottle;
   }
+  prevPotLvl = current;
+  return current;
 }
 
 // ring buffer for voltage readings
