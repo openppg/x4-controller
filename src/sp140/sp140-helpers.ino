@@ -111,7 +111,7 @@ void initBmp() {
   bmp.setOutputDataRate(BMP3_ODR_25_HZ);
   bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_2X);
   bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
-  bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_31);
+  bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_15);
 }
 
 void buzzInit(bool enableBuz) {
