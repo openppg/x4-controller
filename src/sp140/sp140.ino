@@ -257,9 +257,6 @@ void handleThrottle() {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 120);
     maxPWM = ESC_MAX_PWM;
   }
-  Serial.print(potRaw);
-  Serial.print(" ");
-  Serial.println(potLvl);
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
   unsigned long cruisingSecs = (millis() - cruisedAtMilis) / 1000;
@@ -271,7 +268,8 @@ void handleThrottle() {
       throttlePWM = mapf(cruiseLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
     }
   } else {
-    throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);  // mapping val to min and max
+    // mapping val to min and max pwm
+    throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
   }
   throttlePercent = mapf(throttlePWM, ESC_MIN_PWM, ESC_MAX_PWM, 0, 100);
   throttlePercent = constrain(throttlePercent, 0, 100);
@@ -298,7 +296,6 @@ bool armSystem() {
   bottom_bg_color = ARMED_BG_COLOR;
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
 
-  //Serial.println(F("Sending Arm Signal"));
   return true;
 }
 
