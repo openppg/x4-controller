@@ -510,6 +510,7 @@ void displayMessage(char *message) {
 
 void setCruise() {
   // IDEA: fill a "cruise indicator" as long press activate happens
+  // or gradually change color from blue to yellow with time
   if (!throttleSafe()) {  // using pot/throttle
     cruiseLvl = pot.getValue();  // save current throttle val
     cruising = true;

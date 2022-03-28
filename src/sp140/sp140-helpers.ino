@@ -110,8 +110,8 @@ void initBmp() {
   bmp.begin_I2C();
   bmp.setOutputDataRate(BMP3_ODR_25_HZ);
   bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_2X);
-  bmp.setPressureOversampling(BMP3_OVERSAMPLING_8X);
-  bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
+  bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
+  bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_15);
 }
 
 void buzzInit(bool enableBuz) {
@@ -129,7 +129,7 @@ void buzzInit(bool enableBuz) {
   }
 }
 
-void prepareSerialRead() {
+void prepareSerialRead() {  // TODO needed?
   while (Serial5.available() > 0) {
     byte t = Serial5.read();
   }
@@ -229,7 +229,9 @@ void parseData() {
     telemetryData.volts += 1.5;  // calibration
   }
 
-  voltageBuffer.push(telemetryData.volts);
+  if (telemetryData.volts > 1) {  // ignore empty data
+    voltageBuffer.push(telemetryData.volts);
+  }
 
   // Serial.print(F("Volts: "));
   // Serial.println(telemetryData.volts);
