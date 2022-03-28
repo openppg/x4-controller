@@ -246,12 +246,12 @@ void handleThrottle() {
   // Serial.print(potRaw);
   // Serial.print(", ");
   // Serial.println(potLvl);
-  
+
   // runs 40x sec
   // 1000 diff in pwm from 0
   // 1000/6/40
   if (deviceData.performance_mode == 0) { // chill mode
-    potLvl = limitedThrottle(potLvl, prevPotLvl, 40);
+    potLvl = limitedThrottle(potLvl, prevPotLvl, 50);
     maxPWM = 1850;  // 85% interpolated from 1030 to 1990
   } else {
     potLvl = limitedThrottle(potLvl, prevPotLvl, 120);
