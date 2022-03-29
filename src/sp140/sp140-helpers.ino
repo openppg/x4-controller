@@ -124,17 +124,6 @@ void initBmp() {
 
 void buzzInit(bool enableBuz) {
   pinMode(BUZ_PIN, OUTPUT);
-  return;  // TODO deprecated?
-
-  if (enableBuz) {
-    tone(BUZ_PIN, 500);
-    delay(200);
-    tone(BUZ_PIN, 700);
-    delay(200);
-    tone(BUZ_PIN, 900);
-    delay(200);
-    noTone(BUZ_PIN);
-  }
 }
 
 void prepareSerialRead() {  // TODO needed?
