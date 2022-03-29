@@ -43,6 +43,14 @@ void displayTime(int val, int x, int y, uint16_t bg_color) {
   dispValue(seconds, prevSeconds, 2, 0, x+36, y, 2, BLACK, bg_color);
 }
 
+uint16_t batt2color(int percentage) {
+  if (percentage >= 30) {
+    return GREEN;
+  } else if (percentage >= 15) {
+    return YELLOW;
+  }
+  return RED;
+}
 
 //**************************************************************************************//
 //  Helper function to print values without flashing numbers due to slow screen refresh.

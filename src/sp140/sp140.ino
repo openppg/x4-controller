@@ -342,13 +342,8 @@ void updateDisplay() {
   float avgVoltage = getBatteryVoltSmoothed();
   batteryPercent = getBatteryPercent(avgVoltage);  // multi-point line
   // change battery color based on charge
-  if (batteryPercent >= 30) {
-    display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, GREEN);
-  } else if (batteryPercent >= 15) {
-    display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, YELLOW);
-  } else {
-    display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, RED);
-  }
+  int batt_width = map((int)batteryPercent, 0, 100, 0, 108);
+  display.fillRect(0, 0, batt_width, 36, batt2color(batteryPercent));
 
   if (avgVoltage < BATT_MIN_V) {
     if (batteryFlag) {
