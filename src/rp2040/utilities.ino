@@ -120,7 +120,7 @@ String chipId() {
 
 // reboot/reset controller
 void rebootBootloader() {
-  //TinyUSB_Port_EnterDFU();
+  TinyUSB_Port_EnterDFU();
 }
 
 void displayMeta(){
