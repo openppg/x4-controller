@@ -39,7 +39,7 @@ AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
 extEEPROM eep(kbits_64, 1, 64);
 CircularBuffer<float, 50> voltageBuffer;
-CircularBuffer<int, 5> potBuffer;
+CircularBuffer<int, 8> potBuffer;
 
 Thread ledBlinkThread = Thread();
 Thread displayThread = Thread();
@@ -247,9 +247,15 @@ void handleThrottle() {
   // Serial.print(", ");
   // Serial.println(potLvl);
 
+  // runs 40x sec
+  // 1000 diff in pwm from 0
+  // 1000/6/40
   if (deviceData.performance_mode == 0) { // chill mode
-    potLvl = limitedThrottle(potLvl, prevPotLvl, 300);
+    potLvl = limitedThrottle(potLvl, prevPotLvl, 50);
     maxPWM = 1850;  // 85% interpolated from 1030 to 1990
+  } else {
+    potLvl = limitedThrottle(potLvl, prevPotLvl, 120);
+    maxPWM = ESC_MAX_PWM;
   }
   armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
 
@@ -262,7 +268,8 @@ void handleThrottle() {
       throttlePWM = mapf(cruiseLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
     }
   } else {
-    throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);  // mapping val to min and max
+    // mapping val to min and max pwm
+    throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
   }
   throttlePercent = mapf(throttlePWM, ESC_MIN_PWM, ESC_MAX_PWM, 0, 100);
   throttlePercent = constrain(throttlePercent, 0, 100);
@@ -289,7 +296,6 @@ bool armSystem() {
   bottom_bg_color = ARMED_BG_COLOR;
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
 
-  //Serial.println(F("Sending Arm Signal"));
   return true;
 }
 
@@ -331,7 +337,6 @@ void updateDisplay() {
   displayPage0();
   //dispValue(kWatts, prevKilowatts, 4, 1, 10, /*42*/55, 2, BLACK, DEFAULT_BG_COLOR);
   //display.print("kW");
-
 
   display.setTextColor(BLACK);
   float avgVoltage = getBatteryVoltSmoothed();
@@ -505,6 +510,7 @@ void displayMessage(char *message) {
 
 void setCruise() {
   // IDEA: fill a "cruise indicator" as long press activate happens
+  // or gradually change color from blue to yellow with time
   if (!throttleSafe()) {  // using pot/throttle
     cruiseLvl = pot.getValue();  // save current throttle val
     cruising = true;

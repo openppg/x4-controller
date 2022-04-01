@@ -1,5 +1,7 @@
 # EPPG Controller
 
+![Build](https://github.com/openppg/eppg-controller/actions/workflows/config.yml/badge.svg)
+
 Arduino based logic for OpenPPG Throttle Controller
 
 #### This master branch is only for testing the latest firmware for the X4 and SP140
@@ -21,8 +23,8 @@ Suitable for Mac, Windows, and Linux
 
 ### Setup
 
-1. Follow the instructions here for using with VSCode (recommended) https://platformio.org/install/ide?install=vscode
-2. Extract the downloaded code from the repo [here](https://github.com/openppg/eppg-controller/archive/master.zip) (or git clone it)
+1. Follow the instructions here for using with VSCode https://platformio.org/install/ide?install=vscode
+2. Extract the downloaded code from the repo [here](https://github.com/openppg/eppg-controller/archive/master.zip) (or `git clone` it)
 3. Open the folder using the PlatformIO "open project" option inside of VSCode
 
 ### Flash the OpenPPG Code

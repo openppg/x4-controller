@@ -4,6 +4,17 @@ on:
   - pull_request
 
 jobs:
+  cpplint:
+    name: CPP Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+      - run: pip install cpplint
+      - run: cpplint --linelength 140 --filter=-runtime/int,-build/include_subdir --recursive ./inc/ ./lib/ ./src/
   pio-build:
     name: PlatformIO Build
     runs-on: ubuntu-latest
