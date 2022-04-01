@@ -234,43 +234,46 @@ void initDisplay() {
 void handleThrottle() {
   if (!armed) return;  // safe
 
+  armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
+
   static int maxPWM = ESC_MAX_PWM;
   pot.update();
   int potRaw = pot.getValue();
-  potBuffer.push(potRaw);
 
-  int potLvl = 0;
-  for (decltype(potBuffer)::index_t i = 0; i < potBuffer.size(); i++) {
-    potLvl += potBuffer[i] / potBuffer.size();  // avg
-  }
+  if (cruising) {
+    unsigned long cruisingSecs = (millis() - cruisedAtMilis) / 1000;
+
+    if (cruisingSecs >= CRUISE_GRACE && potRaw > POT_SAFE_LEVEL) {
+      removeCruise(true);  // deactivate cruise
+    } else {
+      throttlePWM = mapf(cruisedPotVal, 0, 4095, ESC_MIN_PWM, maxPWM);
+    }
+  } else {
+    // no need to save & smooth throttle etc when in cruise mode (& pot == 0)
+    potBuffer.push(potRaw);
+
+    int potLvl = 0;
+    for (decltype(potBuffer)::index_t i = 0; i < potBuffer.size(); i++) {
+      potLvl += potBuffer[i] / potBuffer.size();  // avg
+    }
   // Serial.print(potRaw);
   // Serial.print(", ");
   // Serial.println(potLvl);
 
-  // runs 40x sec
+  // runs ~40x sec
   // 1000 diff in pwm from 0
   // 1000/6/40
-  if (deviceData.performance_mode == 0) { // chill mode
-    potLvl = limitedThrottle(potLvl, prevPotLvl, 50);
-    maxPWM = 1850;  // 85% interpolated from 1030 to 1990
-  } else {
-    potLvl = limitedThrottle(potLvl, prevPotLvl, 120);
-    maxPWM = ESC_MAX_PWM;
-  }
-  armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
-
-  unsigned long cruisingSecs = (millis() - cruisedAtMilis) / 1000;
-
-  if (cruising) {
-    if (cruisingSecs >= CRUISE_GRACE && potLvl > POT_SAFE_LEVEL) {
-      removeCruise(true);  // deactivate cruise
+    if (deviceData.performance_mode == 0) {  // chill mode
+      potLvl = limitedThrottle(potLvl, prevPotLvl, 50);
+      maxPWM = 1850;  // 85% interpolated from 1030 to 1990
     } else {
-      throttlePWM = mapf(cruiseLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
+      potLvl = limitedThrottle(potLvl, prevPotLvl, 120);
+      maxPWM = ESC_MAX_PWM;
     }
-  } else {
     // mapping val to min and max pwm
     throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
   }
+
   throttlePercent = mapf(throttlePWM, ESC_MIN_PWM, ESC_MAX_PWM, 0, 100);
   throttlePercent = constrain(throttlePercent, 0, 100);
 
@@ -507,10 +510,11 @@ void setCruise() {
   // IDEA: fill a "cruise indicator" as long press activate happens
   // or gradually change color from blue to yellow with time
   if (!throttleSafe()) {  // using pot/throttle
-    cruiseLvl = pot.getValue();  // save current throttle val
+    cruisedPotVal = pot.getValue();  // save current throttle val
     cruising = true;
     vibrateNotify();
 
+    // update display to show cruise
     display.setCursor(70, 60);
     display.setTextSize(1);
     display.setTextColor(RED);
