@@ -2,14 +2,18 @@
 // OpenPPG
 
 #include "../../lib/crc.c"       // packet error checking
-#include "../../inc/sp140/m0-config.h"          // device config
+#ifndef RP_PIO
+  #include "../../inc/sp140/m0-config.h"          // device config
+#else
+  #include "../../inc/sp140/rp2040-config.h"         // device config
+#endif
+
 #include "../../inc/sp140/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
 #include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer
 #include <Adafruit_DRV2605.h>    // haptic controller
 #include <Adafruit_ST7735.h>     // screen
-#include <Adafruit_SleepyDog.h>  // watchdog
 #include <ArduinoJson.h>
 #include <CircularBuffer.h>      // smooth out readings
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
@@ -19,7 +23,13 @@
 #include <Thread.h>   // run tasks at different intervals
 #include <TimeLib.h>  // convert time to hours mins etc
 #include <Wire.h>
-#include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
+
+#ifndef RP_PIO
+  #include <Adafruit_SleepyDog.h>  // watchdog
+  #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
+#else
+  // rp2040 specific libraries here
+#endif
 
 #include <Fonts/FreeSansBold12pt7b.h>
 
@@ -37,7 +47,10 @@ WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
-extEEPROM eep(kbits_64, 1, 64);
+#ifndef RP_PIO
+  extEEPROM eep(kbits_64, 1, 64);
+#endif
+
 CircularBuffer<float, 50> voltageBuffer;
 CircularBuffer<int, 8> potBuffer;
 
@@ -68,15 +81,15 @@ void setup() {
   usb_web.setLineStateCallback(line_state_callback);
 
   Serial.begin(115200);
-  Serial5.begin(ESC_BAUD_RATE);
-  Serial5.setTimeout(ESC_TIMEOUT);
+  SerialESC.begin(ESC_BAUD_RATE);
+  SerialESC.setTimeout(ESC_TIMEOUT);
 
   //Serial.print(F("Booting up (USB) V"));
   //Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   pinMode(LED_SW, OUTPUT);   // set up the internal LED2 pin
 
-  analogReadResolution(12);     // M0 chip provides 12bit resolution
+  analogReadResolution(12);     // M0 family chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   unsigned int startup_vibes[] = { 27, 27, 0 };
   runVibe(startup_vibes, 3);
@@ -101,9 +114,14 @@ void setup() {
   counterThread.onRun(trackPower);
   counterThread.setInterval(250);
 
+#ifndef RP_PIO
   Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
+#else
+#endif
+
   refreshDeviceData();
+
   setup140();
   initDisplay();
 }
@@ -136,7 +154,10 @@ void setup140() {
 
 // main loop - everything runs in threads
 void loop() {
+#ifndef RP_PIO
   Watchdog.reset();
+#endif
+
   // from WebUSB to both Serial & webUSB
   if (usb_web.available()) parse_usb_serial();
   threads.run();

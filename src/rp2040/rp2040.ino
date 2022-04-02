@@ -74,8 +74,8 @@ void setup() {
   //usb_web.setLineStateCallback(line_state_callback);
 
   Serial.begin(115200);
-  Serial1.begin(ESC_BAUD_RATE);
-  Serial1.setTimeout(ESC_TIMEOUT);
+  SerialESC.begin(ESC_BAUD_RATE);
+  SerialESC.setTimeout(ESC_TIMEOUT);
 
   Serial.print(F("Booting up (USB) V"));
   Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);

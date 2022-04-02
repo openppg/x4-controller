@@ -130,14 +130,14 @@ void buzzInit(bool enableBuz) {
 }
 
 void prepareSerialRead() {
-  while (Serial1.available() > 0) {
-    byte t = Serial1.read();
+  while (SerialESC.available() > 0) {
+    byte t = SerialESC.read();
   }
 }
 
 void handleTelemetry() {
   prepareSerialRead();
-  Serial1.readBytes(escData, ESC_DATA_SIZE);
+  SerialESC.readBytes(escData, ESC_DATA_SIZE);
   // enforceChecksum();
   if (enforceFletcher16()) {
     parseData();

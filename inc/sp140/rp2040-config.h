@@ -13,6 +13,8 @@
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
 
+#define SerialESC  Serial1  // ESC UART connection
+
 #define CRUISE_GRACE 1.5  // 1.5 sec period to get off throttle
 #define POT_SAFE_LEVEL 0.10 * 4096  // 10% or less
 

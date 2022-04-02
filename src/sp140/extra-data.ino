@@ -4,21 +4,40 @@
 // ** Logic for EEPROM **
 
 void refreshDeviceData() {
-  static int offset = 0;
+  #ifndef RP_PIO
+    static int offset = 0;
 
-  uint8_t tempBuf[sizeof(deviceData)];
-  if (0 != eep.read(offset, tempBuf, sizeof(deviceData))) {
-    //Serial.println(F("error reading EEPROM"));
-  }
-  memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
-  uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
-    // TODO: add upgrade complete melody
-  if (crc != deviceData.crc) {
-    //Serial.print(F("Memory CRC mismatch. Resetting"));
-    resetDeviceData();
-    return;
-  }
+    uint8_t tempBuf[sizeof(deviceData)];
+    if (0 != eep.read(offset, tempBuf, sizeof(deviceData))) {
+      //Serial.println(F("error reading EEPROM"));
+    }
+    memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
+    uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
+      // TODO: add upgrade complete melody
+    if (crc != deviceData.crc) {
+      //Serial.print(F("Memory CRC mismatch. Resetting"));
+      resetDeviceData();
+      return;
+    }
+  #else
+    // TODO read from tinyfs
+  #endif
 }
+
+void writeDeviceData() {
+  #ifndef RP_PIO
+
+    deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
+    int offset = 0;
+
+    if (0 != eep.write(offset, (uint8_t*)&deviceData, sizeof(deviceData))) {
+      Serial.println(F("error writing EEPROM"));
+    }
+  #else
+    // TODO save to tinyfs
+  #endif
+}
+
 
 void resetDeviceData() {
     deviceData = STR_DEVICE_DATA_140_V1();
@@ -32,16 +51,6 @@ void resetDeviceData() {
     deviceData.batt_size = 4000;
     writeDeviceData();
 }
-
-void writeDeviceData() {
-  deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
-  int offset = 0;
-
-  if (0 != eep.write(offset, (uint8_t*)&deviceData, sizeof(deviceData))) {
-    Serial.println(F("error writing EEPROM"));
-  }
-}
-
 // ** Logic for WebUSB **
 
 void line_state_callback(bool connected) {
