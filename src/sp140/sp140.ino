@@ -30,7 +30,7 @@
 #else
   // rp2040 specific libraries here
   #include <EEPROM.h>
-
+  #include "hardware/watchdog.h"
 #endif
 
 #include <Fonts/FreeSansBold12pt7b.h>
@@ -120,6 +120,7 @@ void setup() {
   Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
 #else
+  watchdog_enable(3000, 1);
 #endif
 
   refreshDeviceData();
@@ -158,6 +159,8 @@ void setup140() {
 void loop() {
 #ifndef RP_PIO
   Watchdog.reset();
+#else
+  watchdog_update();
 #endif
 
   // from WebUSB to both Serial & webUSB
