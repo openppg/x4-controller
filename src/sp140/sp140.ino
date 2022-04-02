@@ -274,9 +274,6 @@ void handleThrottle() {
     throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
   }
 
-  throttlePercent = mapf(throttlePWM, ESC_MIN_PWM, ESC_MAX_PWM, 0, 100);
-  throttlePercent = constrain(throttlePercent, 0, 100);
-
   esc.writeMicroseconds(throttlePWM);  // using val as the signal to esc
 }
 
@@ -379,12 +376,6 @@ void updateDisplay() {
   // battery shape end
   //display.fillRect(102, 0, 6, 9, BLACK);
   //display.fillRect(102, 27, 6, 10, BLACK);
-
-  // For Debugging Throttle:
-  //  display.fillRect(0, 0, map(throttlePercent, 0,100, 0,108), 36, BLUE);
-  //  display.fillRect(map(throttlePercent, 0,100, 0,108), 0, map(throttlePercent, 0,100, 108,0), 36, DEFAULT_BG_COLOR);
-  //  dispValue(throttlePercent, prevThrotPercent, 3, 0, 108, 10, 2, BLACK, DEFAULT_BG_COLOR);
-  //  display.print("%");
 
   display.fillRect(0, 36, 160, 1, BLACK);
   display.fillRect(108, 0, 1, 36, BLACK);

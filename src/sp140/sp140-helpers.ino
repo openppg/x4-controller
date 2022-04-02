@@ -5,10 +5,9 @@ void handleFlightTime() {
   if (!armed) {
     throttledFlag = true;
     throttled = false;
-  }
-  if (armed) {
+  } else { // armed
     // start the timer when armed and throttle is above the threshold
-    if (throttlePercent > 30 && throttledFlag) {
+    if (throttlePWM > 1300 && throttledFlag) {
       throttledAtMillis = millis();
       throttledFlag = false;
       throttled = true;
@@ -43,6 +42,7 @@ void displayTime(int val, int x, int y, uint16_t bg_color) {
   dispValue(seconds, prevSeconds, 2, 0, x+36, y, 2, BLACK, bg_color);
 }
 
+// maps battery percentage to a display color
 uint16_t batt2color(int percentage) {
   if (percentage >= 30) {
     return GREEN;
