@@ -20,7 +20,8 @@ void refreshDeviceData() {
       return;
     }
   #else
-    // TODO read from tinyfs
+    // TODO read from emulated eeprom
+    // https://github.com/earlephilhower/arduino-pico/blob/master/libraries/EEPROM/examples/eeprom_read/eeprom_read.ino
   #endif
 }
 
@@ -34,12 +35,20 @@ void writeDeviceData() {
       Serial.println(F("error writing EEPROM"));
     }
   #else
-    // TODO save to tinyfs
+    // TODO save to eeprom
+    // https://github.com/earlephilhower/arduino-pico/blob/master/libraries/EEPROM/examples/eeprom_write/eeprom_write.ino
   #endif
 }
 
 
 void resetDeviceData() {
+  #ifdef RP_PIO
+    EEPROM.begin(512);
+    // write a 0 to all 512 bytes of the EEPROM
+    for (int i = 0; i < 512; i++) { EEPROM.write(i, 0); }
+    EEPROM.end();
+  #endif
+
     deviceData = STR_DEVICE_DATA_140_V1();
     deviceData.version_major = VERSION_MAJOR;
     deviceData.version_minor = VERSION_MINOR;

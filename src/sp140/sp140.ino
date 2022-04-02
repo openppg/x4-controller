@@ -29,6 +29,8 @@
   #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 #else
   // rp2040 specific libraries here
+  #include <EEPROM.h>
+
 #endif
 
 #include <Fonts/FreeSansBold12pt7b.h>
