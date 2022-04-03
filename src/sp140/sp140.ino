@@ -148,8 +148,13 @@ void checkButtons() {
 
 // disarm, remove cruise, alert, save updated stats
 void disarmSystem() {
+  throttlePWM = ESC_DISARMED_PWM;
   esc.writeMicroseconds(ESC_DISARMED_PWM);
   //Serial.println(F("disarmed"));
+
+  // reset smoothing
+  potBuffer.clear();
+  prevPotLvl = 0;
 
   unsigned int disarm_melody[] = { 2093, 1976, 880 };
   unsigned int disarm_vibes[] = { 70, 33, 0 };
@@ -256,9 +261,6 @@ void handleThrottle() {
     for (decltype(potBuffer)::index_t i = 0; i < potBuffer.size(); i++) {
       potLvl += potBuffer[i] / potBuffer.size();  // avg
     }
-  // Serial.print(potRaw);
-  // Serial.print(", ");
-  // Serial.println(potLvl);
 
   // runs ~40x sec
   // 1000 diff in pwm from 0
