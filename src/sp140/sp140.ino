@@ -114,6 +114,7 @@ void setup140() {
 
   buzzInit(ENABLE_BUZ);
   initBmp();
+  getAltitudeM(); // throw away first value
   vibe.begin();
   vibe.selectLibrary(1);
   vibe.setMode(DRV2605_MODE_INTTRIG);
