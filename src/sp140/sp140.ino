@@ -114,6 +114,7 @@ void setup140() {
 
   buzzInit(ENABLE_BUZ);
   initBmp();
+  getAltitudeM(); // throw away first value
   vibe.begin();
   vibe.selectLibrary(1);
   vibe.setMode(DRV2605_MODE_INTTRIG);
@@ -221,6 +222,15 @@ void initButtons() {
 // inital screen setup and config
 void initDisplay() {
   display.initR(INITR_BLACKTAB);  // Init ST7735S chip, black tab
+
+  pinMode(TFT_LITE, OUTPUT);
+  resetDisplay();
+  displayMeta();
+  digitalWrite(TFT_LITE, HIGH);  // Backlight on
+  delay(2500);
+}
+
+void resetDisplay() {
   display.fillScreen(DEFAULT_BG_COLOR);
   display.setTextColor(BLACK);
   display.setCursor(0, 0);
@@ -228,11 +238,6 @@ void initDisplay() {
   display.setTextWrap(true);
 
   display.setRotation(deviceData.screen_rotation);  // 1=right hand, 3=left hand
-
-  pinMode(TFT_LITE, OUTPUT);
-  digitalWrite(TFT_LITE, HIGH);  // Backlight on
-  displayMeta();
-  delay(2000);
 }
 
 // read throttle and send to hub
