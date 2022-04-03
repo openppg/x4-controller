@@ -224,10 +224,10 @@ void initDisplay() {
   display.initR(INITR_BLACKTAB);  // Init ST7735S chip, black tab
 
   pinMode(TFT_LITE, OUTPUT);
-  digitalWrite(TFT_LITE, HIGH);  // Backlight on
   resetDisplay();
   displayMeta();
-  delay(2000);
+  digitalWrite(TFT_LITE, HIGH);  // Backlight on
+  delay(2500);
 }
 
 void resetDisplay() {
