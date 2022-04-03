@@ -5,10 +5,9 @@ void handleFlightTime() {
   if (!armed) {
     throttledFlag = true;
     throttled = false;
-  }
-  if (armed) {
+  } else { // armed
     // start the timer when armed and throttle is above the threshold
-    if (throttlePercent > 30 && throttledFlag) {
+    if (throttlePWM > 1300 && throttledFlag) {
       throttledAtMillis = millis();
       throttledFlag = false;
       throttled = true;
@@ -43,6 +42,15 @@ void displayTime(int val, int x, int y, uint16_t bg_color) {
   dispValue(seconds, prevSeconds, 2, 0, x+36, y, 2, BLACK, bg_color);
 }
 
+// maps battery percentage to a display color
+uint16_t batt2color(int percentage) {
+  if (percentage >= 30) {
+    return GREEN;
+  } else if (percentage >= 15) {
+    return YELLOW;
+  }
+  return RED;
+}
 
 //**************************************************************************************//
 //  Helper function to print values without flashing numbers due to slow screen refresh.
@@ -116,17 +124,6 @@ void initBmp() {
 
 void buzzInit(bool enableBuz) {
   pinMode(BUZ_PIN, OUTPUT);
-  return;  // TODO deprecated?
-
-  if (enableBuz) {
-    tone(BUZ_PIN, 500);
-    delay(200);
-    tone(BUZ_PIN, 700);
-    delay(200);
-    tone(BUZ_PIN, 900);
-    delay(200);
-    noTone(BUZ_PIN);
-  }
 }
 
 void prepareSerialRead() {  // TODO needed?

@@ -148,8 +148,13 @@ void checkButtons() {
 
 // disarm, remove cruise, alert, save updated stats
 void disarmSystem() {
+  throttlePWM = ESC_DISARMED_PWM;
   esc.writeMicroseconds(ESC_DISARMED_PWM);
   //Serial.println(F("disarmed"));
+
+  // reset smoothing
+  potBuffer.clear();
+  prevPotLvl = 0;
 
   unsigned int disarm_melody[] = { 2093, 1976, 880 };
   unsigned int disarm_vibes[] = { 70, 33, 0 };
@@ -234,45 +239,42 @@ void initDisplay() {
 void handleThrottle() {
   if (!armed) return;  // safe
 
+  armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
+
   static int maxPWM = ESC_MAX_PWM;
   pot.update();
   int potRaw = pot.getValue();
-  potBuffer.push(potRaw);
-
-  int potLvl = 0;
-  for (decltype(potBuffer)::index_t i = 0; i < potBuffer.size(); i++) {
-    potLvl += potBuffer[i] / potBuffer.size();  // avg
-  }
-  // Serial.print(potRaw);
-  // Serial.print(", ");
-  // Serial.println(potLvl);
-
-  // runs 40x sec
-  // 1000 diff in pwm from 0
-  // 1000/6/40
-  if (deviceData.performance_mode == 0) { // chill mode
-    potLvl = limitedThrottle(potLvl, prevPotLvl, 50);
-    maxPWM = 1850;  // 85% interpolated from 1030 to 1990
-  } else {
-    potLvl = limitedThrottle(potLvl, prevPotLvl, 120);
-    maxPWM = ESC_MAX_PWM;
-  }
-  armedSecs = (millis() - armedAtMilis) / 1000;  // update time while armed
-
-  unsigned long cruisingSecs = (millis() - cruisedAtMilis) / 1000;
 
   if (cruising) {
-    if (cruisingSecs >= CRUISE_GRACE && potLvl > POT_SAFE_LEVEL) {
+    unsigned long cruisingSecs = (millis() - cruisedAtMilis) / 1000;
+
+    if (cruisingSecs >= CRUISE_GRACE && potRaw > POT_SAFE_LEVEL) {
       removeCruise(true);  // deactivate cruise
     } else {
-      throttlePWM = mapf(cruiseLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
+      throttlePWM = mapf(cruisedPotVal, 0, 4095, ESC_MIN_PWM, maxPWM);
     }
   } else {
+    // no need to save & smooth throttle etc when in cruise mode (& pot == 0)
+    potBuffer.push(potRaw);
+
+    int potLvl = 0;
+    for (decltype(potBuffer)::index_t i = 0; i < potBuffer.size(); i++) {
+      potLvl += potBuffer[i] / potBuffer.size();  // avg
+    }
+
+  // runs ~40x sec
+  // 1000 diff in pwm from 0
+  // 1000/6/40
+    if (deviceData.performance_mode == 0) {  // chill mode
+      potLvl = limitedThrottle(potLvl, prevPotLvl, 50);
+      maxPWM = 1850;  // 85% interpolated from 1030 to 1990
+    } else {
+      potLvl = limitedThrottle(potLvl, prevPotLvl, 120);
+      maxPWM = ESC_MAX_PWM;
+    }
     // mapping val to min and max pwm
     throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
   }
-  throttlePercent = mapf(throttlePWM, ESC_MIN_PWM, ESC_MAX_PWM, 0, 100);
-  throttlePercent = constrain(throttlePercent, 0, 100);
 
   esc.writeMicroseconds(throttlePWM);  // using val as the signal to esc
 }
@@ -342,13 +344,8 @@ void updateDisplay() {
   float avgVoltage = getBatteryVoltSmoothed();
   batteryPercent = getBatteryPercent(avgVoltage);  // multi-point line
   // change battery color based on charge
-  if (batteryPercent >= 30) {
-    display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, GREEN);
-  } else if (batteryPercent >= 15) {
-    display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, YELLOW);
-  } else {
-    display.fillRect(0, 0, mapf(batteryPercent, 0, 100, 0, 108), 36, RED);
-  }
+  int batt_width = map((int)batteryPercent, 0, 100, 0, 108);
+  display.fillRect(0, 0, batt_width, 36, batt2color(batteryPercent));
 
   if (avgVoltage < BATT_MIN_V) {
     if (batteryFlag) {
@@ -381,12 +378,6 @@ void updateDisplay() {
   // battery shape end
   //display.fillRect(102, 0, 6, 9, BLACK);
   //display.fillRect(102, 27, 6, 10, BLACK);
-
-  // For Debugging Throttle:
-  //  display.fillRect(0, 0, map(throttlePercent, 0,100, 0,108), 36, BLUE);
-  //  display.fillRect(map(throttlePercent, 0,100, 0,108), 0, map(throttlePercent, 0,100, 108,0), 36, DEFAULT_BG_COLOR);
-  //  dispValue(throttlePercent, prevThrotPercent, 3, 0, 108, 10, 2, BLACK, DEFAULT_BG_COLOR);
-  //  display.print("%");
 
   display.fillRect(0, 36, 160, 1, BLACK);
   display.fillRect(108, 0, 1, 36, BLACK);
@@ -512,10 +503,11 @@ void setCruise() {
   // IDEA: fill a "cruise indicator" as long press activate happens
   // or gradually change color from blue to yellow with time
   if (!throttleSafe()) {  // using pot/throttle
-    cruiseLvl = pot.getValue();  // save current throttle val
+    cruisedPotVal = pot.getValue();  // save current throttle val
     cruising = true;
     vibrateNotify();
 
+    // update display to show cruise
     display.setCursor(70, 60);
     display.setTextSize(1);
     display.setTextColor(RED);
