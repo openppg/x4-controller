@@ -175,34 +175,6 @@ bool enforceFletcher16() {
   return true;
 }
 
-// Not used
-void enforceChecksum() {
-  // Check checksum, revert to previous data if bad:
-  word checksum = word(escData[19], escData[18]);
-  int sum = 0;
-  for (int i=0; i<ESC_DATA_SIZE-2; i++) {
-    sum += escData[i];
-  }
-  Serial.print(F("     SUM: "));
-  Serial.println(sum);
-  Serial.print(F("CHECKSUM: "));
-  Serial.println(checksum);
-  if (sum != checksum) {
-    Serial.println(F("__________________________CHECKSUM FAILED!"));
-    failed++;
-    if (failed >= 1000) {  // keep track of how reliable the transmission is
-      transmitted = 1;
-      failed = 0;
-    }
-    for (int i=0; i<ESC_DATA_SIZE; i++) {  // revert to previous data
-      escData[i] = prevData[i];
-    }
-  }
-  for (int i=0; i<ESC_DATA_SIZE; i++) {
-    prevData[i] = escData[i];
-  }
-}
-
 // for debugging
 void printRawSentence() {
   Serial.print(F("DATA: "));
