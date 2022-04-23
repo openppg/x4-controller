@@ -122,8 +122,33 @@ void initBmp() {
   bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_15);
 }
 
-void buzzInit(bool enableBuz) {
+// initialize the buzzer
+void initBuzz() {
   pinMode(BUZ_PIN, OUTPUT);
+}
+
+// initialize the vibration motor
+void initVibe() {
+  vibe.begin();
+  vibe.selectLibrary(1);
+  vibe.setMode(DRV2605_MODE_INTTRIG);
+  vibrateNotify();
+}
+
+// on boot check for button to switch mode
+void modeSwitch() {
+  if (!button_top.isPressedRaw()) { return; }
+
+  // 0=CHILL 1=SPORT 2=LUDICROUS?!
+  if (deviceData.performance_mode == 0) {
+    deviceData.performance_mode = 1;
+  } else {
+    deviceData.performance_mode = 0;
+  }
+  Serial.println("switching modes");
+  writeDeviceData();
+  unsigned int notify_melody[] = { 900, 1976 };
+  playMelody(notify_melody, 2);
 }
 
 void prepareSerialRead() {  // TODO needed?

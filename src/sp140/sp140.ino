@@ -105,6 +105,7 @@ void setup() {
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
   refreshDeviceData();
   setup140();
+  Watchdog.reset();
   initDisplay();
 }
 
@@ -112,27 +113,11 @@ void setup140() {
   esc.attach(ESC_PIN);
   esc.writeMicroseconds(ESC_DISARMED_PWM);
 
-  buzzInit(ENABLE_BUZ);
+  initBuzz();
+  modeSwitch();
   initBmp();
-  getAltitudeM(); // throw away first value
-  vibe.begin();
-  vibe.selectLibrary(1);
-  vibe.setMode(DRV2605_MODE_INTTRIG);
-
-  vibrateNotify();
-
-  if (button_top.isPressedRaw()) {
-    // Switch modes
-    // 0=CHILL 1=SPORT 2=LUDICROUS?!
-    if (deviceData.performance_mode == 0) {
-      deviceData.performance_mode = 1;
-    } else {
-      deviceData.performance_mode = 0;
-    }
-    writeDeviceData();
-    unsigned int notify_melody[] = { 900, 1976 };
-    playMelody(notify_melody, 2);
-  }
+  getAltitudeM();  // throw away first value
+  initVibe();
 }
 
 // main loop - everything runs in threads
