@@ -5,12 +5,11 @@
 #include "shared-config.h"
 
 // Arduino Pins
-#define BUTTON_TOP    6   // arm/disarm button_top
+#define BUTTON_TOP    15   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
 #define BUZZER_PIN    10   // output for buzzer speaker
-#define LED_SW        14// LED_BUILTIN   // output for LED
-#define LED_2         14  // FIXME   // output for LED 2
-#define LED_3         38  // output for LED 3
+#define LED_SW        12// LED_BUILTIN   // output for LED
+#define LED_2         -1  // FIXME   // output for LED 2
 #define THROTTLE_PIN  A0  // throttle pot input
 
 #define SerialESC  Serial1  // ESC UART connection
@@ -30,6 +29,6 @@
 #define TFT_CS 13
 #define TFT_DC 11
 #define TFT_LITE 25
-#define ESC_PIN 12
+#define ESC_PIN 14
 
 #endif  // INC_SP140_RP2040_CONFIG_H_
