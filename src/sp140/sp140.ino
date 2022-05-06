@@ -130,7 +130,10 @@ void setup() {
   refreshDeviceData();
 
   setup140();
+#ifndef RP_PIO
   Watchdog.reset();
+#endif
+
   initDisplay();
 }
 
