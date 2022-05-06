@@ -7,9 +7,9 @@
 // Arduino Pins
 #define BUTTON_TOP    6   // arm/disarm button_top
 #define BUTTON_SIDE   7   // secondary button_top
-#define BUZZER_PIN    5   // output for buzzer speaker
-#define LED_SW        LED_BUILTIN   // output for LED
-#define LED_2         0   // output for LED 2
+#define BUZZER_PIN    10   // output for buzzer speaker
+#define LED_SW        14// LED_BUILTIN   // output for LED
+#define LED_2         14  // FIXME   // output for LED 2
 #define LED_3         38  // output for LED 3
 #define THROTTLE_PIN  A0  // throttle pot input
 
@@ -26,10 +26,10 @@
 // SP140
 #define BUZ_PIN 5
 #define POT_PIN A0
-#define TFT_RST 9
-#define TFT_CS 10
+#define TFT_RST 5
+#define TFT_CS 13
 #define TFT_DC 11
-#define TFT_LITE A1
+#define TFT_LITE 25
 #define ESC_PIN 12
 
 #endif  // INC_SP140_RP2040_CONFIG_H_
