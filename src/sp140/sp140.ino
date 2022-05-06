@@ -10,7 +10,6 @@
 
 #include "../../inc/sp140/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
-#include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer
 #include <Adafruit_DRV2605.h>    // haptic controller
 #include <Adafruit_ST7735.h>     // screen
@@ -26,6 +25,7 @@
 
 #ifndef RP_PIO
   #include <Adafruit_SleepyDog.h>  // watchdog
+  #include "Adafruit_TinyUSB.h"
   #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 #else
   // rp2040 specific libraries here
@@ -42,9 +42,11 @@ using namespace ace_button;
 Adafruit_ST7735 display = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 Adafruit_DRV2605 vibe;
 
+#ifndef RP_PIO
 // USB WebUSB object
 Adafruit_USBD_WebUSB usb_web;
 WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
+#endif
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
@@ -78,9 +80,11 @@ unsigned int last_throttle = 0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
+#ifndef RP_PIO
   usb_web.begin();
   usb_web.setLandingPage(&landingPage);
   usb_web.setLineStateCallback(line_state_callback);
+#endif
 
   Serial.begin(115200);
   SerialESC.begin(ESC_BAUD_RATE);
@@ -102,7 +106,7 @@ void setup() {
   ledBlinkThread.setInterval(500);
 
   displayThread.onRun(updateDisplay);
-  displayThread.setInterval(200);
+  displayThread.setInterval(500);
 
   buttonThread.onRun(checkButtons);
   buttonThread.setInterval(5);
@@ -120,7 +124,7 @@ void setup() {
   Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
 #else
-  watchdog_enable(3000, 1);
+  watchdog_enable(8000, 1);
 #endif
 
   refreshDeviceData();
@@ -164,7 +168,10 @@ void loop() {
 #endif
 
   // from WebUSB to both Serial & webUSB
+  #ifndef RP_PIO
   if (usb_web.available()) parse_usb_serial();
+  #endif
+
   threads.run();
 }
 

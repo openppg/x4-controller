@@ -137,7 +137,7 @@ void rebootBootloader() {
 #pragma message "Running RP2040 Build"
 // reboot/reset controller
 void rebootBootloader() {
-  TinyUSB_Port_EnterDFU();
+  //TinyUSB_Port_EnterDFU();
 }
 #endif
 

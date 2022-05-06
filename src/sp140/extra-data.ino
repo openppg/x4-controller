@@ -20,6 +20,7 @@ void refreshDeviceData() {
       return;
     }
   #else
+    resetDeviceData();
     // TODO read from emulated eeprom
     // https://github.com/earlephilhower/arduino-pico/blob/master/libraries/EEPROM/examples/eeprom_read/eeprom_read.ino
   #endif
@@ -60,8 +61,9 @@ void resetDeviceData() {
     deviceData.batt_size = 4000;
     writeDeviceData();
 }
-// ** Logic for WebUSB **
 
+// ** Logic for WebUSB **
+#ifndef RP_PIO
 void line_state_callback(bool connected) {
   digitalWrite(LED_2, connected);
 
@@ -112,3 +114,5 @@ void send_usb_serial() {
   serializeJson(doc, output);
   usb_web.println(output);
 }
+#endif
+
