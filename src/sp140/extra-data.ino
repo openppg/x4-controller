@@ -91,8 +91,8 @@ void parse_usb_serial() {
   deviceData.metric_alt = doc["metric_alt"];  // true/false
   deviceData.performance_mode = doc["performance_mode"];  // 0,1
   deviceData.batt_size = doc["batt_size"];  // 4000
-  initDisplay();
   writeDeviceData();
+  resetDisplay();
   send_usb_serial();
 }
 
