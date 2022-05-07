@@ -15,14 +15,6 @@
 
 #define SerialESC  Serial5  // ESC UART connection
 
-#define CRUISE_GRACE 1.5  // 1.5 sec period to get off throttle
-#define POT_SAFE_LEVEL 0.10 * 4096  // 10% or less
-
-#define DEFAULT_SEA_PRESSURE 1013.25
-
-// Library config
-#define NO_ADAFRUIT_SSD1306_COLOR_COMPATIBILITY
-
 // SP140
 #define BUZ_PIN 5
 #define POT_PIN A0
