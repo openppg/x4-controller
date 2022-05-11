@@ -63,7 +63,6 @@ void resetDeviceData() {
 }
 
 // ** Logic for WebUSB **
-#ifndef RP_PIO
 void line_state_callback(bool connected) {
   digitalWrite(LED_2, connected);
 
@@ -114,5 +113,3 @@ void send_usb_serial() {
   serializeJson(doc, output);
   usb_web.println(output);
 }
-#endif
-

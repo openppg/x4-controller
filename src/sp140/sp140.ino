@@ -22,10 +22,10 @@
 #include <Thread.h>   // run tasks at different intervals
 #include <TimeLib.h>  // convert time to hours mins etc
 #include <Wire.h>
+#include "Adafruit_TinyUSB.h"
 
 #ifndef RP_PIO
   #include <Adafruit_SleepyDog.h>  // watchdog
-  #include "Adafruit_TinyUSB.h"
   #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 #else
   // rp2040 specific libraries here
@@ -42,11 +42,9 @@ using namespace ace_button;
 Adafruit_ST7735 display = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 Adafruit_DRV2605 vibe;
 
-#ifndef RP_PIO
 // USB WebUSB object
 Adafruit_USBD_WebUSB usb_web;
 WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
-#endif
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
@@ -80,11 +78,9 @@ unsigned int last_throttle = 0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
-#ifndef RP_PIO
   usb_web.begin();
   usb_web.setLandingPage(&landingPage);
   usb_web.setLineStateCallback(line_state_callback);
-#endif
 
   Serial.begin(115200);
   SerialESC.begin(ESC_BAUD_RATE);
@@ -157,9 +153,7 @@ void loop() {
 #endif
 
   // from WebUSB to both Serial & webUSB
-  #ifndef RP_PIO
-  if (usb_web.available()) parse_usb_serial();
-  #endif
+  if (!armed && usb_web.available()) parse_usb_serial();
 
   threads.run();
 }
