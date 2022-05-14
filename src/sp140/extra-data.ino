@@ -4,7 +4,7 @@
 // ** Logic for EEPROM **
 
 void refreshDeviceData() {
-  #ifndef RP_PIO
+  #ifdef M0_PIO
     static int offset = 0;
 
     uint8_t tempBuf[sizeof(deviceData)];

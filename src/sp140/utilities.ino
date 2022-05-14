@@ -3,7 +3,7 @@
 
 #define LAST_PAGE 1  // starts at 0
 
-#ifndef RP_PIO
+#ifdef M0_PIO
 
 #define DBL_TAP_PTR ((volatile uint32_t *)(HMCRAMC0_ADDR + HMCRAMC0_SIZE - 4))
 #define DBL_TAP_MAGIC 0xf01669ef // Randomly selected, adjusted to have first and last bit set
@@ -121,7 +121,7 @@ String chipId() {
   sprintf(id_buf, "%8x%8x%8x%8x", val1, val2, val3, val4);
   return String(id_buf);
 }
-#ifndef RP_PIO
+#ifdef M0_PIO
 
 // reboot/reset controller
 void(* resetFunc) (void) = 0;  // declare reset function @ address 0

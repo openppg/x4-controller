@@ -2,7 +2,7 @@
 // OpenPPG
 
 #include "../../lib/crc.c"       // packet error checking
-#ifndef RP_PIO
+#ifdef M0_PIO
   #include "../../inc/sp140/m0-config.h"          // device config
 #else
   #include "../../inc/sp140/rp2040-config.h"         // device config
@@ -26,7 +26,7 @@
   #include "Adafruit_TinyUSB.h"
 #endif
 
-#ifndef RP_PIO
+#ifdef M0_PIO
   #include <Adafruit_SleepyDog.h>  // watchdog
   #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
 #else
@@ -53,7 +53,7 @@ WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
-#ifndef RP_PIO
+#ifdef M0_PIO
   extEEPROM eep(kbits_64, 1, 64);
 #endif
 
@@ -127,7 +127,7 @@ void setup() {
   counterThread.onRun(trackPower);
   counterThread.setInterval(250);
 
-#ifndef RP_PIO
+#ifdef M0_PIO
   Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
 #else
@@ -137,7 +137,7 @@ void setup() {
   refreshDeviceData();
 
   setup140();
-#ifndef RP_PIO
+#ifdef M0_PIO
   Watchdog.reset();
 #endif
 
@@ -161,7 +161,7 @@ void setup140() {
 
 // main loop - everything runs in threads
 void loop() {
-#ifndef RP_PIO
+#ifdef M0_PIO
   Watchdog.reset();
 #else
   watchdog_update();
