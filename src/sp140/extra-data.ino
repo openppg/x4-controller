@@ -27,17 +27,24 @@ void refreshDeviceData() {
 }
 
 void writeDeviceData() {
-  #ifndef RP_PIO
+  int offset = 0;
+  deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
+  #ifdef M0_PIO
 
-    deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
-    int offset = 0;
 
     if (0 != eep.write(offset, (uint8_t*)&deviceData, sizeof(deviceData))) {
       Serial.println(F("error writing EEPROM"));
     }
-  #else
-    // TODO save to eeprom
+  #elif RP_PIO
     // https://github.com/earlephilhower/arduino-pico/blob/master/libraries/EEPROM/examples/eeprom_write/eeprom_write.ino
+    uint8_t device_bytes[sizeof(deviceData)];
+    memcpy(device_bytes, &deviceData, sizeof(deviceData));
+    for (int i = offset; i < sizeof(device_bytes); i++) {
+      Serial.print(device_bytes[i], HEX);
+      Serial.print(" ");
+      // TODO save to eeprom
+      //EEPROM.write(i, device_bytes);
+    }
   #endif
 }
 

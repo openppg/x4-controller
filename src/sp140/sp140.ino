@@ -56,6 +56,7 @@ ButtonConfig* buttonConfig = button_top.getButtonConfig();
 #ifndef RP_PIO
   extEEPROM eep(kbits_64, 1, 64);
 #endif
+EEPROM.begin(512);
 
 CircularBuffer<float, 50> voltageBuffer;
 CircularBuffer<int, 8> potBuffer;
