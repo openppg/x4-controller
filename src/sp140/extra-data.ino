@@ -71,6 +71,7 @@ void line_state_callback(bool connected) {
 
 // customized for sp140
 void parse_usb_serial() {
+#ifdef USE_TINYUSB
   const size_t capacity = JSON_OBJECT_SIZE(12) + 90;
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
@@ -93,9 +94,11 @@ void parse_usb_serial() {
   writeDeviceData();
   resetDisplay();
   send_usb_serial();
+#endif
 }
 
 void send_usb_serial() {
+#ifdef USE_TINYUSB
   const size_t capacity = JSON_OBJECT_SIZE(11) + 90;
   DynamicJsonDocument doc(capacity);
 
@@ -112,4 +115,5 @@ void send_usb_serial() {
   char output[256];
   serializeJson(doc, output);
   usb_web.println(output);
+#endif
 }

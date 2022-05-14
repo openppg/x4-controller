@@ -22,7 +22,9 @@
 #include <Thread.h>   // run tasks at different intervals
 #include <TimeLib.h>  // convert time to hours mins etc
 #include <Wire.h>
-#include "Adafruit_TinyUSB.h"
+#ifdef USE_TINYUSB
+  #include "Adafruit_TinyUSB.h"
+#endif
 
 #ifndef RP_PIO
   #include <Adafruit_SleepyDog.h>  // watchdog
@@ -43,8 +45,10 @@ Adafruit_ST7735 display = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 Adafruit_DRV2605 vibe;
 
 // USB WebUSB object
+#ifdef USE_TINYUSB
 Adafruit_USBD_WebUSB usb_web;
 WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
+#endif
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
@@ -78,13 +82,20 @@ unsigned int last_throttle = 0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
-  usb_web.begin();
-  usb_web.setLandingPage(&landingPage);
-  usb_web.setLineStateCallback(line_state_callback);
+  #if defined(RP_PIO) && defined(USE_TINYUSB)
+    // Manual begin() is required on core without built-in support for TinyUSB such as mbed rp2040
+    TinyUSB_Device_Init(0);
+  #endif
 
   Serial.begin(115200);
   SerialESC.begin(ESC_BAUD_RATE);
   SerialESC.setTimeout(ESC_TIMEOUT);
+
+#ifdef USE_TINYUSB
+  usb_web.begin();
+  usb_web.setLandingPage(&landingPage);
+  usb_web.setLineStateCallback(line_state_callback);
+#endif
 
   //Serial.print(F("Booting up (USB) V"));
   //Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
@@ -153,7 +164,9 @@ void loop() {
 #endif
 
   // from WebUSB to both Serial & webUSB
+#ifdef USE_TINYUSB
   if (!armed && usb_web.available()) parse_usb_serial();
+#endif
 
   threads.run();
 }
