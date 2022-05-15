@@ -3,6 +3,7 @@
 
 // ** Logic for EEPROM **
 # define EEPROM_OFFSET 0
+
 // read saved data from EEPROM
 void refreshDeviceData() {
   uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
@@ -20,22 +21,10 @@ void refreshDeviceData() {
       return;
     }
   #elif RP_PIO
-    // read a byte from the current address of the EEPROM
-    byte value;
-    for (int i = EEPROM_OFFSET; i < sizeof(deviceData); i++) {
-      value = EEPROM.read(i);
-
-      Serial.print(i);
-      Serial.print("\t");
-      Serial.println(value, HEX);
-      tempBuf[i] = value;
-    }
-    //EEPROM.get(EEPROM_OFFSET, tempBuf);
+    // TODO check crc
+    EEPROM.get(EEPROM_OFFSET, tempBuf);
     memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
-
   #endif
-  Serial.print("screen rotation: ");
-  Serial.println(deviceData.screen_rotation);
 }
 
 // write to EEPROM
@@ -43,7 +32,7 @@ void writeDeviceData() {
   deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
   #ifdef M0_PIO
     if (0 != eep.write(EEPROM_OFFSET, (uint8_t*)&deviceData, sizeof(deviceData))) {
-      Serial.println(F("error writing EEPROM"));
+      //Serial.println(F("error writing EEPROM"));
     }
   #elif RP_PIO
     EEPROM.put(EEPROM_OFFSET, deviceData);
