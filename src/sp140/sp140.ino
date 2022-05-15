@@ -132,15 +132,13 @@ void setup() {
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
 #else
   watchdog_enable(8000, 1);
+  EEPROM.begin(512);
 #endif
-
   refreshDeviceData();
-
   setup140();
 #ifdef M0_PIO
   Watchdog.reset();
 #endif
-
   initDisplay();
 }
 
@@ -150,9 +148,6 @@ void setup140() {
 
   initBuzz();
   modeSwitch();
-#ifdef RP_PIO
-  EEPROM.begin(512);
-#endif
 
   initBmp();
   getAltitudeM();  // throw away first value
@@ -273,6 +268,7 @@ void resetDisplay() {
 }
 
 // read throttle and send to hub
+// read throttle
 void handleThrottle() {
   if (!armed) return;  // safe
 

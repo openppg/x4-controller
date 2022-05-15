@@ -2,71 +2,67 @@
 // OpenPPG
 
 // ** Logic for EEPROM **
-
+# define EEPROM_OFFSET 0
+// read saved data from EEPROM
 void refreshDeviceData() {
-  #ifdef M0_PIO
-    static int offset = 0;
+  uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
+  uint8_t tempBuf[sizeof(deviceData)];
 
-    uint8_t tempBuf[sizeof(deviceData)];
-    if (0 != eep.read(offset, tempBuf, sizeof(deviceData))) {
+  #ifdef M0_PIO
+    if (0 != eep.read(EEPROM_OFFSET, tempBuf, sizeof(deviceData))) {
       //Serial.println(F("error reading EEPROM"));
     }
     memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
-    uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
       // TODO: add upgrade complete melody
     if (crc != deviceData.crc) {
       //Serial.print(F("Memory CRC mismatch. Resetting"));
       resetDeviceData();
       return;
     }
-  #else
-    resetDeviceData();
-    // TODO read from emulated eeprom
-    // https://github.com/earlephilhower/arduino-pico/blob/master/libraries/EEPROM/examples/eeprom_read/eeprom_read.ino
+  #elif RP_PIO
+    // read a byte from the current address of the EEPROM
+    byte value;
+    for (int i = EEPROM_OFFSET; i < sizeof(deviceData); i++) {
+      value = EEPROM.read(i);
+
+      Serial.print(i);
+      Serial.print("\t");
+      Serial.println(value, HEX);
+      tempBuf[i] = value;
+    }
+    //EEPROM.get(EEPROM_OFFSET, tempBuf);
+    memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
+
   #endif
+  Serial.print("screen rotation: ");
+  Serial.println(deviceData.screen_rotation);
 }
 
+// write to EEPROM
 void writeDeviceData() {
-  int offset = 0;
   deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
   #ifdef M0_PIO
-
-
-    if (0 != eep.write(offset, (uint8_t*)&deviceData, sizeof(deviceData))) {
+    if (0 != eep.write(EEPROM_OFFSET, (uint8_t*)&deviceData, sizeof(deviceData))) {
       Serial.println(F("error writing EEPROM"));
     }
   #elif RP_PIO
-    // https://github.com/earlephilhower/arduino-pico/blob/master/libraries/EEPROM/examples/eeprom_write/eeprom_write.ino
-    uint8_t device_bytes[sizeof(deviceData)];
-    memcpy(device_bytes, &deviceData, sizeof(deviceData));
-    for (int i = offset; i < sizeof(device_bytes); i++) {
-      Serial.print(device_bytes[i], HEX);
-      Serial.print(" ");
-      // TODO save to eeprom
-      //EEPROM.write(i, device_bytes);
-    }
+    EEPROM.put(EEPROM_OFFSET, deviceData);
+    EEPROM.commit();
   #endif
 }
 
-
+// reset eeprom and deviceData to factory defaults
 void resetDeviceData() {
-  #ifdef RP_PIO
-    EEPROM.begin(512);
-    // write a 0 to all 512 bytes of the EEPROM
-    for (int i = 0; i < 512; i++) { EEPROM.write(i, 0); }
-    EEPROM.end();
-  #endif
-
-    deviceData = STR_DEVICE_DATA_140_V1();
-    deviceData.version_major = VERSION_MAJOR;
-    deviceData.version_minor = VERSION_MINOR;
-    deviceData.screen_rotation = 3;
-    deviceData.sea_pressure = DEFAULT_SEA_PRESSURE;  // 1013.25 mbar
-    deviceData.metric_temp = true;
-    deviceData.metric_alt = true;
-    deviceData.performance_mode = 0;
-    deviceData.batt_size = 4000;
-    writeDeviceData();
+  deviceData = STR_DEVICE_DATA_140_V1();
+  deviceData.version_major = VERSION_MAJOR;
+  deviceData.version_minor = VERSION_MINOR;
+  deviceData.screen_rotation = 3;
+  deviceData.sea_pressure = DEFAULT_SEA_PRESSURE;  // 1013.25 mbar
+  deviceData.metric_temp = true;
+  deviceData.metric_alt = true;
+  deviceData.performance_mode = 0;
+  deviceData.batt_size = 4000;
+  writeDeviceData();
 }
 
 // ** Logic for WebUSB **
