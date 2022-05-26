@@ -2,48 +2,56 @@
 // OpenPPG
 
 // ** Logic for EEPROM **
+# define EEPROM_OFFSET 0 // Address of first byte of EEPROM
 
+// read saved data from EEPROM
 void refreshDeviceData() {
-  static int offset = 0;
-
-  uint8_t tempBuf[sizeof(deviceData)];
-  if (0 != eep.read(offset, tempBuf, sizeof(deviceData))) {
-    //Serial.println(F("error reading EEPROM"));
-  }
-  memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
   uint16_t crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
-    // TODO: add upgrade complete melody
+  uint8_t tempBuf[sizeof(deviceData)];
+
+  #ifdef M0_PIO
+    if (0 != eep.read(EEPROM_OFFSET, tempBuf, sizeof(deviceData))) {
+      // Serial.println(F("error reading EEPROM"));
+    }
+  #elif RP_PIO
+    EEPROM.get(EEPROM_OFFSET, tempBuf);
+  #endif
+
+  memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
   if (crc != deviceData.crc) {
-    //Serial.print(F("Memory CRC mismatch. Resetting"));
+    // Serial.print(F("Memory CRC mismatch. Resetting"));
     resetDeviceData();
-    return;
   }
 }
 
-void resetDeviceData() {
-    deviceData = STR_DEVICE_DATA_140_V1();
-    deviceData.version_major = VERSION_MAJOR;
-    deviceData.version_minor = VERSION_MINOR;
-    deviceData.screen_rotation = 3;
-    deviceData.sea_pressure = DEFAULT_SEA_PRESSURE;  // 1013.25 mbar
-    deviceData.metric_temp = true;
-    deviceData.metric_alt = true;
-    deviceData.performance_mode = 0;
-    deviceData.batt_size = 4000;
-    writeDeviceData();
-}
-
+// write to EEPROM
 void writeDeviceData() {
   deviceData.crc = crc16((uint8_t*)&deviceData, sizeof(deviceData) - 2);
-  int offset = 0;
+  #ifdef M0_PIO
+    if (0 != eep.write(EEPROM_OFFSET, (uint8_t*)&deviceData, sizeof(deviceData))) {
+      //Serial.println(F("error writing EEPROM"));
+    }
+  #elif RP_PIO
+    EEPROM.put(EEPROM_OFFSET, deviceData);
+    EEPROM.commit();
+  #endif
+}
 
-  if (0 != eep.write(offset, (uint8_t*)&deviceData, sizeof(deviceData))) {
-    Serial.println(F("error writing EEPROM"));
-  }
+// reset eeprom and deviceData to factory defaults
+void resetDeviceData() {
+  deviceData = STR_DEVICE_DATA_140_V1();
+  deviceData.version_major = VERSION_MAJOR;
+  deviceData.version_minor = VERSION_MINOR;
+  deviceData.screen_rotation = 3;
+  deviceData.sea_pressure = DEFAULT_SEA_PRESSURE;  // 1013.25 mbar
+  deviceData.metric_temp = true;
+  deviceData.metric_alt = true;
+  deviceData.performance_mode = 0;
+  deviceData.batt_size = 4000;
+  writeDeviceData();
 }
 
 // ** Logic for WebUSB **
-
 void line_state_callback(bool connected) {
   digitalWrite(LED_2, connected);
 
@@ -52,6 +60,7 @@ void line_state_callback(bool connected) {
 
 // customized for sp140
 void parse_usb_serial() {
+#ifdef USE_TINYUSB
   const size_t capacity = JSON_OBJECT_SIZE(12) + 90;
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, usb_web);
@@ -74,9 +83,11 @@ void parse_usb_serial() {
   writeDeviceData();
   resetDisplay();
   send_usb_serial();
+#endif
 }
 
 void send_usb_serial() {
+#ifdef USE_TINYUSB
   const size_t capacity = JSON_OBJECT_SIZE(11) + 90;
   DynamicJsonDocument doc(capacity);
 
@@ -93,4 +104,5 @@ void send_usb_serial() {
   char output[256];
   serializeJson(doc, output);
   usb_web.println(output);
+#endif
 }

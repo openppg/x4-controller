@@ -2,14 +2,17 @@
 // OpenPPG
 
 #include "../../lib/crc.c"       // packet error checking
-#include "../../inc/sp140/config.h"          // device config
+#ifdef M0_PIO
+  #include "../../inc/sp140/m0-config.h"          // device config
+#else
+  #include "../../inc/sp140/rp2040-config.h"         // device config
+#endif
+
 #include "../../inc/sp140/structs.h"         // data structs
 #include <AceButton.h>           // button clicks
-#include "Adafruit_TinyUSB.h"
 #include <Adafruit_BMP3XX.h>     // barometer
 #include <Adafruit_DRV2605.h>    // haptic controller
 #include <Adafruit_ST7735.h>     // screen
-#include <Adafruit_SleepyDog.h>  // watchdog
 #include <ArduinoJson.h>
 #include <CircularBuffer.h>      // smooth out readings
 #include <ResponsiveAnalogRead.h>  // smoothing for throttle
@@ -19,7 +22,18 @@
 #include <Thread.h>   // run tasks at different intervals
 #include <TimeLib.h>  // convert time to hours mins etc
 #include <Wire.h>
-#include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
+#ifdef USE_TINYUSB
+  #include "Adafruit_TinyUSB.h"
+#endif
+
+#ifdef M0_PIO
+  #include <Adafruit_SleepyDog.h>  // watchdog
+  #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
+#else
+  // rp2040 specific libraries here
+  #include <EEPROM.h>
+  #include "hardware/watchdog.h"
+#endif
 
 #include <Fonts/FreeSansBold12pt7b.h>
 
@@ -31,13 +45,18 @@ Adafruit_ST7735 display = Adafruit_ST7735(TFT_CS, TFT_DC, TFT_RST);
 Adafruit_DRV2605 vibe;
 
 // USB WebUSB object
+#ifdef USE_TINYUSB
 Adafruit_USBD_WebUSB usb_web;
 WEBUSB_URL_DEF(landingPage, 1 /*https*/, "config.openppg.com");
+#endif
 
 ResponsiveAnalogRead pot(THROTTLE_PIN, false);
 AceButton button_top(BUTTON_TOP);
 ButtonConfig* buttonConfig = button_top.getButtonConfig();
-extEEPROM eep(kbits_64, 1, 64);
+#ifdef M0_PIO
+  extEEPROM eep(kbits_64, 1, 64);
+#endif
+
 CircularBuffer<float, 50> voltageBuffer;
 CircularBuffer<int, 8> potBuffer;
 
@@ -63,20 +82,27 @@ unsigned int last_throttle = 0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
+  #if defined(RP_PIO) && defined(USE_TINYUSB)
+    // Manual begin() is required on core without built-in support for TinyUSB such as mbed rp2040
+    TinyUSB_Device_Init(0);
+  #endif
+
+  Serial.begin(115200);
+  SerialESC.begin(ESC_BAUD_RATE);
+  SerialESC.setTimeout(ESC_TIMEOUT);
+
+#ifdef USE_TINYUSB
   usb_web.begin();
   usb_web.setLandingPage(&landingPage);
   usb_web.setLineStateCallback(line_state_callback);
-
-  Serial.begin(115200);
-  Serial5.begin(ESC_BAUD_RATE);
-  Serial5.setTimeout(ESC_TIMEOUT);
+#endif
 
   //Serial.print(F("Booting up (USB) V"));
   //Serial.print(VERSION_MAJOR + "." + VERSION_MINOR);
 
   pinMode(LED_SW, OUTPUT);   // set up the internal LED2 pin
 
-  analogReadResolution(12);     // M0 chip provides 12bit resolution
+  analogReadResolution(12);     // M0 family chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   unsigned int startup_vibes[] = { 27, 27, 0 };
   runVibe(startup_vibes, 3);
@@ -87,7 +113,7 @@ void setup() {
   ledBlinkThread.setInterval(500);
 
   displayThread.onRun(updateDisplay);
-  displayThread.setInterval(200);
+  displayThread.setInterval(250);
 
   buttonThread.onRun(checkButtons);
   buttonThread.setInterval(5);
@@ -101,11 +127,18 @@ void setup() {
   counterThread.onRun(trackPower);
   counterThread.setInterval(250);
 
+#ifdef M0_PIO
   Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
+#else
+  watchdog_enable(8000, 1);
+  EEPROM.begin(512);
+#endif
   refreshDeviceData();
   setup140();
+#ifdef M0_PIO
   Watchdog.reset();
+#endif
   initDisplay();
 }
 
@@ -115,6 +148,7 @@ void setup140() {
 
   initBuzz();
   modeSwitch();
+
   initBmp();
   getAltitudeM();  // throw away first value
   initVibe();
@@ -122,9 +156,17 @@ void setup140() {
 
 // main loop - everything runs in threads
 void loop() {
+#ifdef M0_PIO
   Watchdog.reset();
+#else
+  watchdog_update();
+#endif
+
   // from WebUSB to both Serial & webUSB
-  if (usb_web.available()) parse_usb_serial();
+#ifdef USE_TINYUSB
+  if (!armed && usb_web.available()) parse_usb_serial();
+#endif
+
   threads.run();
 }
 
@@ -226,6 +268,7 @@ void resetDisplay() {
 }
 
 // read throttle and send to hub
+// read throttle
 void handleThrottle() {
   if (!armed) return;  // safe
 
