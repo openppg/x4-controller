@@ -113,7 +113,7 @@ void setup() {
   ledBlinkThread.setInterval(500);
 
   displayThread.onRun(updateDisplay);
-  displayThread.setInterval(500);
+  displayThread.setInterval(250);
 
   buttonThread.onRun(checkButtons);
   buttonThread.setInterval(5);
