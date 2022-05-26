@@ -2,7 +2,7 @@
 // OpenPPG
 
 // ** Logic for EEPROM **
-# define EEPROM_OFFSET 0
+# define EEPROM_OFFSET 0 // Address of first byte of EEPROM
 
 // read saved data from EEPROM
 void refreshDeviceData() {
@@ -11,20 +11,17 @@ void refreshDeviceData() {
 
   #ifdef M0_PIO
     if (0 != eep.read(EEPROM_OFFSET, tempBuf, sizeof(deviceData))) {
-      //Serial.println(F("error reading EEPROM"));
-    }
-    memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
-      // TODO: add upgrade complete melody
-    if (crc != deviceData.crc) {
-      //Serial.print(F("Memory CRC mismatch. Resetting"));
-      resetDeviceData();
-      return;
+      // Serial.println(F("error reading EEPROM"));
     }
   #elif RP_PIO
-    // TODO check crc
     EEPROM.get(EEPROM_OFFSET, tempBuf);
-    memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
   #endif
+
+  memcpy((uint8_t*)&deviceData, tempBuf, sizeof(deviceData));
+  if (crc != deviceData.crc) {
+    // Serial.print(F("Memory CRC mismatch. Resetting"));
+    resetDeviceData();
+  }
 }
 
 // write to EEPROM
