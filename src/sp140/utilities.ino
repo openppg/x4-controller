@@ -149,7 +149,10 @@ void displayMeta(){
   display.setFont();
   display.setTextSize(2);
   display.setCursor(60, 60);
-  display.println("v" + String(VERSION_MAJOR) + "." + String(VERSION_MINOR));
+  display.print("v" + String(VERSION_MAJOR) + "." + String(VERSION_MINOR));
+#ifdef RP_PIO
+  display.print("R");
+#endif
   display.setCursor(54, 90);
   displayTime(deviceData.armed_time);
 }
