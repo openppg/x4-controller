@@ -124,7 +124,7 @@ void initBmp() {
 
 // initialize the buzzer
 void initBuzz() {
-  pinMode(BUZ_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
 }
 
 // initialize the vibration motor

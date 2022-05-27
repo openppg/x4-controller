@@ -544,7 +544,7 @@ void setCruise() {
     display.setCursor(70, 60);
     display.setTextSize(1);
     display.setTextColor(RED);
-    display.print("CRUISE");
+    display.print(F("CRUISE"));
 
     unsigned int notify_melody[] = { 900, 900 };
     playMelody(notify_melody, 2);
@@ -559,24 +559,25 @@ void setCruise() {
 void removeCruise(bool alert) {
   cruising = false;
 
-  if (armed) {
-    bottom_bg_color = ARMED_BG_COLOR;
-  } else {
-    bottom_bg_color = DEFAULT_BG_COLOR;
-  }
+  // update bottom bar
+  bottom_bg_color = DEFAULT_BG_COLOR;
+  if (armed) { bottom_bg_color = ARMED_BG_COLOR; }
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
 
+  // update text status
   display.setCursor(70, 60);
   display.setTextSize(1);
   display.setTextColor(DEFAULT_BG_COLOR);
-  display.print("CRUISE");
+  display.print(F("CRUISE"));  // overwrite in bg color to remove
+  display.setTextColor(BLACK);
+
   if (alert) {
     vibrateNotify();
 
     if (ENABLE_BUZ) {
-      tone(BUZ_PIN, 500, 100);
+      tone(BUZZER_PIN, 500, 100);
       delay(250);
-      tone(BUZ_PIN, 500, 100);
+      tone(BUZZER_PIN, 500, 100);
     }
   }
 }
