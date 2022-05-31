@@ -191,12 +191,12 @@ void disarmSystem() {
   removeCruise(false);
 
   ledBlinkThread.enabled = true;
-  updateDisplay();
   runVibe(disarm_vibes, 3);
   playMelody(disarm_melody, 3);
 
   bottom_bg_color = DEFAULT_BG_COLOR;
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
+  updateDisplay();
 
   // update armed_time
   refreshDeviceData();
