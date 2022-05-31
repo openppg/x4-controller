@@ -77,7 +77,7 @@ bool playMelody(unsigned int melody[], int siz) {
   for (int thisNote = 0; thisNote < siz; thisNote++) {
     // quarter note = 1000 / 4, eigth note = 1000/8, etc.
     int noteDuration = 125;
-    tone(BUZZER_PIN, melody[thisNote], noteDuration);
+    tone(BUZZER_PIN, melody[thisNote]);
     delay(noteDuration);  // to distinguish the notes, delay between them
   }
   noTone(BUZZER_PIN);
