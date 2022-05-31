@@ -145,7 +145,6 @@ void modeSwitch() {
   } else {
     deviceData.performance_mode = 0;
   }
-  Serial.println("switching modes");
   writeDeviceData();
   unsigned int notify_melody[] = { 900, 1976 };
   playMelody(notify_melody, 2);
@@ -153,14 +152,13 @@ void modeSwitch() {
 
 void prepareSerialRead() {  // TODO needed?
   while (SerialESC.available() > 0) {
-    byte t = SerialESC.read();
+    SerialESC.read();
   }
 }
 
 void handleTelemetry() {
   prepareSerialRead();
   SerialESC.readBytes(escData, ESC_DATA_SIZE);
-  // enforceChecksum();
   if (enforceFletcher16()) {
     parseData();
   }
