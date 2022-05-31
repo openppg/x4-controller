@@ -284,7 +284,7 @@ void handleThrottle() {
     if (cruisingSecs >= CRUISE_GRACE && potRaw > POT_SAFE_LEVEL) {
       removeCruise(true);  // deactivate cruise
     } else {
-      throttlePWM = mapf(cruisedPotVal, 0, 4095, ESC_MIN_PWM, maxPWM);
+      throttlePWM = mapd(cruisedPotVal, 0, 4095, ESC_MIN_PWM, maxPWM);
     }
   } else {
     // no need to save & smooth throttle etc when in cruise mode (& pot == 0)
@@ -306,7 +306,7 @@ void handleThrottle() {
       maxPWM = ESC_MAX_PWM;
     }
     // mapping val to min and max pwm
-    throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
+    throttlePWM = mapd(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
   }
 
   esc.writeMicroseconds(throttlePWM);  // using val as the signal to esc

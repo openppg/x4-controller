@@ -2,7 +2,7 @@
 // OpenPPG
 
 // ** Logic for EEPROM **
-# define EEPROM_OFFSET 0 // Address of first byte of EEPROM
+# define EEPROM_OFFSET 0  // Address of first byte of EEPROM
 
 // read saved data from EEPROM
 void refreshDeviceData() {
@@ -48,7 +48,7 @@ void resetDeviceData() {
   deviceData.metric_temp = true;
   deviceData.metric_alt = true;
   deviceData.performance_mode = 0;
-  deviceData.batt_size = 4000; // 4kw
+  deviceData.batt_size = 4000;  // 4kw
   writeDeviceData();
 }
 

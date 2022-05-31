@@ -230,7 +230,7 @@ void parseData() {
   // Serial.print(F("Volts: "));
   // Serial.println(telemetryData.volts);
 
-  // batteryPercent = mapf(telemetryData.volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0); // flat line
+  // batteryPercent = mapd(telemetryData.volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0); // flat line
 
   _temperatureC = word(escData[3], escData[2]);
   telemetryData.temperatureC = _temperatureC/100.0;

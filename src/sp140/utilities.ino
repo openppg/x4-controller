@@ -6,17 +6,13 @@
 #ifdef M0_PIO
 
 #define DBL_TAP_PTR ((volatile uint32_t *)(HMCRAMC0_ADDR + HMCRAMC0_SIZE - 4))
-#define DBL_TAP_MAGIC 0xf01669ef // Randomly selected, adjusted to have first and last bit set
+#define DBL_TAP_MAGIC 0xf01669ef  // Randomly selected, adjusted to have first and last bit set
 #define DBL_TAP_MAGIC_QUICK_BOOT 0xf02669ef
-
-#else
-
-#pragma message "Running RP2040 Build"
 
 #endif
 
-// Map float values
-double mapf(double x, double in_min, double in_max, double out_min, double out_max) {
+// Map double values
+double mapd(double x, double in_min, double in_max, double out_min, double out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
@@ -121,8 +117,8 @@ String chipId() {
   sprintf(id_buf, "%8x%8x%8x%8x", val1, val2, val3, val4);
   return String(id_buf);
 }
-#ifdef M0_PIO
 
+#ifdef M0_PIO
 // reboot/reset controller
 void(* resetFunc) (void) = 0;  // declare reset function @ address 0
 
@@ -132,16 +128,16 @@ void rebootBootloader() {
 
   resetFunc();
 }
+
 #else
 
-#pragma message "Running RP2040 Build"
 // reboot/reset controller
 void rebootBootloader() {
   //TinyUSB_Port_EnterDFU();
 }
 #endif
 
-void displayMeta(){
+void displayMeta() {
   display.setFont(&FreeSansBold12pt7b);
   display.setTextColor(BLACK);
   display.setCursor(25, 30);
