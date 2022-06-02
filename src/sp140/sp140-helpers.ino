@@ -7,7 +7,7 @@ void handleFlightTime() {
     throttled = false;
   } else { // armed
     // start the timer when armed and throttle is above the threshold
-    if (throttlePWM > 1300 && throttledFlag) {
+    if (throttlePWM > 1250 && throttledFlag) {
       throttledAtMillis = millis();
       throttledFlag = false;
       throttled = true;
