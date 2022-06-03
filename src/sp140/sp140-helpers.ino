@@ -7,7 +7,7 @@ void handleFlightTime() {
     throttled = false;
   } else { // armed
     // start the timer when armed and throttle is above the threshold
-    if (throttlePWM > 1300 && throttledFlag) {
+    if (throttlePWM > 1250 && throttledFlag) {
       throttledAtMillis = millis();
       throttledFlag = false;
       throttled = true;
@@ -124,7 +124,7 @@ void initBmp() {
 
 // initialize the buzzer
 void initBuzz() {
-  pinMode(BUZ_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
 }
 
 // initialize the vibration motor
@@ -145,7 +145,6 @@ void modeSwitch() {
   } else {
     deviceData.performance_mode = 0;
   }
-  Serial.println("switching modes");
   writeDeviceData();
   unsigned int notify_melody[] = { 900, 1976 };
   playMelody(notify_melody, 2);
@@ -153,14 +152,13 @@ void modeSwitch() {
 
 void prepareSerialRead() {  // TODO needed?
   while (SerialESC.available() > 0) {
-    byte t = SerialESC.read();
+    SerialESC.read();
   }
 }
 
 void handleTelemetry() {
   prepareSerialRead();
   SerialESC.readBytes(escData, ESC_DATA_SIZE);
-  // enforceChecksum();
   if (enforceFletcher16()) {
     parseData();
   }
@@ -230,7 +228,7 @@ void parseData() {
   // Serial.print(F("Volts: "));
   // Serial.println(telemetryData.volts);
 
-  // batteryPercent = mapf(telemetryData.volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0); // flat line
+  // batteryPercent = mapd(telemetryData.volts, BATT_MIN_V, BATT_MAX_V, 0.0, 100.0); // flat line
 
   _temperatureC = word(escData[3], escData[2]);
   telemetryData.temperatureC = _temperatureC/100.0;

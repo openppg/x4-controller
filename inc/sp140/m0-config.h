@@ -16,7 +16,6 @@
 #define SerialESC  Serial5  // ESC UART connection
 
 // SP140
-#define BUZ_PIN 5
 #define POT_PIN A0
 #define TFT_RST 9
 #define TFT_CS 10

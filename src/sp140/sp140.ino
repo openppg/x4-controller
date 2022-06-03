@@ -191,12 +191,12 @@ void disarmSystem() {
   removeCruise(false);
 
   ledBlinkThread.enabled = true;
-  updateDisplay();
   runVibe(disarm_vibes, 3);
   playMelody(disarm_melody, 3);
 
   bottom_bg_color = DEFAULT_BG_COLOR;
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
+  updateDisplay();
 
   // update armed_time
   refreshDeviceData();
@@ -284,7 +284,7 @@ void handleThrottle() {
     if (cruisingSecs >= CRUISE_GRACE && potRaw > POT_SAFE_LEVEL) {
       removeCruise(true);  // deactivate cruise
     } else {
-      throttlePWM = mapf(cruisedPotVal, 0, 4095, ESC_MIN_PWM, maxPWM);
+      throttlePWM = mapd(cruisedPotVal, 0, 4095, ESC_MIN_PWM, maxPWM);
     }
   } else {
     // no need to save & smooth throttle etc when in cruise mode (& pot == 0)
@@ -306,7 +306,7 @@ void handleThrottle() {
       maxPWM = ESC_MAX_PWM;
     }
     // mapping val to min and max pwm
-    throttlePWM = mapf(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
+    throttlePWM = mapd(potLvl, 0, 4095, ESC_MIN_PWM, maxPWM);
   }
 
   esc.writeMicroseconds(throttlePWM);  // using val as the signal to esc
@@ -544,7 +544,7 @@ void setCruise() {
     display.setCursor(70, 60);
     display.setTextSize(1);
     display.setTextColor(RED);
-    display.print("CRUISE");
+    display.print(F("CRUISE"));
 
     unsigned int notify_melody[] = { 900, 900 };
     playMelody(notify_melody, 2);
@@ -559,24 +559,25 @@ void setCruise() {
 void removeCruise(bool alert) {
   cruising = false;
 
-  if (armed) {
-    bottom_bg_color = ARMED_BG_COLOR;
-  } else {
-    bottom_bg_color = DEFAULT_BG_COLOR;
-  }
+  // update bottom bar
+  bottom_bg_color = DEFAULT_BG_COLOR;
+  if (armed) { bottom_bg_color = ARMED_BG_COLOR; }
   display.fillRect(0, 93, 160, 40, bottom_bg_color);
 
+  // update text status
   display.setCursor(70, 60);
   display.setTextSize(1);
   display.setTextColor(DEFAULT_BG_COLOR);
-  display.print("CRUISE");
+  display.print(F("CRUISE"));  // overwrite in bg color to remove
+  display.setTextColor(BLACK);
+
   if (alert) {
     vibrateNotify();
 
     if (ENABLE_BUZ) {
-      tone(BUZ_PIN, 500, 100);
+      tone(BUZZER_PIN, 500, 100);
       delay(250);
-      tone(BUZ_PIN, 500, 100);
+      tone(BUZZER_PIN, 500, 100);
     }
   }
 }
