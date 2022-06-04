@@ -29,9 +29,7 @@
 #ifdef M0_PIO
   #include <Adafruit_SleepyDog.h>  // watchdog
   #include <extEEPROM.h>  // https://github.com/PaoloP74/extEEPROM
-#endif
-
-#ifdef RP2040_PIO
+#elif RP_PIO
   // rp2040 specific libraries here
   #include <EEPROM.h>
   #include "hardware/watchdog.h"
@@ -132,8 +130,7 @@ void setup() {
 #ifdef M0_PIO
   Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
-#endif
-#ifdef RP2040_PIO
+#elif RP_PIO
   watchdog_enable(8000, 1);
   EEPROM.begin(512);
 #endif
@@ -161,9 +158,7 @@ void setup140() {
 void loop() {
 #ifdef M0_PIO
   Watchdog.reset();
-#endif
-
-#ifdef RP2040_PIO
+#elif RP_PIO
   watchdog_update();
 #endif
 
