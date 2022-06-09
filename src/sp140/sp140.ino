@@ -172,15 +172,16 @@ void loop() {
 
 //#ifdef RP_PIO
 void setup1() {
-  delay(5000);
-  Serial.printf("C1: Red leader standing by...\n");
 }
 
 void loop1() {
-  Serial.printf("C1: Stay on target...\n");
-  delay(500);
   if (rp2040.fifo.available() > 1) {
-    rp2040.fifo.pop();
+    STR_NOTE noteData;
+    uint32_t tone_msg = rp2040.fifo.pop();
+    memcpy((uint32_t*)&noteData, &tone_msg, sizeof(noteData));
+    tone(BUZZER_PIN, noteData.freq);
+    delay(noteData.duration);
+    noTone(BUZZER_PIN);
   }
 }
 //#endif
