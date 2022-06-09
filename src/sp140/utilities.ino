@@ -71,7 +71,7 @@ bool runVibe(unsigned int sequence[], int siz) {
   return true;
 }
 
-bool playMelody(unsigned int melody[], int siz) {
+bool playMelody(uint16_t melody[], int siz) {
   if (!ENABLE_BUZ) { return false; }
 
   for (int thisNote = 0; thisNote < siz; thisNote++) {
@@ -85,7 +85,7 @@ bool playMelody(unsigned int melody[], int siz) {
 }
 
 void handleArmFail() {
-  unsigned int arm_fail_melody[] = { 820, 640 };
+  uint16_t arm_fail_melody[] = { 820, 640 };
   playMelody(arm_fail_melody, 2);
 }
 

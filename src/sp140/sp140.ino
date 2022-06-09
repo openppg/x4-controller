@@ -170,6 +170,21 @@ void loop() {
   threads.run();
 }
 
+//#ifdef RP_PIO
+void setup1() {
+  delay(5000);
+  Serial.printf("C1: Red leader standing by...\n");
+}
+
+void loop1() {
+  Serial.printf("C1: Stay on target...\n");
+  delay(500);
+  if (rp2040.fifo.available() > 1) {
+    rp2040.fifo.pop();
+  }
+}
+//#endif
+
 void checkButtons() {
   button_top.check();
 }
@@ -184,7 +199,7 @@ void disarmSystem() {
   potBuffer.clear();
   prevPotLvl = 0;
 
-  unsigned int disarm_melody[] = { 2093, 1976, 880 };
+  u_int16_t disarm_melody[] = { 2093, 1976, 880 };
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
   armed = false;
@@ -314,7 +329,7 @@ void handleThrottle() {
 
 // get the PPG ready to fly
 bool armSystem() {
-  unsigned int arm_melody[] = { 1760, 1976, 2093 };
+  uint16_t arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 70, 33, 0 };
 
   armed = true;
@@ -546,7 +561,7 @@ void setCruise() {
     display.setTextColor(RED);
     display.print(F("CRUISE"));
 
-    unsigned int notify_melody[] = { 900, 900 };
+    uint16_t notify_melody[] = { 900, 900 };
     playMelody(notify_melody, 2);
 
     bottom_bg_color = YELLOW;
