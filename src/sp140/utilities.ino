@@ -76,11 +76,14 @@ bool playMelody(uint16_t melody[], int siz) {
 
   for (int thisNote = 0; thisNote < siz; thisNote++) {
     // quarter note = 1000 / 4, eigth note = 1000/8, etc.
-    int noteDuration = 125;
-    tone(BUZZER_PIN, melody[thisNote]);
-    delay(noteDuration);  // to distinguish the notes, delay between them
+    STR_NOTE noteData;
+    uint32_t note_msg;
+    noteData.duration = 125;
+    noteData.freq = melody[thisNote];
+
+    memcpy((uint32_t*)&note_msg, &noteData, sizeof(noteData));
+    rp2040.fifo.push_nb(note_msg);
   }
-  noTone(BUZZER_PIN);
   return true;
 }
 

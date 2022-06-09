@@ -170,21 +170,21 @@ void loop() {
   threads.run();
 }
 
-//#ifdef RP_PIO
+#ifdef RP_PIO
 void setup1() {
 }
 
 void loop1() {
-  if (rp2040.fifo.available() > 1) {
+  if (rp2040.fifo.available() > 0) {
     STR_NOTE noteData;
-    uint32_t tone_msg = rp2040.fifo.pop();
-    memcpy((uint32_t*)&noteData, &tone_msg, sizeof(noteData));
+    uint32_t note_msg = rp2040.fifo.pop();
+    memcpy((uint32_t*)&noteData, &note_msg, sizeof(noteData));
     tone(BUZZER_PIN, noteData.freq);
     delay(noteData.duration);
     noTone(BUZZER_PIN);
   }
 }
-//#endif
+#endif
 
 void checkButtons() {
   button_top.check();
