@@ -171,8 +171,7 @@ void loop() {
 }
 
 #ifdef RP_PIO
-void setup1() {
-}
+void setup1() {}
 
 void loop1() {
   if (rp2040.fifo.available() > 0) {
