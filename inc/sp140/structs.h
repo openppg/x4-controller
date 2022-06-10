@@ -28,6 +28,11 @@ typedef struct {
   uint16_t unused;     // for future use
   uint16_t crc;        // error check
 }STR_DEVICE_DATA_140_V1;
+
+typedef struct {
+  uint16_t freq;
+  uint16_t duration;
+}STR_NOTE;
 #pragma pack(pop)
 
 static STR_ESC_TELEMETRY_140 telemetryData;

@@ -170,6 +170,23 @@ void loop() {
   threads.run();
 }
 
+#ifdef RP_PIO
+// set up the second core. Nothing to do for now
+void setup1() {}
+
+// automatically runs on the second core of the RP2040
+void loop1() {
+  if (rp2040.fifo.available() > 0) {
+    STR_NOTE noteData;
+    uint32_t note_msg = rp2040.fifo.pop();  // get note from fifo queue
+    memcpy((uint32_t*)&noteData, &note_msg, sizeof(noteData));
+    tone(BUZZER_PIN, noteData.freq);
+    delay(noteData.duration);
+    noTone(BUZZER_PIN);
+  }
+}
+#endif
+
 void checkButtons() {
   button_top.check();
 }
@@ -184,7 +201,7 @@ void disarmSystem() {
   potBuffer.clear();
   prevPotLvl = 0;
 
-  unsigned int disarm_melody[] = { 2093, 1976, 880 };
+  u_int16_t disarm_melody[] = { 2093, 1976, 880 };
   unsigned int disarm_vibes[] = { 70, 33, 0 };
 
   armed = false;
@@ -314,7 +331,7 @@ void handleThrottle() {
 
 // get the PPG ready to fly
 bool armSystem() {
-  unsigned int arm_melody[] = { 1760, 1976, 2093 };
+  uint16_t arm_melody[] = { 1760, 1976, 2093 };
   unsigned int arm_vibes[] = { 70, 33, 0 };
 
   armed = true;
@@ -546,7 +563,7 @@ void setCruise() {
     display.setTextColor(RED);
     display.print(F("CRUISE"));
 
-    unsigned int notify_melody[] = { 900, 900 };
+    uint16_t notify_melody[] = { 900, 900 };
     playMelody(notify_melody, 2);
 
     bottom_bg_color = YELLOW;
