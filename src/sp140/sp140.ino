@@ -171,12 +171,14 @@ void loop() {
 }
 
 #ifdef RP_PIO
+// set up the second core. Nothing to do for now
 void setup1() {}
 
+// automatically runs on the second core of the RP2040
 void loop1() {
   if (rp2040.fifo.available() > 0) {
     STR_NOTE noteData;
-    uint32_t note_msg = rp2040.fifo.pop();
+    uint32_t note_msg = rp2040.fifo.pop();  // get note from fifo queue
     memcpy((uint32_t*)&noteData, &note_msg, sizeof(noteData));
     tone(BUZZER_PIN, noteData.freq);
     delay(noteData.duration);

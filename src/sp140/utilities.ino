@@ -85,12 +85,13 @@ bool playMelody(uint16_t melody[], int siz) {
 // non-blocking tone function that uses second core
 void playNote(uint16_t note, uint16_t duration) {
     STR_NOTE noteData;
+    // fifo uses 32 bit messages so package up the note and duration
     uint32_t note_msg;
     noteData.duration = duration;
     noteData.freq = note;
 
     memcpy((uint32_t*)&note_msg, &noteData, sizeof(noteData));
-    rp2040.fifo.push_nb(note_msg);
+    rp2040.fifo.push_nb(note_msg);  // send note to second core via fifo queue
 }
 #else
 // blocking tone function that delays for notes
