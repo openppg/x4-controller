@@ -82,10 +82,6 @@ unsigned int last_throttle = 0;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
-  #if defined(RP_PIO) && defined(USE_TINYUSB)
-    // Manual begin() is required on core without built-in support for TinyUSB such as mbed rp2040
-    TinyUSB_Device_Init(0);
-  #endif
 
   Serial.begin(115200);
   SerialESC.begin(ESC_BAUD_RATE);
