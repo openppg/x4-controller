@@ -33,6 +33,7 @@
   // rp2040 specific libraries here
   #include <EEPROM.h>
   #include "hardware/watchdog.h"
+  #include "pico/unique_id.h"
 #endif
 
 #include <Fonts/FreeSansBold12pt7b.h>

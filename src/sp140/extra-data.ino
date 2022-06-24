@@ -54,7 +54,7 @@ void resetDeviceData() {
 
 // ** Logic for WebUSB **
 void line_state_callback(bool connected) {
-  digitalWrite(LED_2, connected);
+  digitalWrite(LED_SW, connected);
 
   if ( connected ) send_usb_serial();
 }
