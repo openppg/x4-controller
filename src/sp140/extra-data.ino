@@ -89,11 +89,13 @@ void parse_usb_serial() {
 
 void send_usb_serial() {
 #ifdef USE_TINYUSB
+#ifdef M0_PIO
   const size_t capacity = JSON_OBJECT_SIZE(11) + 90;
   DynamicJsonDocument doc(capacity);
 
   doc["major_v"] = VERSION_MAJOR;
   doc["minor_v"] = VERSION_MINOR;
+  doc["arch"] = "SAMD21";
   doc["screen_rot"] = deviceData.screen_rotation;
   doc["armed_time"] = deviceData.armed_time;
   doc["metric_temp"] = deviceData.metric_temp;
@@ -105,5 +107,29 @@ void send_usb_serial() {
   char output[256];
   serializeJson(doc, output);
   usb_web.println(output);
-#endif
+#elif RP_PIO
+  StaticJsonDocument<220> doc; // <- a little more than 220 bytes in the stack
+  // const size_t capacity = JSON_OBJECT_SIZE(15) + 90;
+  // StaticJsonDocument = doc(capacity);
+
+  doc["mj_v"].set(VERSION_MAJOR);
+  doc["mi_v"].set(VERSION_MINOR);
+  doc["arch"].set("RP2040");
+  doc["scr_rot"].set(deviceData.screen_rotation);
+  doc["ar_tme"].set(deviceData.armed_time);
+  doc["m_tmp"].set(deviceData.metric_temp);
+  doc["m_alt"].set(deviceData.metric_alt);
+  doc["prf"].set(deviceData.performance_mode);
+  doc["sea_p"].set(deviceData.sea_pressure);
+  doc["id"].set(chipId());
+
+  char output[256];
+  serializeJson(doc, output, sizeof(output));
+  Serial.println(output);
+  delay(50);
+  usb_web.print(output);
+  usb_web.flush();
+  Serial.println(chipId());
+#endif // M0_PIO/RP_PIO
+#endif // USE_TINYUSB
 }

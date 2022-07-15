@@ -120,6 +120,7 @@ void printDeviceData() {
   Serial.println(deviceData.crc);
 }
 
+#ifdef M0_PIO
 // get chip serial number (for SAMD21)
 String chipId() {
   volatile uint32_t val1, val2, val3, val4;
@@ -136,6 +137,11 @@ String chipId() {
   sprintf(id_buf, "%8x%8x%8x%8x", val1, val2, val3, val4);
   return String(id_buf);
 }
+#elif RP_PIO
+String chipId() {
+  return String("ABC123");
+}
+#endif // M0_PIO/RP_PIO
 
 #ifdef M0_PIO
 // reboot/reset controller
@@ -148,11 +154,13 @@ void rebootBootloader() {
   resetFunc();
 }
 
-#else
+#elif RP_PIO
 
 // reboot/reset controller
 void rebootBootloader() {
-  //TinyUSB_Port_EnterDFU();
+#ifdef USE_TINYUSB
+  TinyUSB_Port_EnterDFU();
+#endif
 }
 #endif
 
