@@ -139,7 +139,10 @@ String chipId() {
 }
 #elif RP_PIO
 String chipId() {
-  return String("ABC123");
+  int len = 2 * PICO_UNIQUE_BOARD_ID_SIZE_BYTES + 1;
+  uint8_t buff[len] = "";
+  pico_get_unique_board_id_string((char *)buff, len);
+  return String((char *)buff);
 }
 #endif // M0_PIO/RP_PIO
 

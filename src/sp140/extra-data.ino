@@ -108,9 +108,7 @@ void send_usb_serial() {
   serializeJson(doc, output);
   usb_web.println(output);
 #elif RP_PIO
-  StaticJsonDocument<220> doc; // <- a little more than 220 bytes in the stack
-  // const size_t capacity = JSON_OBJECT_SIZE(15) + 90;
-  // StaticJsonDocument = doc(capacity);
+  StaticJsonDocument<256> doc; // <- a little more than 256 bytes in the stack
 
   doc["mj_v"].set(VERSION_MAJOR);
   doc["mi_v"].set(VERSION_MINOR);
@@ -121,15 +119,13 @@ void send_usb_serial() {
   doc["m_alt"].set(deviceData.metric_alt);
   doc["prf"].set(deviceData.performance_mode);
   doc["sea_p"].set(deviceData.sea_pressure);
-  doc["id"].set(chipId());
+  //doc["id"].set(chipId()); // webusb bug prevents this extra field from being sent
 
   char output[256];
   serializeJson(doc, output, sizeof(output));
-  Serial.println(output);
-  delay(50);
-  usb_web.print(output);
+  usb_web.println(output);
   usb_web.flush();
-  Serial.println(chipId());
+  //Serial.println(chipId());
 #endif // M0_PIO/RP_PIO
 #endif // USE_TINYUSB
 }
