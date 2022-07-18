@@ -35,13 +35,13 @@ jobs:
         with:
           name: bins
           path: .pio/build/**/firmware.bin
-      - name: Archive RP2040 uf2
+      - name: Save uf2 for RP2040
         uses: actions/upload-artifact@v2
         with:
           name: OpenPPG-CRP2040-SP140.uf2
           path: .pio/build/OpenPPG-CRP2040-SP140/firmware.uf2
   generate-uf2:
-    name: Generate uf2 for SAMD21 devices
+    name: Save uf2 for ${{ matrix.device }}
     needs: pio-build
     runs-on: ubuntu-latest
     strategy:
