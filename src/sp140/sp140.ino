@@ -199,7 +199,7 @@ void disarmSystem() {
   prevPotLvl = 0;
 
   u_int16_t disarm_melody[] = { 2093, 1976, 880 };
-  unsigned int disarm_vibes[] = { 70, 33, 0 };
+  unsigned int disarm_vibes[] = { 70, 71, 72 };
 
   armed = false;
   removeCruise(false);
