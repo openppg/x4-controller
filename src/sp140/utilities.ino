@@ -63,9 +63,8 @@ void blinkLED() {
 bool runVibe(unsigned int sequence[], int siz) {
   if (!ENABLE_VIB) { return false; }
 
-  vibe.begin();
-  for (int thisNote = 0; thisNote < siz; thisNote++) {
-    vibe.setWaveform(thisNote, sequence[thisNote]);
+  for (int thisVibe = 0; thisVibe < siz; thisVibe++) {
+    vibe.setWaveform(thisVibe, sequence[thisVibe]);
   }
   vibe.go();
   return true;

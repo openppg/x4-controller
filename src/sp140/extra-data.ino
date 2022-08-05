@@ -75,16 +75,48 @@ void parse_usb_serial() {
 
   if (doc["major_v"] < 5) return;
 
-  deviceData.screen_rotation = doc["screen_rot"];  // "3/1"
+  deviceData.screen_rotation = doc["screen_rot"].as<unsigned int>();  // "3/1"
   deviceData.sea_pressure = doc["sea_pressure"];  // 1013.25 mbar
   deviceData.metric_temp = doc["metric_temp"];  // true/false
   deviceData.metric_alt = doc["metric_alt"];  // true/false
   deviceData.performance_mode = doc["performance_mode"];  // 0,1
   deviceData.batt_size = doc["batt_size"];  // 4000
+  sanitizeDeviceData();
   writeDeviceData();
   resetDisplay();
   send_usb_serial();
 #endif
+}
+
+bool sanitizeDeviceData() {
+  bool changed = false;
+
+  if (deviceData.screen_rotation == 1 || deviceData.screen_rotation == 3) {
+  } else {
+    deviceData.screen_rotation = 3;
+    changed = true;
+  }
+  if (deviceData.sea_pressure < 0 || deviceData.sea_pressure > 10000) {
+    deviceData.sea_pressure = 1013.25;
+    changed = true;
+  }
+  if (deviceData.metric_temp != true && deviceData.metric_temp != false) {
+    deviceData.metric_temp = true;
+    changed = true;
+  }
+  if (deviceData.metric_alt != true && deviceData.metric_alt != false) {
+    deviceData.metric_alt = true;
+    changed = true;
+  }
+  if (deviceData.performance_mode < 0 || deviceData.performance_mode > 1) {
+    deviceData.performance_mode = 0;
+    changed = true;
+  }
+  if (deviceData.batt_size < 0 || deviceData.batt_size > 10000) {
+    deviceData.batt_size = 4000;
+    changed = true;
+  }
+  return changed;
 }
 
 void send_usb_serial() {
@@ -113,7 +145,7 @@ void send_usb_serial() {
   doc["mj_v"].set(VERSION_MAJOR);
   doc["mi_v"].set(VERSION_MINOR);
   doc["arch"].set("RP2040");
-  doc["scr_rot"].set(deviceData.screen_rotation);
+  doc["scr_rt"].set(deviceData.screen_rotation);
   doc["ar_tme"].set(deviceData.armed_time);
   doc["m_tmp"].set(deviceData.metric_temp);
   doc["m_alt"].set(deviceData.metric_alt);

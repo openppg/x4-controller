@@ -102,8 +102,6 @@ void setup() {
   analogReadResolution(12);     // M0 family chip provides 12bit resolution
   pot.setAnalogResolution(4096);
   unsigned int startup_vibes[] = { 27, 27, 0 };
-  runVibe(startup_vibes, 3);
-
   initButtons();
 
   ledBlinkThread.onRun(blinkLED);
