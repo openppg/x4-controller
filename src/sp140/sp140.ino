@@ -135,6 +135,7 @@ void setup() {
   Watchdog.reset();
 #endif
   initDisplay();
+  modeSwitch();
 }
 
 void setup140() {
@@ -142,8 +143,6 @@ void setup140() {
   esc.writeMicroseconds(ESC_DISARMED_PWM);
 
   initBuzz();
-  modeSwitch();
-
   initBmp();
   getAltitudeM();  // throw away first value
   initVibe();
@@ -197,7 +196,7 @@ void disarmSystem() {
   prevPotLvl = 0;
 
   u_int16_t disarm_melody[] = { 2093, 1976, 880 };
-  unsigned int disarm_vibes[] = { 70, 71, 72 };
+  unsigned int disarm_vibes[] = { 100, 0 };
 
   armed = false;
   removeCruise(false);
