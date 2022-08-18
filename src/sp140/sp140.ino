@@ -126,7 +126,7 @@ void setup() {
   Watchdog.enable(5000);
   uint8_t eepStatus = eep.begin(eep.twiClock100kHz);
 #elif RP_PIO
-  watchdog_enable(8000, 1);
+  watchdog_enable(5000, 1);
   EEPROM.begin(512);
 #endif
   refreshDeviceData();
