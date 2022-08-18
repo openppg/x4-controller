@@ -1,7 +1,8 @@
 name: Continuous Integration
 on:
-  - push
-  - pull_request
+  push:
+  pull_request:
+    types: [opened, reopened]
 
 jobs:
   cpplint:
@@ -31,17 +32,22 @@ jobs:
       - name: Build
         run: platformio run
       - name: Archive bin
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: bins
           path: .pio/build/**/firmware.bin
+      - name: Save uf2 for RP2040
+        uses: actions/upload-artifact@v3
+        with:
+          name: OpenPPG-CRP2040-SP140.uf2
+          path: .pio/build/OpenPPG-CRP2040-SP140/firmware.uf2
   generate-uf2:
-    name: Generate uf2
+    name: Save uf2 for ${{ matrix.device }}
     needs: pio-build
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        device: [OpenPPG-CM0-SP140, OpenPPG-CRP2040-SP140, OpenPPG-CM0-X4]
+        device: [OpenPPG-CM0-SP140, OpenPPG-CM0-X4]
       fail-fast: false
     steps:
       - name: Setup Python
@@ -56,7 +62,7 @@ jobs:
           name: bins
       - name: Run uf2 conversion
         run: python3 utils/uf2conv.py ${{ matrix.device }}/firmware.bin -c -o ${{ matrix.device }}.uf2
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.device }}.uf2
           path: ${{ matrix.device }}.uf2
