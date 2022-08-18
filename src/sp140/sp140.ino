@@ -586,9 +586,8 @@ void removeCruise(bool alert) {
     vibrateNotify();
 
     if (ENABLE_BUZ) {
-      tone(BUZZER_PIN, 500, 100);
-      delay(250);
-      tone(BUZZER_PIN, 500, 100);
+      uint16_t notify_melody[] = { 500, 500 };
+      playMelody(notify_melody, 2);
     }
   }
 }
