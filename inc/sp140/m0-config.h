@@ -22,5 +22,6 @@
 #define TFT_DC 11
 #define TFT_LITE A1
 #define ESC_PIN 12
+#define ENABLE_VIB            true    // enable vibration
 
 #endif  // INC_SP140_M0_CONFIG_H_
