@@ -20,5 +20,6 @@
 #define TFT_DC 11
 #define TFT_LITE 25
 #define ESC_PIN 14
+#define ENABLE_VIB            false    // enable vibration
 
 #endif  // INC_SP140_RP2040_CONFIG_H_
