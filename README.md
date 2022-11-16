@@ -4,7 +4,7 @@
 
 Arduino based logic for OpenPPG Throttle Controller
 
-#### This master branch is only for testing the latest firmware for the X4 and SP140
+#### This master branch is only for testing the latest firmware for the X4
 
 It may not be stable and is not recommended for flying.
 See stable releases [here](https://github.com/openppg/eppg-controller/releases)
