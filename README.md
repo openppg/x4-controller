@@ -1,17 +1,19 @@
 # EPPG Controller
 
-![Build](https://github.com/openppg/eppg-controller/actions/workflows/config.yml/badge.svg)
+![Build](https://github.com/openppg/x4-controller/actions/workflows/config.yml/badge.svg)
 
-Arduino based logic for OpenPPG Throttle Controller
+Arduino based logic for OpenPPG X4 Throttle Controller
+
+The SP140 controller codebase is located at https://github.com/openppg/eppg-controller
 
 #### This master branch is only for testing the latest firmware for the X4
 
 It may not be stable and is not recommended for flying.
-See stable releases [here](https://github.com/openppg/eppg-controller/releases)
+See stable releases [here](https://github.com/openppg/x4-controller/releases)
 
-> For batch 3 (non-telemetry) controllers please see the [batch-3 branch](https://github.com/openppg/eppg-controller/tree/batch-3).
+> For batch 3 (non-telemetry) controllers please see the [batch-3 branch](https://github.com/openppg/x4-controller/tree/batch-3).
 
-> For batch 2 (Arduino nano based) controllers please see the [batch-2 branch](https://github.com/openppg/eppg-controller/tree/batch-2).
+> For batch 2 (Arduino nano based) controllers please see the [batch-2 branch](https://github.com/openppg/x4-controller/tree/batch-2).
 
 ## Build and flash firmware
 
@@ -24,7 +26,7 @@ Suitable for Mac, Windows, and Linux
 ### Setup
 
 1. Follow the instructions here for using with VSCode https://platformio.org/install/ide?install=vscode
-2. Extract the downloaded code from the repo [here](https://github.com/openppg/eppg-controller/archive/master.zip) (or `git clone` it)
+2. Extract the downloaded code from the repo [here](https://github.com/openppg/x4-controller/archive/master.zip) (or `git clone` it)
 3. Open the folder using the PlatformIO "open project" option inside of VSCode.
 
 ### Flash the OpenPPG Code
@@ -33,12 +35,11 @@ Suitable for Mac, Windows, and Linux
 
 #### Install the driver
 
-Batch 3+ OpenPPG controllers and early SP140 controllers are powered by Atmel’s SAMD21G18A MCU, featuring a 32-bit ARM Cortex® M0+ core. On some operating systems you may need extra drivers to communicate with it.
-Newer SP140 controllers feature the RP2040 MCU which is a dual-core variant of the ARM Cortex® M0+. 
+Batch 3+ OpenPPG controllers are powered by Atmel’s SAMD21G18A MCU, featuring a 32-bit ARM Cortex® M0+ core. On some operating systems you may need extra drivers to communicate with it.
 
 #### Download and Prepare OpenPPG Code
 
-1. Download the latest controller code zip from [here](https://github.com/openppg/eppg-controller/archive/master.zip)
+1. Download the latest controller code zip from [here](https://github.com/openppg/x4-controller/archive/master.zip)
 
 #### Flash the OpenPPG Code
 
@@ -48,7 +49,7 @@ Newer SP140 controllers feature the RP2040 MCU which is a dual-core variant of t
 
 ## Bootloader
 
-The latest batches of OpenPPG X4 and SP140 controllers use the UF2 bootloader (compatible with Arduino).
+The latest batches of OpenPPG X4 controllers use the UF2 bootloader (compatible with Arduino).
 It makes firmware updates as simple as drag and drop.
 Learn more here https://github.com/openppg/uf2-samdx1
 
@@ -58,7 +59,7 @@ The uf2 bootloader can update firmware with a .uf2 binary file built from a comp
 Using the uf2-samdx repo above python tool the command to build a compatible .uf2 file should look something like:
 
 ```bash
-$ python3 utils/uf2conv.py eppg-controller/.pio/build/OpenPPG\ CM0/firmware.bin -c -o sp140-update.uf2
+$ python3 utils/uf2conv.py x4-controller/.pio/build/OpenPPG\ CM0/firmware.bin -c -o X4-update.uf2
 ```
 
 ## Config tool
@@ -68,4 +69,4 @@ The open source web based config tool for updating certain settings over USB (wi
 
 ## Help improve these docs
 
-Pull requests are welcome for these instructions and code changes
+Pull requests are welcome for these instructions and code changes.

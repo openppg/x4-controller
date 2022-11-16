@@ -36,18 +36,13 @@ jobs:
         with:
           name: bins
           path: .pio/build/**/firmware.bin
-      - name: Save uf2 for RP2040
-        uses: actions/upload-artifact@v3
-        with:
-          name: OpenPPG-CRP2040-SP140.uf2
-          path: .pio/build/OpenPPG-CRP2040-SP140/firmware.uf2
   generate-uf2:
     name: Save uf2 for ${{ matrix.device }}
     needs: pio-build
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        device: [OpenPPG-CM0-SP140, OpenPPG-CM0-X4]
+        device: [OpenPPG-CM0-X4]
       fail-fast: false
     steps:
       - name: Setup Python
